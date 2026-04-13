@@ -39,7 +39,6 @@ Do not split HTML, CSS, and JS into separate files unless explicitly instructed.
 The repository uses a shared HTML template as the default starting point for playgrounds.
 
 You must interpret that template correctly:
-
 - The template’s overall page shell is intentional and should generally be preserved.
 - The site header is intentional and useful. It is part of the normal published-page structure, not accidental bloat.
 - The template includes commented example/reference blocks. These are guidance patterns only.
@@ -48,7 +47,7 @@ You must interpret that template correctly:
 - Remove, replace, or ignore unused placeholder content in the final playground.
 - Do not preserve placeholder text, sample state, or sample rendering output unless the current project actually needs them.
 
-## What Is Standardized vs Flexible
+## Standardized vs Flexible
 
 ### Standardized and usually preserved
 These are part of the house structure and should remain unless there is a clear reason to change them:
@@ -58,7 +57,7 @@ These are part of the house structure and should remain unless there is a clear 
 - reusable styling tokens
 - the visualization mount convention
 - the general lifecycle flow for playground logic
-- the expectation of clear controls, visualization, and explanation areas
+- the expectation of clear controls, visualization, and explanation/information areas
 
 ### Flexible and expected to change per project
 These should be replaced or adapted freely:
@@ -71,21 +70,6 @@ These should be replaced or adapted freely:
 - explanation content
 - math logic
 - project-specific UI details
-
-## Decision-making for underspecified UI details
-
-When the project spec allows multiple reasonable implementations, choose the simplest option that:
-- best supports the main learning outcome
-- minimizes UI complexity
-- reduces implementation risk
-- fits the bounded v1 scope
-
-Do not leave core interaction decisions ambiguous in the implementation plan when a simple default choice is clearly better.
-
-Examples:
-- Prefer a single bounded control over multiple free-form controls when both satisfy the learning goal.
-- Prefer beginner-friendly defaults that reduce visual overload.
-- Prefer explicit default visibility choices for optional features.
 
 ## Visualization Convention
 
@@ -151,33 +135,53 @@ Guidelines:
 - do not introduce classes unless the project genuinely benefits from them
 - prefer a simple functional structure inside the single file
 
-## Controls and Interaction
+## Control and UX Decision Rules
 
-Controls should be:
-- relevant to the current mathematical concept
-- clearly labeled
-- safe by default
-- synchronized with state
-- easy to reset
+When the project spec leaves multiple valid implementation choices, choose the simplest bounded v1 option that best supports the main learning outcome.
 
-When applicable:
-- keep numeric controls bounded
-- handle invalid inputs gracefully
-- keep presets explicit and understandable
-- avoid adding controls that do not help the core learning goal
+Prefer:
+- fewer controls over more controls
+- beginner-friendly defaults
+- explicit default visibility states
+- one bounded control instead of a more flexible but more complex control system
+- one strong visualization relationship over multiple competing visual ideas
 
-Reference controls in the template are examples, not obligations.
+Do not leave major v1 interaction decisions unresolved in the plan when a reasonable default can be chosen.
 
-## Explanation Area
+Examples:
+- prefer a bounded “revolutions” control over free-form min/max theta controls if both satisfy the learning goal
+- prefer explicit default-visible and default-hidden function states
+- prefer one global guide toggle for a visual system instead of many overlapping toggles when that is sufficient
 
-Each playground should include explanation text that helps the user interpret what they are seeing.
+## Layout and Responsiveness Rules
 
-The explanation section should:
-- describe the current mathematical meaning of the state or visualization
-- note important caveats when needed
-- support learning, not just decorate the page
+When a playground has multiple coordinated visual panels:
+- explicitly preserve the intended visual relationship during resize
+- if one panel is supposed to remain square, keep it square
+- if two top-row panels are meant to share height, preserve that relationship during resize
+- if a lower information panel is meant to span the full width, preserve that relationship during resize
+- do not assume CSS alone is sufficient if the intended geometry clearly requires a small amount of resize logic
 
-Do not leave placeholder explanation text in finished playgrounds.
+When responsive behavior affects mathematical interpretation, prioritize preserving the intended geometric relationship over purely fluid layout.
+
+## Graphing and Visibility Rules
+
+For graph-based playgrounds:
+- do not fabricate continuity across undefined regions or poles
+- break curves at true discontinuities
+- if a branch approaches the visible graph boundary, prefer clipping to the boundary rather than dropping the line early
+- keep readouts honest even when drawing uses display-only clipping
+- when connector lines are used between a geometric construction and a graph, only draw a connector if the current graph point is actually visible in the graph viewport
+- do not imply a live visible mapping when the graph point is off-screen or undefined
+
+## Explanatory Panels and Information Density
+
+When adding equations, identities, or readout content:
+- prefer integrating related information into an existing panel before creating a new stacked panel
+- avoid unnecessary extra surfaces when the information can fit cleanly into an existing one
+- use dead space intentionally
+- keep equations and values visually associated with the graph or visualization they explain
+- avoid turning the page into a formula dump
 
 ## Mathematical Quality Standards
 
@@ -202,8 +206,9 @@ Default workflow for playground work:
 2. define the exact mathematical behavior
 3. propose the UI and visualization approach
 4. identify risks or edge cases
-5. implement in bounded steps
-6. self-review for correctness and usability
+5. resolve key v1 decisions explicitly
+6. implement in bounded steps
+7. self-review for correctness and usability
 
 Before coding, prefer producing a bounded plan unless the requested change is very small and local.
 

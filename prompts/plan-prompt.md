@@ -12,23 +12,23 @@ Your job:
 3. Propose the interaction model.
 4. Propose the visualization approach.
 5. Identify the required controls and presets.
-6. Identify edge cases, correctness risks, and usability risks.
-7. Produce a bounded implementation plan.
+6. Identify edge cases, correctness risks, usability risks, and responsive layout risks.
+7. Resolve any major v1 interaction, default-state, visibility, control-shape, and layout decisions needed for implementation.
+8. Produce a bounded implementation plan.
 
 Important:
 - Do not write code yet.
 - Keep the plan concrete and implementation-oriented.
 - Respect the single-file template structure.
 - Only include features justified by the learning goal.
+- Do not leave core v1 UX or layout decisions as open options when a reasonable bounded choice can be made.
 
-Before finishing the plan, resolve any major v1 interaction or default-setting decisions that would otherwise be left open.
-
-For each core control or feature area, specify:
-- what the v1 implementation will be
-- what the default state will be
-- what alternatives were intentionally not chosen for v1, if relevant
-
-Do not leave core UX decisions as multiple open options unless the spec explicitly asks for alternatives.
+Before finishing the plan, explicitly specify:
+- chosen v1 approach
+- default state / default visible features
+- default hidden features
+- bounded simplifications used for v1
+- any important responsive layout invariants that must be preserved
 
 Project spec:
 [PASTE SPEC HERE]

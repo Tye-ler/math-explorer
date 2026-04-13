@@ -10,7 +10,8 @@ Requirements:
 - Keep JS in the script block
 - Preserve the overall page shell unless the plan requires a specific change
 - Replace placeholder template logic with project-specific logic
-- Keep the standard control -> state -> derived state -> render -> explanation flow
+- Keep the standard control -> state -> derived state -> render -> explanation/info flow
+- Preserve any layout invariants explicitly identified in the approved plan
 - No unnecessary abstractions
 - No frameworks
 - No external dependencies unless explicitly approved

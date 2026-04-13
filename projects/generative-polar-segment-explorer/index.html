@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generative Polar Segment Explorer</title>
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 1120px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255,255,255,0.10);
+      --line-strong: rgba(255,255,255,0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255,255,255,0.14);
+      --viz-grid: rgba(255,255,255,0.08);
+      --viz-axis: rgba(255,255,255,0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+    }
+
+    :root[data-theme="light"] {
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0,0,0,0.08);
+      --line-strong: rgba(0,0,0,0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0,0,0,0.10);
+      --viz-grid: rgba(0,0,0,0.05);
+      --viz-axis: rgba(0,0,0,0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ta-site-header,
+    .ta-site-header * {
+      box-sizing: border-box;
+    }
+
+    .ta-site-header {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    .control input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+    .control select:focus-visible,
+    .control textarea:focus-visible,
+    button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .ta-site-project-shell {
+      min-height: calc(100vh - var(--ta-site-header-height));
+    }
+
+    .page-shell {
+      width: min(100% - 2rem, var(--max-width));
+      margin: 0 auto;
+      padding: var(--space-4) 0;
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .page-topbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      text-align: center;
+    }
+
+    .hero {
+      display: grid;
+      gap: 0.45rem;
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.15;
+      font-weight: 400;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 72ch;
+      font-size: 12px;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+      align-items: start;
+    }
+
+    .section {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      padding: var(--space-2);
+    }
+
+    .controls-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      align-items: stretch;
+    }
+
+    .subsystem {
+      flex: 1 1 220px;
+      min-width: min(100%, 200px);
+      max-width: 100%;
+      display: grid;
+      gap: var(--space-2);
+      padding: var(--space-2);
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    .subsystem-title {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--space-2);
+      align-items: end;
+    }
+
+    .control-stack {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .control {
+      display: grid;
+      gap: 0.3rem;
+    }
+
+    .control label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .stepper-button {
+      min-width: 28px;
+      padding: 4px 8px;
+    }
+
+    .stepper .control-input {
+      text-align: center;
+      padding-left: 8px;
+      padding-right: 8px;
+      cursor: text;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2);
+    }
+
+    .choice-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .choice-row input {
+      margin: 0;
+    }
+
+    .control input:not([type="checkbox"]):not([type="radio"]),
+    .control select,
+    .control textarea,
+    button {
+      min-height: 28px;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .control input:not([type="checkbox"]):not([type="radio"]):hover,
+    .control select:hover,
+    .control textarea:hover,
+    button:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    button:disabled,
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    button:disabled:hover,
+    button[disabled]:hover {
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    .control input[type="number"]::-webkit-outer-spin-button,
+    .control input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .control input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .control input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 16px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .control input[type="range"]::-webkit-slider-runnable-track {
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 4px;
+      height: 14px;
+      margin-top: -6.5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .control input[type="range"]::-moz-range-track {
+      height: 1px;
+      background: var(--line-strong);
+      border: 0;
+    }
+
+    .control input[type="range"]::-moz-range-thumb {
+      width: 4px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .control input[type="range"]:hover::-webkit-slider-runnable-track,
+    .control input[type="range"]:focus-visible::-webkit-slider-runnable-track,
+    .control input[type="range"]:hover::-moz-range-track,
+    .control input[type="range"]:focus-visible::-moz-range-track {
+      background: var(--control-text-hover);
+    }
+
+    .control input[type="range"]:hover::-webkit-slider-thumb,
+    .control input[type="range"]:focus-visible::-webkit-slider-thumb,
+    .control input[type="range"]:hover::-moz-range-thumb,
+    .control input[type="range"]:focus-visible::-moz-range-thumb {
+      border-color: var(--control-text-hover);
+      background: var(--control-text-hover);
+    }
+
+    .visualization-box {
+      min-height: min(72vh, 640px);
+      border: 1px dashed var(--viz-frame);
+      background: var(--viz-bg);
+      color: var(--viz-text);
+      padding: var(--space-2);
+      font-size: 12px;
+    }
+
+    .viz-mount {
+      width: 100%;
+      min-height: min(68vh, 600px);
+      display: block;
+      position: relative;
+    }
+
+    .viz-mount canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: middle;
+      border: 1px solid var(--viz-frame);
+      background: #000000;
+    }
+
+    .explanation {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .explanation strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    @media (max-width: 900px) {
+      .content-grid {
+        gap: var(--space-3);
+      }
+
+      .subsystem {
+        flex: 1 1 100%;
+      }
+
+      .visualization-box {
+        min-height: 52vh;
+      }
+
+      .viz-mount {
+        min-height: 48vh;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .ta-site-project-shell {
+        min-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+
+      .page-shell {
+        padding: var(--space-3) 0;
+        gap: var(--space-3);
+      }
+
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="ta-site-header" data-project-header data-root="../" aria-label="Site header">
+    <div class="ta-site-nav">
+      <a class="ta-site-brand" data-project-header-link="home" href="../">Tyeler Ahern</a>
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" data-project-header-link="home" href="../">Home</a>
+        <a class="ta-site-link" data-project-header-link="projects" href="../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="ta-site-project-shell">
+    <div class="page-shell">
+      <div class="page-topbar">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+      </div>
+
+      <section class="hero" aria-labelledby="project-title">
+        <h1 id="project-title">Generative Polar Segment Explorer</h1>
+        <p>
+          Place repeated line segments on polar curves, spin them locally and globally, link endpoints with simple index rules, and watch emergent geometry appear. Adjust controls to see how polar placement, motion, and connections combine.
+        </p>
+      </section>
+
+      <div class="content-grid">
+        <section class="section" aria-labelledby="controls-title">
+          <h2 id="controls-title">controls</h2>
+          <div class="controls-strip">
+            <div class="subsystem" aria-labelledby="sub-presets">
+              <h3 class="subsystem-title" id="sub-presets">presets &amp; reset</h3>
+              <div class="control">
+                <label for="preset-select">preset</label>
+                <select id="preset-select">
+                  <option value="simple-circle">simple circle</option>
+                  <option value="rotating-polygon">rotating polygon / ring</option>
+                  <option value="rotating-shards">disconnected rotating shards</option>
+                  <option value="pinwheel">center-connected pinwheel</option>
+                  <option value="petal-harmonic">petal harmonic</option>
+                  <option value="dense-bloom">dense bloom / woven trail</option>
+                </select>
+              </div>
+              <div class="button-row">
+                <button type="button" id="reset-button">reset</button>
+                <button type="button" id="clear-trails-button">clear trails</button>
+              </div>
+            </div>
+
+            <div class="subsystem" aria-labelledby="sub-segments">
+              <h3 class="subsystem-title" id="sub-segments">segments</h3>
+              <div class="control-row">
+                <div class="control">
+                  <label for="segment-count">count (N)</label>
+                  <div class="stepper" data-stepper>
+                    <button type="button" class="stepper-button" data-step="-1" aria-label="decrease segment count">-</button>
+                    <input id="segment-count" class="control-input" type="number" min="1" max="256" step="1" value="36" inputmode="numeric" />
+                    <button type="button" class="stepper-button" data-step="1" aria-label="increase segment count">+</button>
+                  </div>
+                </div>
+                <div class="control">
+                  <label for="segment-length">length (L)</label>
+                  <input id="segment-length" type="range" min="0.02" max="1.2" step="0.01" value="0.2" />
+                </div>
+                <div class="control">
+                  <label for="primary-color">primary color</label>
+                  <input id="primary-color" type="color" value="#5f8fe8" />
+                </div>
+              </div>
+            </div>
+
+            <div class="subsystem" aria-labelledby="sub-polar">
+              <h3 class="subsystem-title" id="sub-polar">polar placement</h3>
+              <div class="control-row">
+                <div class="control">
+                  <label for="placement-mode">θ sampling</label>
+                  <select id="placement-mode">
+                    <option value="fullCircle">full circle (uniform)</option>
+                    <option value="fixedStep">fixed Δθ (rad)</option>
+                  </select>
+                </div>
+                <div class="control" id="delta-theta-wrap">
+                  <label for="delta-theta">Δθ (rad)</label>
+                  <input id="delta-theta" type="range" min="0.05" max="1.5" step="0.01" value="0.35" />
+                </div>
+                <div class="control">
+                  <label for="theta-base-deg">θ base (deg)</label>
+                  <input id="theta-base-deg" type="range" min="-180" max="180" step="1" value="0" />
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control">
+                  <label for="polar-preset">polar r = f(θ)</label>
+                  <select id="polar-preset">
+                    <option value="circle">circle: r = a</option>
+                    <option value="roseCos">rose: r = a cos(k(θ+φ))</option>
+                    <option value="roseSin">rose: r = a sin(k(θ+φ))</option>
+                    <option value="cardioid">cardioid: r = a(1+cos(θ+φ))</option>
+                  </select>
+                </div>
+                <div class="control">
+                  <label for="amplitude">amplitude (a)</label>
+                  <input id="amplitude" type="range" min="0.1" max="1.5" step="0.01" value="0.85" />
+                </div>
+                <div class="control">
+                  <label for="harmonic-k">harmonic k</label>
+                  <div class="stepper" data-stepper>
+                    <button type="button" class="stepper-button" data-step="-1" aria-label="decrease k">-</button>
+                    <input id="harmonic-k" class="control-input" type="number" min="1" max="12" step="1" value="3" inputmode="numeric" />
+                    <button type="button" class="stepper-button" data-step="1" aria-label="increase k">+</button>
+                  </div>
+                </div>
+              </div>
+              <div class="control-row">
+                <div class="control">
+                  <label for="polar-phase0-deg">φ₀ (deg)</label>
+                  <input id="polar-phase0-deg" type="range" min="-180" max="180" step="1" value="0" />
+                </div>
+              </div>
+            </div>
+
+            <div class="subsystem" aria-labelledby="sub-motion">
+              <h3 class="subsystem-title" id="sub-motion">motion</h3>
+              <div class="control-row">
+                <label class="choice-row" for="phase-motion-enabled">
+                  <input type="checkbox" id="phase-motion-enabled" />
+                  polar phase motion
+                </label>
+                <div class="control">
+                  <label for="omega-phase">ω_phase (rad/s)</label>
+                  <input id="omega-phase" type="range" min="-2" max="2" step="0.01" value="0.4" />
+                </div>
+              </div>
+              <div class="control-row">
+                <label class="choice-row" for="local-rotation-enabled">
+                  <input type="checkbox" id="local-rotation-enabled" />
+                  local rotation
+                </label>
+                <div class="control">
+                  <label for="omega-local">ω_local (rad/s)</label>
+                  <input id="omega-local" type="range" min="-3" max="3" step="0.01" value="0.8" />
+                </div>
+                <label class="choice-row" for="mirrored-local">
+                  <input type="checkbox" id="mirrored-local" />
+                  mirrored (−1)ⁱ
+                </label>
+              </div>
+              <div class="control-row">
+                <label class="choice-row" for="global-rotation-enabled">
+                  <input type="checkbox" id="global-rotation-enabled" />
+                  global rotation
+                </label>
+                <div class="control">
+                  <label for="omega-global">ω_global (rad/s)</label>
+                  <input id="omega-global" type="range" min="-2" max="2" step="0.01" value="0.35" />
+                </div>
+              </div>
+            </div>
+
+            <div class="subsystem" aria-labelledby="sub-connectors">
+              <h3 class="subsystem-title" id="sub-connectors">connectors</h3>
+              <div class="control-row">
+                <label class="choice-row" for="connectors-enabled">
+                  <input type="checkbox" id="connectors-enabled" />
+                  enable connectors
+                </label>
+                <div class="control">
+                  <label for="connection-kind">connection</label>
+                  <select id="connection-kind">
+                    <option value="AA">A → A</option>
+                    <option value="BB">B → B</option>
+                    <option value="AB">A → B</option>
+                    <option value="A_center">A → center</option>
+                    <option value="B_center">B → center</option>
+                  </select>
+                </div>
+                <div class="control">
+                  <label for="connection-offset-k">offset k</label>
+                  <div class="stepper" data-stepper>
+                    <button type="button" class="stepper-button" data-step="-1" aria-label="decrease k">-</button>
+                    <input id="connection-offset-k" class="control-input" type="number" min="-64" max="64" step="1" value="1" inputmode="numeric" />
+                    <button type="button" class="stepper-button" data-step="1" aria-label="increase k">+</button>
+                  </div>
+                </div>
+                <div class="control">
+                  <label for="connection-stride">stride</label>
+                  <select id="connection-stride">
+                    <option value="1">1 (every)</option>
+                    <option value="2">2 (every other)</option>
+                  </select>
+                </div>
+                <div class="control">
+                  <label for="connector-color">connector color</label>
+                  <input id="connector-color" type="color" value="#c97fe0" />
+                </div>
+              </div>
+            </div>
+
+            <div class="subsystem" aria-labelledby="sub-trails">
+              <h3 class="subsystem-title" id="sub-trails">trails</h3>
+              <div class="control-row">
+                <label class="choice-row" for="trail-enabled">
+                  <input type="checkbox" id="trail-enabled" />
+                  trail accumulation
+                </label>
+                <div class="control">
+                  <label for="trail-persistence">persistence</label>
+                  <input id="trail-persistence" type="range" min="0" max="1" step="0.01" value="0.55" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="visualization-title">
+          <h2 id="visualization-title">visualization</h2>
+          <div class="surface">
+            <div class="visualization-box">
+              <div id="viz-mount" class="viz-mount" aria-label="polar segment visualization"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="section" aria-labelledby="explanation-title">
+        <h2 id="explanation-title">explanation</h2>
+        <div class="surface">
+          <p class="explanation" id="explanation-text"></p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const rootElement = document.documentElement;
+      const themeToggle = document.querySelector("#theme-toggle");
+      const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+      let themeMode = "auto";
+
+      initializeTheme();
+      initializeHeaderLinks();
+      initializeSteppers();
+      initializePlayground();
+
+      function initializeTheme() {
+        themeMode = "auto";
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+
+        if (themeToggle) {
+          themeToggle.addEventListener("click", cycleThemeMode);
+        }
+
+        if (mediaQuery) {
+          const handleChange = () => {
+            if (themeMode === "auto") {
+              applyTheme("auto");
+              updateThemeToggleLabel();
+            }
+          };
+
+          if (typeof mediaQuery.addEventListener === "function") {
+            mediaQuery.addEventListener("change", handleChange);
+          } else if (typeof mediaQuery.addListener === "function") {
+            mediaQuery.addListener(handleChange);
+          }
+        }
+      }
+
+      function applyTheme(mode) {
+        rootElement.setAttribute("data-theme", resolveTheme(mode));
+      }
+
+      function cycleThemeMode() {
+        if (themeMode === "auto") {
+          themeMode = resolveTheme("auto") === "dark" ? "light" : "dark";
+        } else if (themeMode === "light") {
+          themeMode = "dark";
+        } else {
+          themeMode = "auto";
+        }
+
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+      }
+
+      function updateThemeToggleLabel() {
+        if (!themeToggle) return;
+        themeToggle.textContent = `theme: ${themeMode}`;
+      }
+
+      function resolveTheme(mode) {
+        if (mode === "auto") {
+          return mediaQuery && mediaQuery.matches ? "dark" : "light";
+        }
+        return mode;
+      }
+
+      function initializeSteppers() {
+        document.querySelectorAll("[data-stepper]").forEach((stepper) => {
+          const input = stepper.querySelector('input[type="number"]');
+          if (!input) return;
+
+          stepper.querySelectorAll("[data-step]").forEach((button) => {
+            button.addEventListener("click", () => {
+              const amount = Number(button.getAttribute("data-step") || 0);
+              if (!amount) return;
+
+              const step = Number(input.step) || 1;
+              const min = input.min === "" ? -Infinity : Number(input.min);
+              const max = input.max === "" ? Infinity : Number(input.max);
+              const current = input.value === "" ? 0 : Number(input.value);
+              const next = clamp(current + amount * step, min, max);
+
+              input.value = String(next);
+              input.dispatchEvent(new Event("input", { bubbles: true }));
+              input.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+          });
+        });
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function initializeHeaderLinks() {
+        const header = document.querySelector("[data-project-header]");
+        if (!header) return;
+
+        const root = normalizeRoot(header.getAttribute("data-root") || "./");
+
+        const linkTargets = {
+          home: root,
+          projects: `${root}#projects`,
+        };
+
+        header.querySelectorAll("[data-project-header-link]").forEach((link) => {
+          const key = link.getAttribute("data-project-header-link");
+          if (linkTargets[key]) {
+            link.setAttribute("href", linkTargets[key]);
+          }
+        });
+
+        header.querySelectorAll(".ta-site-link").forEach((link) => {
+          const url = new URL(link.getAttribute("href"), window.location.href);
+          const samePath = stripIndex(url.pathname) === stripIndex(window.location.pathname);
+          const sameHash = url.hash ? url.hash === window.location.hash : !window.location.hash;
+
+          if (samePath && sameHash) {
+            link.setAttribute("aria-current", "page");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+      }
+
+      function normalizeRoot(value) {
+        if (!value || value === ".") return "./";
+        return /[#/]$/.test(value) ? value : `${value}/`;
+      }
+
+      function stripIndex(pathname) {
+        return pathname.replace(/\/index\.html$/i, "/");
+      }
+
+      function initializePlayground() {
+        const INTERNAL_N_MAX = 512;
+        const UI_N_MAX = 256;
+
+        const presetTable = {
+          "simple-circle": {
+            N: 48,
+            L: 0.12,
+            primaryColor: "#6ea8ff",
+            placementMode: "fullCircle",
+            deltaTheta: 0.35,
+            thetaBase: 0,
+            polarPreset: "circle",
+            amplitude: 0.82,
+            harmonicK: 3,
+            polarPhase0: 0,
+            phaseMotionEnabled: false,
+            omegaPhase: 0.35,
+            localRotationEnabled: false,
+            omegaLocal: 0.6,
+            mirroredLocal: false,
+            globalRotationEnabled: false,
+            omegaGlobal: 0.25,
+            connectorsEnabled: false,
+            connectionKind: "AA",
+            connectionOffsetK: 1,
+            connectionStride: 1,
+            connectorColor: "#d080ff",
+            trailEnabled: false,
+            trailPersistence: 0.5,
+          },
+          "rotating-polygon": {
+            N: 10,
+            L: 0.42,
+            primaryColor: "#7ec8ff",
+            placementMode: "fullCircle",
+            deltaTheta: 0.35,
+            thetaBase: 0,
+            polarPreset: "circle",
+            amplitude: 0.75,
+            harmonicK: 1,
+            polarPhase0: 0,
+            phaseMotionEnabled: false,
+            omegaPhase: 0.2,
+            localRotationEnabled: true,
+            omegaLocal: 0.55,
+            mirroredLocal: false,
+            globalRotationEnabled: true,
+            omegaGlobal: 0.18,
+            connectorsEnabled: false,
+            connectionKind: "AA",
+            connectionOffsetK: 1,
+            connectionStride: 1,
+            connectorColor: "#c97fe0",
+            trailEnabled: false,
+            trailPersistence: 0.5,
+          },
+          "rotating-shards": {
+            N: 64,
+            L: 0.18,
+            primaryColor: "#9bdcff",
+            placementMode: "fullCircle",
+            deltaTheta: 0.35,
+            thetaBase: 0,
+            polarPreset: "roseCos",
+            amplitude: 0.95,
+            harmonicK: 5,
+            polarPhase0: 0,
+            phaseMotionEnabled: false,
+            omegaPhase: 0.15,
+            localRotationEnabled: true,
+            omegaLocal: 1.1,
+            mirroredLocal: true,
+            globalRotationEnabled: true,
+            omegaGlobal: 0.42,
+            connectorsEnabled: false,
+            connectionKind: "AA",
+            connectionOffsetK: 1,
+            connectionStride: 1,
+            connectorColor: "#e0a0ff",
+            trailEnabled: false,
+            trailPersistence: 0.5,
+          },
+          pinwheel: {
+            N: 24,
+            L: 0.38,
+            primaryColor: "#ffcf6e",
+            placementMode: "fullCircle",
+            deltaTheta: 0.35,
+            thetaBase: 0,
+            polarPreset: "circle",
+            amplitude: 0.72,
+            harmonicK: 1,
+            polarPhase0: 0,
+            phaseMotionEnabled: false,
+            omegaPhase: 0.2,
+            localRotationEnabled: true,
+            omegaLocal: 0.9,
+            mirroredLocal: false,
+            globalRotationEnabled: true,
+            omegaGlobal: 0.22,
+            connectorsEnabled: true,
+            connectionKind: "A_center",
+            connectionOffsetK: 1,
+            connectionStride: 1,
+            connectorColor: "#ff7a59",
+            trailEnabled: false,
+            trailPersistence: 0.5,
+          },
+          "petal-harmonic": {
+            N: 72,
+            L: 0.1,
+            primaryColor: "#7dffb3",
+            placementMode: "fullCircle",
+            deltaTheta: 0.35,
+            thetaBase: 0,
+            polarPreset: "roseCos",
+            amplitude: 1.05,
+            harmonicK: 4,
+            polarPhase0: 0,
+            phaseMotionEnabled: true,
+            omegaPhase: 0.35,
+            localRotationEnabled: false,
+            omegaLocal: 0.4,
+            mirroredLocal: false,
+            globalRotationEnabled: false,
+            omegaGlobal: 0.1,
+            connectorsEnabled: false,
+            connectionKind: "AA",
+            connectionOffsetK: 1,
+            connectionStride: 1,
+            connectorColor: "#c97fe0",
+            trailEnabled: false,
+            trailPersistence: 0.5,
+          },
+          "dense-bloom": {
+            N: 128,
+            L: 0.14,
+            primaryColor: "#6ab0ff",
+            placementMode: "fullCircle",
+            deltaTheta: 0.35,
+            thetaBase: 0,
+            polarPreset: "roseSin",
+            amplitude: 0.88,
+            harmonicK: 3,
+            polarPhase0: 0,
+            phaseMotionEnabled: true,
+            omegaPhase: 0.28,
+            localRotationEnabled: false,
+            omegaLocal: 0.3,
+            mirroredLocal: false,
+            globalRotationEnabled: true,
+            omegaGlobal: 0.12,
+            connectorsEnabled: true,
+            connectionKind: "AA",
+            connectionOffsetK: 1,
+            connectionStride: 2,
+            connectorColor: "#e86edc",
+            trailEnabled: true,
+            trailPersistence: 0.72,
+          },
+        };
+
+        let state = createInitialState();
+        const trailState = { canvas: null, ctx: null, width: 0, height: 0, dpr: 1 };
+        let rafId = 0;
+        let timeStart = performance.now();
+        let lastFrameTime = timeStart;
+
+        const elements = {};
+
+        cacheElements();
+        bindControls();
+        syncControlsFromState();
+        updateDeltaThetaVisibility();
+        resizeCanvas();
+        refreshStatic();
+
+        const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => {
+          resizeCanvas();
+          refreshStatic();
+        }) : null;
+        if (ro && elements.vizMount) {
+          ro.observe(elements.vizMount);
+        }
+        window.addEventListener("resize", () => {
+          resizeCanvas();
+          refreshStatic();
+        });
+
+        function createInitialState() {
+          const base = clonePresetConfig(presetTable["simple-circle"]);
+          return {
+            config: base,
+            derived: null,
+            animTime: 0,
+          };
+        }
+
+        function clonePresetConfig(src) {
+          return {
+            N: src.N,
+            L: src.L,
+            primaryColor: src.primaryColor,
+            placementMode: src.placementMode,
+            deltaTheta: src.deltaTheta,
+            thetaBase: src.thetaBase,
+            polarPreset: src.polarPreset,
+            amplitude: src.amplitude,
+            harmonicK: src.harmonicK,
+            polarPhase0: src.polarPhase0,
+            phaseMotionEnabled: src.phaseMotionEnabled,
+            omegaPhase: src.omegaPhase,
+            localRotationEnabled: src.localRotationEnabled,
+            omegaLocal: src.omegaLocal,
+            mirroredLocal: src.mirroredLocal,
+            globalRotationEnabled: src.globalRotationEnabled,
+            omegaGlobal: src.omegaGlobal,
+            connectorsEnabled: src.connectorsEnabled,
+            connectionKind: src.connectionKind,
+            connectionOffsetK: src.connectionOffsetK,
+            connectionStride: src.connectionStride,
+            connectorColor: src.connectorColor,
+            trailEnabled: src.trailEnabled,
+            trailPersistence: src.trailPersistence,
+            activePresetId: "simple-circle",
+          };
+        }
+
+        function cacheElements() {
+          elements.presetSelect = document.getElementById("preset-select");
+          elements.resetButton = document.getElementById("reset-button");
+          elements.clearTrailsButton = document.getElementById("clear-trails-button");
+          elements.segmentCount = document.getElementById("segment-count");
+          elements.segmentLength = document.getElementById("segment-length");
+          elements.primaryColor = document.getElementById("primary-color");
+          elements.placementMode = document.getElementById("placement-mode");
+          elements.deltaTheta = document.getElementById("delta-theta");
+          elements.deltaThetaWrap = document.getElementById("delta-theta-wrap");
+          elements.thetaBaseDeg = document.getElementById("theta-base-deg");
+          elements.polarPreset = document.getElementById("polar-preset");
+          elements.amplitude = document.getElementById("amplitude");
+          elements.harmonicK = document.getElementById("harmonic-k");
+          elements.polarPhase0Deg = document.getElementById("polar-phase0-deg");
+          elements.phaseMotionEnabled = document.getElementById("phase-motion-enabled");
+          elements.omegaPhase = document.getElementById("omega-phase");
+          elements.localRotationEnabled = document.getElementById("local-rotation-enabled");
+          elements.omegaLocal = document.getElementById("omega-local");
+          elements.mirroredLocal = document.getElementById("mirrored-local");
+          elements.globalRotationEnabled = document.getElementById("global-rotation-enabled");
+          elements.omegaGlobal = document.getElementById("omega-global");
+          elements.connectorsEnabled = document.getElementById("connectors-enabled");
+          elements.connectionKind = document.getElementById("connection-kind");
+          elements.connectionOffsetK = document.getElementById("connection-offset-k");
+          elements.connectionStride = document.getElementById("connection-stride");
+          elements.connectorColor = document.getElementById("connector-color");
+          elements.trailEnabled = document.getElementById("trail-enabled");
+          elements.trailPersistence = document.getElementById("trail-persistence");
+          elements.vizMount = document.getElementById("viz-mount");
+          elements.explanation = document.getElementById("explanation-text");
+        }
+
+        function bindControls() {
+          const onInput = () => {
+            readControlsIntoState();
+            refreshStatic();
+          };
+
+          if (elements.presetSelect) {
+            elements.presetSelect.addEventListener("change", () => {
+              const id = elements.presetSelect.value;
+              if (presetTable[id]) {
+                state.config = clonePresetConfig(presetTable[id]);
+                state.config.activePresetId = id;
+                syncControlsFromState();
+                updateDeltaThetaVisibility();
+                refreshStatic();
+              }
+            });
+          }
+
+          if (elements.resetButton) {
+            elements.resetButton.addEventListener("click", () => {
+              const id = state.config.activePresetId || "simple-circle";
+              if (presetTable[id]) {
+                state.config = clonePresetConfig(presetTable[id]);
+                state.config.activePresetId = id;
+                syncControlsFromState();
+                updateDeltaThetaVisibility();
+                clearTrailSurface();
+                refreshStatic();
+              }
+            });
+          }
+
+          if (elements.clearTrailsButton) {
+            elements.clearTrailsButton.addEventListener("click", () => {
+              clearTrailSurface();
+              refreshStatic();
+            });
+          }
+
+          [
+            elements.segmentCount,
+            elements.segmentLength,
+            elements.primaryColor,
+            elements.placementMode,
+            elements.deltaTheta,
+            elements.thetaBaseDeg,
+            elements.polarPreset,
+            elements.amplitude,
+            elements.harmonicK,
+            elements.polarPhase0Deg,
+            elements.phaseMotionEnabled,
+            elements.omegaPhase,
+            elements.localRotationEnabled,
+            elements.omegaLocal,
+            elements.mirroredLocal,
+            elements.globalRotationEnabled,
+            elements.omegaGlobal,
+            elements.connectorsEnabled,
+            elements.connectionKind,
+            elements.connectionOffsetK,
+            elements.connectionStride,
+            elements.connectorColor,
+            elements.trailEnabled,
+            elements.trailPersistence,
+          ].forEach((el) => {
+            if (!el) return;
+            el.addEventListener("input", onInput);
+            el.addEventListener("change", onInput);
+          });
+        }
+
+        function syncControlsFromState() {
+          const c = state.config;
+          if (elements.presetSelect) elements.presetSelect.value = c.activePresetId || "simple-circle";
+          if (elements.segmentCount) elements.segmentCount.value = String(clamp(Math.round(c.N), 1, UI_N_MAX));
+          if (elements.segmentLength) elements.segmentLength.value = String(c.L);
+          if (elements.primaryColor) elements.primaryColor.value = c.primaryColor;
+          if (elements.placementMode) elements.placementMode.value = c.placementMode;
+          if (elements.deltaTheta) elements.deltaTheta.value = String(c.deltaTheta);
+          if (elements.thetaBaseDeg) elements.thetaBaseDeg.value = String((c.thetaBase * 180) / Math.PI);
+          if (elements.polarPreset) elements.polarPreset.value = c.polarPreset;
+          if (elements.amplitude) elements.amplitude.value = String(c.amplitude);
+          if (elements.harmonicK) elements.harmonicK.value = String(clamp(Math.round(c.harmonicK), 1, 12));
+          if (elements.polarPhase0Deg) elements.polarPhase0Deg.value = String((c.polarPhase0 * 180) / Math.PI);
+          if (elements.phaseMotionEnabled) elements.phaseMotionEnabled.checked = c.phaseMotionEnabled;
+          if (elements.omegaPhase) elements.omegaPhase.value = String(c.omegaPhase);
+          if (elements.localRotationEnabled) elements.localRotationEnabled.checked = c.localRotationEnabled;
+          if (elements.omegaLocal) elements.omegaLocal.value = String(c.omegaLocal);
+          if (elements.mirroredLocal) elements.mirroredLocal.checked = c.mirroredLocal;
+          if (elements.globalRotationEnabled) elements.globalRotationEnabled.checked = c.globalRotationEnabled;
+          if (elements.omegaGlobal) elements.omegaGlobal.value = String(c.omegaGlobal);
+          if (elements.connectorsEnabled) elements.connectorsEnabled.checked = c.connectorsEnabled;
+          if (elements.connectionKind) elements.connectionKind.value = c.connectionKind;
+          if (elements.connectionOffsetK) elements.connectionOffsetK.value = String(c.connectionOffsetK);
+          if (elements.connectionStride) elements.connectionStride.value = String(c.connectionStride);
+          if (elements.connectorColor) elements.connectorColor.value = c.connectorColor;
+          if (elements.trailEnabled) elements.trailEnabled.checked = c.trailEnabled;
+          if (elements.trailPersistence) elements.trailPersistence.value = String(c.trailPersistence);
+          updateDeltaThetaVisibility();
+        }
+
+        function updateDeltaThetaVisibility() {
+          if (!elements.deltaThetaWrap || !elements.placementMode) return;
+          const fixed = elements.placementMode.value === "fixedStep";
+          elements.deltaThetaWrap.style.opacity = fixed ? "1" : "0.45";
+          if (elements.deltaTheta) {
+            elements.deltaTheta.disabled = !fixed;
+          }
+        }
+
+        function readControlsIntoState() {
+          const c = state.config;
+          c.N = clamp(Math.round(Number(elements.segmentCount && elements.segmentCount.value)), 1, Math.min(UI_N_MAX, INTERNAL_N_MAX));
+          c.L = Number(elements.segmentLength && elements.segmentLength.value);
+          c.primaryColor = (elements.primaryColor && elements.primaryColor.value) || "#5f8fe8";
+          c.placementMode = (elements.placementMode && elements.placementMode.value) || "fullCircle";
+          c.deltaTheta = Math.max(0.0001, Number(elements.deltaTheta && elements.deltaTheta.value));
+          c.thetaBase = ((Number(elements.thetaBaseDeg && elements.thetaBaseDeg.value) || 0) * Math.PI) / 180;
+          c.polarPreset = (elements.polarPreset && elements.polarPreset.value) || "circle";
+          c.amplitude = Number(elements.amplitude && elements.amplitude.value);
+          c.harmonicK = clamp(Math.round(Number(elements.harmonicK && elements.harmonicK.value)), 1, 12);
+          c.polarPhase0 = ((Number(elements.polarPhase0Deg && elements.polarPhase0Deg.value) || 0) * Math.PI) / 180;
+          c.phaseMotionEnabled = Boolean(elements.phaseMotionEnabled && elements.phaseMotionEnabled.checked);
+          c.omegaPhase = Number(elements.omegaPhase && elements.omegaPhase.value);
+          c.localRotationEnabled = Boolean(elements.localRotationEnabled && elements.localRotationEnabled.checked);
+          c.omegaLocal = Number(elements.omegaLocal && elements.omegaLocal.value);
+          c.mirroredLocal = Boolean(elements.mirroredLocal && elements.mirroredLocal.checked);
+          c.globalRotationEnabled = Boolean(elements.globalRotationEnabled && elements.globalRotationEnabled.checked);
+          c.omegaGlobal = Number(elements.omegaGlobal && elements.omegaGlobal.value);
+          c.connectorsEnabled = Boolean(elements.connectorsEnabled && elements.connectorsEnabled.checked);
+          c.connectionKind = (elements.connectionKind && elements.connectionKind.value) || "AA";
+          c.connectionOffsetK = Math.round(Number(elements.connectionOffsetK && elements.connectionOffsetK.value));
+          c.connectionStride = clamp(Number(elements.connectionStride && elements.connectionStride.value), 1, 2);
+          c.connectorColor = (elements.connectorColor && elements.connectorColor.value) || "#c97fe0";
+          c.trailEnabled = Boolean(elements.trailEnabled && elements.trailEnabled.checked);
+          c.trailPersistence = clamp(Number(elements.trailPersistence && elements.trailPersistence.value), 0, 1);
+          c.activePresetId = (elements.presetSelect && elements.presetSelect.value) || c.activePresetId;
+        }
+
+        function needsAnimationLoop() {
+          const c = state.config;
+          const motion =
+            (c.phaseMotionEnabled && c.omegaPhase !== 0) ||
+            (c.localRotationEnabled && c.omegaLocal !== 0) ||
+            (c.globalRotationEnabled && c.omegaGlobal !== 0);
+          return motion || c.trailEnabled;
+        }
+
+        function refreshStatic() {
+          readControlsIntoState();
+          updateDeltaThetaVisibility();
+          updateDerivedState();
+          updateExplanation();
+          if (needsAnimationLoop()) {
+            startLoop();
+          } else {
+            stopLoop();
+            renderFrame(state.animTime);
+          }
+        }
+
+        function startLoop() {
+          if (rafId) return;
+          lastFrameTime = performance.now();
+          const tick = (now) => {
+            rafId = 0;
+            const dt = Math.min(0.05, Math.max(0, (now - lastFrameTime) / 1000));
+            lastFrameTime = now;
+            state.animTime += dt;
+            readControlsIntoState();
+            updateDerivedState();
+            renderFrame(state.animTime);
+            updateExplanation();
+            if (!needsAnimationLoop()) {
+              return;
+            }
+            rafId = window.requestAnimationFrame(tick);
+          };
+          rafId = window.requestAnimationFrame(tick);
+        }
+
+        function stopLoop() {
+          if (rafId) {
+            window.cancelAnimationFrame(rafId);
+            rafId = 0;
+          }
+        }
+
+        function updateDerivedState() {
+          state.derived = buildDerived(state.config, state.animTime);
+        }
+
+        function sampleTheta(i, config) {
+          if (config.placementMode === "fullCircle") {
+            if (config.N <= 0) return config.thetaBase;
+            return config.thetaBase + (2 * Math.PI * i) / config.N;
+          }
+          return config.thetaBase + i * config.deltaTheta;
+        }
+
+        function evalPolar(theta, config, polarPhase) {
+          const a = config.amplitude;
+          const k = config.harmonicK;
+          const t = theta;
+          switch (config.polarPreset) {
+            case "circle":
+              return { rRaw: a, theta: t };
+            case "roseCos":
+              return { rRaw: a * Math.cos(k * (t + polarPhase)), theta: t };
+            case "roseSin":
+              return { rRaw: a * Math.sin(k * (t + polarPhase)), theta: t };
+            case "cardioid":
+              return { rRaw: a * (1 + Math.cos(t + polarPhase)), theta: t };
+            default:
+              return { rRaw: a, theta: t };
+          }
+        }
+
+        function applyNegativeRadiusRule(rRaw, theta) {
+          if (rRaw >= 0) {
+            return { rEff: rRaw, thetaPlacement: theta };
+          }
+          return { rEff: -rRaw, thetaPlacement: theta + Math.PI };
+        }
+
+        function rotateVec(x, y, angle) {
+          const c = Math.cos(angle);
+          const s = Math.sin(angle);
+          return { x: x * c - y * s, y: x * s + y * c };
+        }
+
+        function worldTransformPoint(x, y, globalAngle) {
+          return rotateVec(x, y, globalAngle);
+        }
+
+        function buildSegments(config, t) {
+          const polarPhase =
+            config.polarPhase0 + (config.phaseMotionEnabled ? config.omegaPhase * t : 0);
+          const globalAngle = config.globalRotationEnabled ? config.omegaGlobal * t : 0;
+
+          const count = clamp(Math.round(config.N), 1, INTERNAL_N_MAX);
+          const segments = [];
+
+          for (let i = 0; i < count; i += 1) {
+            const thetaSample = sampleTheta(i, { ...config, N: count });
+            const { rRaw, theta: thetaEval } = evalPolar(thetaSample, config, polarPhase);
+            const { rEff, thetaPlacement } = applyNegativeRadiusRule(rRaw, thetaEval);
+
+            const mx = rEff * Math.cos(thetaPlacement);
+            const my = rEff * Math.sin(thetaPlacement);
+
+            const baseDirX = -Math.sin(thetaPlacement);
+            const baseDirY = Math.cos(thetaPlacement);
+
+            const mSign = config.mirroredLocal ? (i % 2 === 0 ? 1 : -1) : 1;
+            const localAngle = config.localRotationEnabled ? mSign * config.omegaLocal * t : 0;
+            const cosL = Math.cos(localAngle);
+            const sinL = Math.sin(localAngle);
+            const dx = baseDirX * cosL - baseDirY * sinL;
+            const dy = baseDirX * sinL + baseDirY * cosL;
+
+            const half = config.L * 0.5;
+            const ax = mx - dx * half;
+            const ay = my - dy * half;
+            const bx = mx + dx * half;
+            const by = my + dy * half;
+
+            const aw = worldTransformPoint(ax, ay, globalAngle);
+            const bw = worldTransformPoint(bx, by, globalAngle);
+            const mw = worldTransformPoint(mx, my, globalAngle);
+
+            segments.push({
+              index: i,
+              thetaSample,
+              rRaw,
+              rEff,
+              thetaPlacement,
+              midpoint: { x: mx, y: my },
+              localAngle,
+              direction: { x: dx, y: dy },
+              A: { x: ax, y: ay },
+              B: { x: bx, y: by },
+              Aw: { x: aw.x, y: aw.y },
+              Bw: { x: bw.x, y: bw.y },
+              Mw: { x: mw.x, y: mw.y },
+            });
+          }
+
+          return {
+            globalAngle,
+            polarPhase,
+            segments,
+          };
+        }
+
+        function endpointWorld(seg, which) {
+          return which === "A" ? seg.Aw : seg.Bw;
+        }
+
+        function connectionEndpoints(kind) {
+          if (kind === "AA") return { src: "A", tgt: "A" };
+          if (kind === "BB") return { src: "B", tgt: "B" };
+          if (kind === "AB") return { src: "A", tgt: "B" };
+          if (kind === "A_center") return { src: "A", tgt: null };
+          if (kind === "B_center") return { src: "B", tgt: null };
+          return { src: "A", tgt: "A" };
+        }
+
+        function buildConnections(segments, config) {
+          const list = [];
+          if (!config.connectorsEnabled) return list;
+
+          const n = segments.length;
+          const stride = clamp(config.connectionStride, 1, 2);
+          const k = config.connectionOffsetK | 0;
+          const kind = config.connectionKind;
+          const ends = connectionEndpoints(kind);
+
+          const centerConnections = ends.tgt === null;
+          const segToSeg = !centerConnections;
+
+          if (segToSeg && n < 2) {
+            return list;
+          }
+
+          for (let i = 0; i < n; i += 1) {
+            if (i % stride !== 0) continue;
+
+            const s0 = segments[i];
+            const p0 = endpointWorld(s0, ends.src);
+
+            if (centerConnections) {
+              list.push({ x1: p0.x, y1: p0.y, x2: 0, y2: 0 });
+              continue;
+            }
+
+            const jNorm = ((i + k) % n + n) % n;
+            const s1 = segments[jNorm];
+            const p1 = endpointWorld(s1, ends.tgt);
+
+            list.push({ x1: p0.x, y1: p0.y, x2: p1.x, y2: p1.y });
+          }
+
+          return list;
+        }
+
+        function buildDerived(config, t) {
+          const frame = buildSegments(config, t);
+          const connections = buildConnections(frame.segments, config);
+          return {
+            globalAngle: frame.globalAngle,
+            polarPhase: frame.polarPhase,
+            segments: frame.segments,
+            connections,
+          };
+        }
+
+        function computeBounds(derived) {
+          let minX = Infinity;
+          let minY = Infinity;
+          let maxX = -Infinity;
+          let maxY = -Infinity;
+
+          function addPoint(x, y) {
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+          }
+
+          derived.segments.forEach((s) => {
+            addPoint(s.Aw.x, s.Aw.y);
+            addPoint(s.Bw.x, s.Bw.y);
+          });
+
+          derived.connections.forEach((c) => {
+            addPoint(c.x1, c.y1);
+            addPoint(c.x2, c.y2);
+          });
+
+          if (!Number.isFinite(minX)) {
+            return { minX: -1, minY: -1, maxX: 1, maxY: 1 };
+          }
+
+          const pad = 0.12;
+          minX -= pad;
+          minY -= pad;
+          maxX += pad;
+          maxY += pad;
+          return { minX, minY, maxX, maxY };
+        }
+
+        function ensureCanvases() {
+          if (!elements.vizMount) return;
+          let main = document.getElementById("polar-main-canvas");
+          if (!main) {
+            main = document.createElement("canvas");
+            main.id = "polar-main-canvas";
+            elements.vizMount.appendChild(main);
+          }
+          elements.mainCanvas = main;
+
+          if (!trailState.canvas) {
+            trailState.canvas = document.createElement("canvas");
+            trailState.ctx = trailState.canvas.getContext("2d");
+          }
+        }
+
+        function resizeCanvas() {
+          ensureCanvases();
+          const mount = elements.vizMount;
+          const main = elements.mainCanvas;
+          const trail = trailState.canvas;
+          if (!mount || !main || !trail) return;
+
+          const rect = mount.getBoundingClientRect();
+          const cssW = Math.max(1, Math.floor(rect.width));
+          const cssH = Math.max(1, Math.floor(rect.height));
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+          main.width = Math.floor(cssW * dpr);
+          main.height = Math.floor(cssH * dpr);
+          main.style.width = `${cssW}px`;
+          main.style.height = `${cssH}px`;
+
+          if (trail.width !== main.width || trail.height !== main.height) {
+            trail.width = main.width;
+            trail.height = main.height;
+            if (trailState.ctx) {
+              trailState.ctx.setTransform(1, 0, 0, 1, 0, 0);
+              trailState.ctx.clearRect(0, 0, trail.width, trail.height);
+            }
+          }
+
+          trailState.width = main.width;
+          trailState.height = main.height;
+          trailState.dpr = dpr;
+        }
+
+        function clearTrailSurface() {
+          if (!trailState.ctx || !trailState.canvas) return;
+          trailState.ctx.setTransform(1, 0, 0, 1, 0, 0);
+          trailState.ctx.clearRect(0, 0, trailState.canvas.width, trailState.canvas.height);
+          trailState.ctx.setTransform(trailState.dpr, 0, 0, trailState.dpr, 0, 0);
+        }
+
+        function worldToScreen(x, y, bounds, cssW, cssH) {
+          const bw = bounds.maxX - bounds.minX;
+          const bh = bounds.maxY - bounds.minY;
+          const span = Math.max(bw, bh, 1e-6);
+          const scale = 0.92 * Math.min(cssW, cssH) / span;
+          const cx = (bounds.minX + bounds.maxX) * 0.5;
+          const cy = (bounds.minY + bounds.maxY) * 0.5;
+          const sx = cssW * 0.5 + (x - cx) * scale;
+          const sy = cssH * 0.5 - (y - cy) * scale;
+          return { sx, sy, scale };
+        }
+
+        function renderFrame(t) {
+          readControlsIntoState();
+          updateDerivedState();
+          const derived = state.derived;
+          if (!derived || !elements.mainCanvas) return;
+
+          const main = elements.mainCanvas;
+          const ctx = main.getContext("2d");
+          const cssW = main.clientWidth;
+          const cssH = main.clientHeight;
+          const bounds = computeBounds(derived);
+          const c = state.config;
+
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, main.width, main.height);
+
+          ctx.setTransform(trailState.dpr, 0, 0, trailState.dpr, 0, 0);
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, cssW, cssH);
+
+          if (c.trailEnabled && trailState.canvas && trailState.ctx) {
+            const fade = 0.04 + (1 - c.trailPersistence) * 0.32;
+            trailState.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            trailState.ctx.fillStyle = `rgba(0,0,0,${fade})`;
+            trailState.ctx.fillRect(0, 0, trailState.canvas.width, trailState.canvas.height);
+            trailState.ctx.setTransform(trailState.dpr, 0, 0, trailState.dpr, 0, 0);
+
+            trailState.ctx.lineCap = "round";
+            trailState.ctx.lineJoin = "round";
+            trailState.ctx.globalAlpha = 0.14 + c.trailPersistence * 0.18;
+            trailState.ctx.strokeStyle = c.primaryColor;
+
+            derived.segments.forEach((s) => {
+              const a = worldToScreen(s.Aw.x, s.Aw.y, bounds, cssW, cssH);
+              const b = worldToScreen(s.Bw.x, s.Bw.y, bounds, cssW, cssH);
+              trailState.ctx.beginPath();
+              trailState.ctx.moveTo(a.sx, a.sy);
+              trailState.ctx.lineTo(b.sx, b.sy);
+              trailState.ctx.stroke();
+            });
+
+            if (c.connectorsEnabled) {
+              trailState.ctx.globalAlpha = 0.1 + c.trailPersistence * 0.12;
+              trailState.ctx.strokeStyle = c.connectorColor;
+              derived.connections.forEach((ln) => {
+                const p1 = worldToScreen(ln.x1, ln.y1, bounds, cssW, cssH);
+                const p2 = worldToScreen(ln.x2, ln.y2, bounds, cssW, cssH);
+                trailState.ctx.beginPath();
+                trailState.ctx.moveTo(p1.sx, p1.sy);
+                trailState.ctx.lineTo(p2.sx, p2.sy);
+                trailState.ctx.stroke();
+              });
+            }
+            trailState.ctx.globalAlpha = 1;
+
+            ctx.drawImage(
+              trailState.canvas,
+              0,
+              0,
+              trailState.canvas.width,
+              trailState.canvas.height,
+              0,
+              0,
+              cssW,
+              cssH
+            );
+          }
+
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          const o = worldToScreen(0, 0, bounds, cssW, cssH);
+          ctx.strokeStyle = "rgba(255,255,255,0.2)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(o.sx, o.sy, 3, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.strokeStyle = c.primaryColor;
+          ctx.lineWidth = 1.6;
+          derived.segments.forEach((s) => {
+            const a = worldToScreen(s.Aw.x, s.Aw.y, bounds, cssW, cssH);
+            const b = worldToScreen(s.Bw.x, s.Bw.y, bounds, cssW, cssH);
+            ctx.beginPath();
+            ctx.moveTo(a.sx, a.sy);
+            ctx.lineTo(b.sx, b.sy);
+            ctx.stroke();
+          });
+
+          if (c.connectorsEnabled) {
+            ctx.strokeStyle = c.connectorColor;
+            ctx.lineWidth = 1.1;
+            ctx.globalAlpha = 0.95;
+            derived.connections.forEach((ln) => {
+              const p1 = worldToScreen(ln.x1, ln.y1, bounds, cssW, cssH);
+              const p2 = worldToScreen(ln.x2, ln.y2, bounds, cssW, cssH);
+              ctx.beginPath();
+              ctx.moveTo(p1.sx, p1.sy);
+              ctx.lineTo(p2.sx, p2.sy);
+              ctx.stroke();
+            });
+            ctx.globalAlpha = 1;
+          }
+
+          if (!needsAnimationLoop()) {
+            updateExplanation();
+          }
+        }
+
+        function updateExplanation() {
+          if (!elements.explanation) return;
+          const c = state.config;
+          const d = state.derived;
+          const phaseDeg = d ? ((d.polarPhase * 180) / Math.PI).toFixed(1) : "0.0";
+          const gDeg = d ? ((d.globalAngle * 180) / Math.PI).toFixed(1) : "0.0";
+
+          const placementLabel =
+            c.placementMode === "fullCircle"
+              ? `θ_i = θ_base + 2π·i/${c.N}`
+              : `θ_i = θ_base + i·Δθ`;
+
+          const polarLabel =
+            c.polarPreset === "circle"
+              ? "r = a"
+              : c.polarPreset === "roseCos"
+                ? "r = a·cos(k(θ+φ))"
+                : c.polarPreset === "roseSin"
+                  ? "r = a·sin(k(θ+φ))"
+                  : "r = a(1+cos(θ+φ))";
+
+          elements.explanation.innerHTML = `
+            <strong>What you are seeing:</strong>
+            Midpoints sit on ${polarLabel} with ${placementLabel}.
+            Each segment is tangent-oriented (base direction θ+π/2), then spun locally
+            ${c.localRotationEnabled ? `(ω_local, mirrored ${c.mirroredLocal ? "on" : "off"})` : "(off)"},
+            then the whole figure rotates globally ${c.globalRotationEnabled ? `(Ω=${gDeg}°)` : "(off)"}.
+            Polar phase φ is ${c.phaseMotionEnabled ? `${phaseDeg}°` : "fixed (motion off)"}.
+            Connectors use modular indexing: target index (i+k) mod N with stride ${c.connectionStride}.
+            Negative radii use |r| with θ+π for placement.
+          `;
+        }
+
+        window.mathExplorer = {
+          getState: () => structuredCloneSafe(state),
+        };
+      }
+
+      function structuredCloneSafe(value) {
+        try {
+          return structuredClone(value);
+        } catch {
+          return JSON.parse(JSON.stringify(value));
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
