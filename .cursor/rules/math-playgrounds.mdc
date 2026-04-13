@@ -72,6 +72,21 @@ These should be replaced or adapted freely:
 - math logic
 - project-specific UI details
 
+## Decision-making for underspecified UI details
+
+When the project spec allows multiple reasonable implementations, choose the simplest option that:
+- best supports the main learning outcome
+- minimizes UI complexity
+- reduces implementation risk
+- fits the bounded v1 scope
+
+Do not leave core interaction decisions ambiguous in the implementation plan when a simple default choice is clearly better.
+
+Examples:
+- Prefer a single bounded control over multiple free-form controls when both satisfy the learning goal.
+- Prefer beginner-friendly defaults that reduce visual overload.
+- Prefer explicit default visibility choices for optional features.
+
 ## Visualization Convention
 
 Use the standard visualization mount convention unless the project clearly needs a different one.

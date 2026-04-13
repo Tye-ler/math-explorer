@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Math Explorer Template</title>
+  <title>Trig Explorer</title>
   <style>
     :root {
       --ta-site-header-height: 3.25rem;
@@ -14,6 +14,12 @@
       --space-3: 1.25rem;
       --space-4: 1.75rem;
       --accent: #86e1ff;
+      --viz-sin: #5f8fe8;
+      --viz-cos: #7f69ba;
+      --viz-tan: #e8a43a;
+      --viz-cot: #5fd4a5;
+      --viz-sec: #e07070;
+      --viz-csc: #c97fe0;
     }
 
     :root,
@@ -60,6 +66,12 @@
       --viz-secondary: #8c5bd6;
       --viz-highlight: #111111;
       --viz-point: #2f6fed;
+      --viz-sin: #2f6fed;
+      --viz-cos: #8c5bd6;
+      --viz-tan: #c47a12;
+      --viz-cot: #2a9d6d;
+      --viz-sec: #c23b3b;
+      --viz-csc: #9b4dca;
     }
 
     * { box-sizing: border-box; }
@@ -196,7 +208,7 @@
 
     .content-grid {
       display: grid;
-      grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
       gap: var(--space-4);
       align-items: start;
     }
@@ -254,8 +266,19 @@
 
     .button-row {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: var(--space-2);
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.35rem;
+    }
+
+    .preset-grid button {
+      padding: 4px 6px;
+      font-size: 11px;
     }
 
     .control input:not([type="checkbox"]):not([type="radio"]),
@@ -376,8 +399,82 @@
     .viz-mount {
       width: 100%;
       min-height: 240px;
+      display: block;
+    }
+
+    .trig-viz-stack {
       display: grid;
-      place-items: center;
+      gap: var(--space-2);
+      width: 100%;
+    }
+
+    .trig-canvas-wrap {
+      width: 100%;
+      position: relative;
+    }
+
+    .trig-canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: middle;
+      border: 1px solid var(--viz-frame);
+      background: var(--viz-bg);
+    }
+
+    .trig-readout {
+      border: 1px solid var(--viz-frame);
+      padding: var(--space-2);
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--viz-text);
+      overflow-x: auto;
+    }
+
+    .trig-readout table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .trig-readout th,
+    .trig-readout td {
+      text-align: left;
+      padding: 0.15rem 0.35rem 0.15rem 0;
+      vertical-align: top;
+    }
+
+    .trig-readout th {
+      color: var(--muted);
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    .trig-readout td.fn-sin { color: var(--viz-sin); }
+    .trig-readout td.fn-cos { color: var(--viz-cos); }
+    .trig-readout td.fn-tan { color: var(--viz-tan); }
+    .trig-readout td.fn-cot { color: var(--viz-cot); }
+    .trig-readout td.fn-sec { color: var(--viz-sec); }
+    .trig-readout td.fn-csc { color: var(--viz-csc); }
+
+    .choice-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .choice-row input {
+      margin: 0;
+    }
+
+    .control-group-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+      margin: 0.25rem 0 0;
     }
 
     .explanation {
@@ -420,6 +517,10 @@
       .visualization-box {
         min-height: 220px;
       }
+
+      .button-row {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -442,9 +543,10 @@
       </div>
 
       <section class="hero" aria-labelledby="project-title">
-        <h1 id="project-title">Math Explorer Template</h1>
+        <h1 id="project-title">Trig Explorer</h1>
         <p>
-          Reusable single-file playground scaffold with a stable structure, token-based theming, and room for project-specific math.
+          Move the angle on the unit circle and watch the six trig functions trace over multiple revolutions.
+          Sine and cosine come straight from the coordinates; the others are the corresponding ratios—and they repeat as θ grows.
         </p>
       </section>
 
@@ -454,21 +556,99 @@
           <div class="surface">
             <div class="control-stack">
               <div class="control">
-                <label for="primary-value">primary value</label>
-                <input id="primary-value" type="range" min="0" max="10" value="5" />
+                <label id="angle-label" for="angle-slider">angle (rad)</label>
+                <input id="angle-slider" type="range" min="0" max="12.566" value="0" step="0.001" />
               </div>
 
               <div class="control">
-                <label for="secondary-value">secondary value</label>
-                <div class="stepper" data-stepper>
-                  <button type="button" class="stepper-button" data-step="-1" aria-label="decrease secondary value">-</button>
-                  <input id="secondary-value" class="control-input" type="number" min="0" max="100" step="1" value="12" inputmode="numeric" />
-                  <button type="button" class="stepper-button" data-step="1" aria-label="increase secondary value">+</button>
-                </div>
+                <span class="control-group-label">units</span>
+                <label class="choice-row">
+                  <input type="radio" name="angle-units" id="unit-rad" value="rad" checked />
+                  <span>radians</span>
+                </label>
+                <label class="choice-row">
+                  <input type="radio" name="angle-units" id="unit-deg" value="deg" />
+                  <span>degrees</span>
+                </label>
               </div>
 
               <div class="button-row">
+                <button type="button" id="play-toggle" aria-pressed="false">play</button>
                 <button type="button" id="reset-button">reset</button>
+              </div>
+
+              <div class="control">
+                <label id="speed-label" for="speed-slider">speed (rad/s)</label>
+                <input id="speed-slider" type="range" min="0.2" max="3" value="1.2" step="0.05" />
+              </div>
+
+              <div class="control">
+                <label for="revolutions-slider">graph revolutions (1–4)</label>
+                <input id="revolutions-slider" type="range" min="1" max="4" value="2" step="1" />
+              </div>
+
+              <p class="control-group-label">presets</p>
+              <div class="preset-grid" role="group" aria-label="Angle presets">
+                <button type="button" class="preset-btn" data-theta="0">0</button>
+                <button type="button" class="preset-btn" data-theta="pi/6">π/6</button>
+                <button type="button" class="preset-btn" data-theta="pi/4">π/4</button>
+                <button type="button" class="preset-btn" data-theta="pi/3">π/3</button>
+                <button type="button" class="preset-btn" data-theta="pi/2">π/2</button>
+                <button type="button" class="preset-btn" data-theta="pi">π</button>
+                <button type="button" class="preset-btn" data-theta="3pi/2">3π/2</button>
+                <button type="button" class="preset-btn" data-theta="2pi">2π</button>
+              </div>
+
+              <p class="control-group-label">show curves</p>
+              <div class="control">
+                <label class="choice-row">
+                  <input type="checkbox" id="vis-sin" checked />
+                  <span>sin</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="vis-cos" checked />
+                  <span>cos</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="vis-tan" />
+                  <span>tan</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="vis-cot" />
+                  <span>cot</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="vis-sec" />
+                  <span>sec</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="vis-csc" />
+                  <span>csc</span>
+                </label>
+              </div>
+
+              <p class="control-group-label">guides</p>
+              <div class="control">
+                <label class="choice-row">
+                  <input type="checkbox" id="guide-circle-axes" checked />
+                  <span>circle axes</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="guide-angle-arc" checked />
+                  <span>angle arc</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="guide-projections" checked />
+                  <span>sin / cos projections</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="guide-graph-grid" checked />
+                  <span>graph grid</span>
+                </label>
+                <label class="choice-row">
+                  <input type="checkbox" id="guide-period-markers" checked />
+                  <span>period markers (2π)</span>
+                </label>
               </div>
             </div>
           </div>
@@ -478,113 +658,32 @@
           <h2 id="visualization-title">visualization</h2>
           <div class="surface">
             <div class="visualization-box">
-              <div id="viz-mount" class="viz-mount" aria-label="interactive mathematical visualization"></div>
+              <div id="viz-mount" class="viz-mount" aria-label="interactive mathematical visualization">
+                <div class="trig-viz-stack">
+                  <div class="trig-canvas-wrap">
+                    <canvas id="circle-canvas" width="400" height="400" aria-label="Unit circle"></canvas>
+                  </div>
+                  <div class="trig-canvas-wrap">
+                    <canvas id="graph-canvas" width="800" height="280" aria-label="Trigonometric functions versus angle"></canvas>
+                  </div>
+                  <div id="trig-readout" class="trig-readout" aria-live="polite"></div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
-
-        <!-- sample visualization reference: keep as source-only reference for future playgrounds
-        <div class="viz-demo">
-          <svg viewBox="0 0 520 240" aria-label="theme-aware sample visualization">
-            <rect x="0" y="0" width="520" height="240" fill="var(--viz-bg)" />
-
-            <g stroke="var(--viz-grid)" stroke-width="1">
-              <line x1="40" y1="30" x2="40" y2="200" />
-              <line x1="120" y1="30" x2="120" y2="200" />
-              <line x1="200" y1="30" x2="200" y2="200" />
-              <line x1="280" y1="30" x2="280" y2="200" />
-              <line x1="360" y1="30" x2="360" y2="200" />
-              <line x1="440" y1="30" x2="440" y2="200" />
-              <line x1="40" y1="30" x2="480" y2="30" />
-              <line x1="40" y1="72" x2="480" y2="72" />
-              <line x1="40" y1="114" x2="480" y2="114" />
-              <line x1="40" y1="156" x2="480" y2="156" />
-              <line x1="40" y1="198" x2="480" y2="198" />
-            </g>
-
-            <g stroke="var(--viz-axis)" stroke-width="1.5">
-              <line x1="40" y1="198" x2="480" y2="198" />
-              <line x1="40" y1="198" x2="40" y2="30" />
-            </g>
-
-            <polyline
-              fill="none"
-              stroke="var(--viz-primary)"
-              stroke-width="2"
-              points="40,182 120,156 200,126 280,96 360,78 440,58"
-            />
-
-            <polyline
-              fill="none"
-              stroke="var(--viz-secondary)"
-              stroke-width="2"
-              stroke-dasharray="5 4"
-              points="40,64 120,84 200,102 280,122 360,144 440,164"
-            />
-
-            <circle cx="280" cy="96" r="4" fill="var(--viz-point)" />
-
-            <g fill="var(--viz-text)" font-family="inherit" font-size="11">
-              <text x="484" y="202">x</text>
-              <text x="30" y="24">y</text>
-              <text x="290" y="90">f(x)</text>
-              <text x="292" y="136">g(x)</text>
-            </g>
-          </svg>
-        </div>
-        -->
       </div>
 
       <section class="section" aria-labelledby="explanation-title">
         <h2 id="explanation-title">explanation</h2>
         <div class="surface">
           <p class="explanation">
-            <strong>Template role:</strong> explain what the current state means, what the visualization shows, and any mathematical caveats or interpretation notes.
+            <strong>How to read this:</strong> the moving point is (cos θ, sin θ). Projections to the axes show cosine and sine as lengths (with sign from the quadrant).
+            The graph uses the same θ on the horizontal axis from 0 to 2π times the revolution count. Tangent, cotangent, secant, and cosecant blow up where their defining ratio divides by zero; the graph leaves gaps instead of connecting across those jumps.
+            Asymptote lines on the graph appear only while a related function is visible (tan or sec for cos θ = 0; cot or csc for sin θ = 0). Dragging the angle slider pauses animation.
           </p>
         </div>
       </section>
-
-      <!-- optional control patterns: keep as source-only reference for future playgrounds
-      <div class="control">
-        <label for="sample-mode">mode</label>
-        <select id="sample-mode">
-          <option>default</option>
-          <option>compare</option>
-          <option>explore</option>
-        </select>
-      </div>
-
-      <div class="control">
-        <label>
-          <input type="checkbox" checked />
-          show guides
-        </label>
-      </div>
-
-      <fieldset class="control-group">
-        <legend>view</legend>
-        <label class="choice-row">
-          <input type="radio" name="sample-view" value="cartesian" checked />
-          <span>cartesian</span>
-        </label>
-        <label class="choice-row">
-          <input type="radio" name="sample-view" value="polar" />
-          <span>polar</span>
-        </label>
-      </fieldset>
-
-      <div class="control">
-        <label for="sample-notes">notes</label>
-        <textarea id="sample-notes" rows="4">example input, expression notes, or set contents</textarea>
-      </div>
-
-      <div class="button-row">
-        <button type="button">preset a</button>
-        <button type="button">preset b</button>
-        <button type="button">reset</button>
-        <button type="button" disabled>disabled</button>
-      </div>
-      -->
     </div>
   </main>
 
@@ -595,9 +694,20 @@
       const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       let themeMode = "auto";
 
+      const TAU = 2 * Math.PI;
+      const PRESET_MAP = {
+        "0": 0,
+        "pi/6": Math.PI / 6,
+        "pi/4": Math.PI / 4,
+        "pi/3": Math.PI / 3,
+        "pi/2": Math.PI / 2,
+        "pi": Math.PI,
+        "3pi/2": (3 * Math.PI) / 2,
+        "2pi": TAU,
+      };
+
       initializeTheme();
       initializeHeaderLinks();
-      initializeSteppers();
       initializePlayground();
 
       function initializeTheme() {
@@ -654,32 +764,12 @@
         return mode;
       }
 
-      function initializeSteppers() {
-        document.querySelectorAll("[data-stepper]").forEach((stepper) => {
-          const input = stepper.querySelector('input[type="number"]');
-          if (!input) return;
-
-          stepper.querySelectorAll("[data-step]").forEach((button) => {
-            button.addEventListener("click", () => {
-              const amount = Number(button.getAttribute("data-step") || 0);
-              if (!amount) return;
-
-              const step = Number(input.step) || 1;
-              const min = input.min === "" ? -Infinity : Number(input.min);
-              const max = input.max === "" ? Infinity : Number(input.max);
-              const current = input.value === "" ? 0 : Number(input.value);
-              const next = clamp(current + amount * step, min, max);
-
-              input.value = String(next);
-              input.dispatchEvent(new Event("input", { bubbles: true }));
-              input.dispatchEvent(new Event("change", { bubbles: true }));
-            });
-          });
-        });
-      }
-
       function clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
+      }
+
+      function positiveMod(theta, m) {
+        return ((theta % m) + m) % m;
       }
 
       function initializeHeaderLinks() {
@@ -722,57 +812,117 @@
         return pathname.replace(/\/index\.html$/i, "/");
       }
 
-      // ---------------------------------------------------
-      // Playground-specific lifecycle
-      // Replace placeholder state, math, and rendering logic
-      // while preserving the general control -> state ->
-      // derived state -> render -> explanation flow.
-      // ---------------------------------------------------
       function initializePlayground() {
         const defaults = {
-          primaryValue: 5,
-          secondaryValue: 12,
+          thetaRad: 0,
+          units: "rad",
+          playing: false,
+          speedRadPerSec: 1.2,
+          revolutions: 2,
+          vis: { sin: true, cos: true, tan: false, cot: false, sec: false, csc: false },
+          guides: {
+            circleAxes: true,
+            angleArc: true,
+            projections: true,
+            graphGrid: true,
+            periodMarkers: true,
+          },
         };
 
         let state = createInitialState();
         const elements = {};
+        let rafId = 0;
+        let lastFrameMs = 0;
+        let resizeObserver = null;
 
         cacheElements();
         bindControls();
         syncControlsFromState();
         updateDerivedState();
+        setupResize();
         render();
         updateExplanation();
 
-        function cacheElements() {
-          elements.primaryValue = document.getElementById("primary-value");
-          elements.secondaryValue = document.getElementById("secondary-value");
-          elements.resetButton = document.getElementById("reset-button");
-          elements.vizMount = document.getElementById("viz-mount");
-          elements.explanation = document.querySelector(".explanation");
-        }
-
         function createInitialState() {
           return {
-            primaryValue: defaults.primaryValue,
-            secondaryValue: defaults.secondaryValue,
+            thetaRad: defaults.thetaRad,
+            units: defaults.units,
+            playing: defaults.playing,
+            speedRadPerSec: defaults.speedRadPerSec,
+            revolutions: defaults.revolutions,
+            vis: { ...defaults.vis },
+            guides: { ...defaults.guides },
             derived: {},
           };
         }
 
+        function cacheElements() {
+          elements.vizMount = document.getElementById("viz-mount");
+          elements.circleCanvas = document.getElementById("circle-canvas");
+          elements.graphCanvas = document.getElementById("graph-canvas");
+          elements.readout = document.getElementById("trig-readout");
+          elements.explanation = document.querySelector(".explanation");
+          elements.angleSlider = document.getElementById("angle-slider");
+          elements.angleLabel = document.getElementById("angle-label");
+          elements.unitRad = document.getElementById("unit-rad");
+          elements.unitDeg = document.getElementById("unit-deg");
+          elements.playToggle = document.getElementById("play-toggle");
+          elements.resetButton = document.getElementById("reset-button");
+          elements.speedSlider = document.getElementById("speed-slider");
+          elements.speedLabel = document.getElementById("speed-label");
+          elements.revolutionsSlider = document.getElementById("revolutions-slider");
+          elements.presetButtons = document.querySelectorAll(".preset-btn");
+          elements.visSin = document.getElementById("vis-sin");
+          elements.visCos = document.getElementById("vis-cos");
+          elements.visTan = document.getElementById("vis-tan");
+          elements.visCot = document.getElementById("vis-cot");
+          elements.visSec = document.getElementById("vis-sec");
+          elements.visCsc = document.getElementById("vis-csc");
+          elements.guideCircleAxes = document.getElementById("guide-circle-axes");
+          elements.guideAngleArc = document.getElementById("guide-angle-arc");
+          elements.guideProjections = document.getElementById("guide-projections");
+          elements.guideGraphGrid = document.getElementById("guide-graph-grid");
+          elements.guidePeriodMarkers = document.getElementById("guide-period-markers");
+        }
+
+        function thetaMax() {
+          return state.revolutions * TAU;
+        }
+
         function bindControls() {
-          if (elements.primaryValue) {
-            elements.primaryValue.addEventListener("input", (event) => {
-              state.primaryValue = Number(event.target.value);
+          if (elements.angleSlider) {
+            elements.angleSlider.addEventListener("pointerdown", pauseFromScrub);
+            elements.angleSlider.addEventListener("input", (event) => {
+              state.thetaRad = clamp(Number(event.target.value), 0, thetaMax());
+              updateDerivedState();
+              render();
+              updateReadoutOnly();
+            });
+          }
+
+          if (elements.unitRad) {
+            elements.unitRad.addEventListener("change", () => {
+              if (elements.unitRad.checked) state.units = "rad";
+              refresh();
+            });
+          }
+          if (elements.unitDeg) {
+            elements.unitDeg.addEventListener("change", () => {
+              if (elements.unitDeg.checked) state.units = "deg";
               refresh();
             });
           }
 
-          if (elements.secondaryValue) {
-            elements.secondaryValue.addEventListener("input", (event) => {
-              const value = Number(event.target.value);
-              state.secondaryValue = Number.isFinite(value) ? value : defaults.secondaryValue;
-              refresh();
+          if (elements.playToggle) {
+            elements.playToggle.addEventListener("click", () => {
+              state.playing = !state.playing;
+              syncPlayButton();
+              if (state.playing) {
+                lastFrameMs = performance.now();
+                startAnimationLoop();
+              } else {
+                stopAnimationLoop();
+              }
             });
           }
 
@@ -781,51 +931,609 @@
               resetState();
             });
           }
+
+          if (elements.speedSlider) {
+            elements.speedSlider.addEventListener("input", (event) => {
+              state.speedRadPerSec = Number(event.target.value);
+              syncSpeedLabel();
+            });
+          }
+
+          if (elements.revolutionsSlider) {
+            elements.revolutionsSlider.addEventListener("input", (event) => {
+              state.revolutions = clamp(Math.round(Number(event.target.value)), 1, 4);
+              state.thetaRad = clamp(state.thetaRad, 0, thetaMax());
+              refresh();
+            });
+          }
+
+          elements.presetButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const key = btn.getAttribute("data-theta");
+              if (!key || !(key in PRESET_MAP)) return;
+              let t = PRESET_MAP[key];
+              t = clamp(t, 0, thetaMax());
+              state.thetaRad = t;
+              pauseFromScrub();
+              refresh();
+            });
+          });
+
+          const visMap = [
+            ["visSin", "sin"],
+            ["visCos", "cos"],
+            ["visTan", "tan"],
+            ["visCot", "cot"],
+            ["visSec", "sec"],
+            ["visCsc", "csc"],
+          ];
+          visMap.forEach(([elKey, name]) => {
+            const el = elements[elKey];
+            if (!el) return;
+            el.addEventListener("change", () => {
+              state.vis[name] = el.checked;
+              refresh();
+            });
+          });
+
+          const guideMap = [
+            ["guideCircleAxes", "circleAxes"],
+            ["guideAngleArc", "angleArc"],
+            ["guideProjections", "projections"],
+            ["guideGraphGrid", "graphGrid"],
+            ["guidePeriodMarkers", "periodMarkers"],
+          ];
+          guideMap.forEach(([elKey, name]) => {
+            const el = elements[elKey];
+            if (!el) return;
+            el.addEventListener("change", () => {
+              state.guides[name] = el.checked;
+              refresh();
+            });
+          });
+
+          themeToggle?.addEventListener("click", () => {
+            requestAnimationFrame(() => render());
+          });
+        }
+
+        function pauseFromScrub() {
+          if (!state.playing) return;
+          state.playing = false;
+          syncPlayButton();
+          stopAnimationLoop();
+        }
+
+        function syncPlayButton() {
+          if (!elements.playToggle) return;
+          elements.playToggle.textContent = state.playing ? "pause" : "play";
+          elements.playToggle.setAttribute("aria-pressed", state.playing ? "true" : "false");
+        }
+
+        function startAnimationLoop() {
+          stopAnimationLoop();
+          const step = (now) => {
+            if (!state.playing) return;
+            const dt = Math.min(0.05, (now - lastFrameMs) / 1000);
+            lastFrameMs = now;
+            state.thetaRad += state.speedRadPerSec * dt;
+            const max = thetaMax();
+            while (state.thetaRad >= max) state.thetaRad -= max;
+            updateDerivedState();
+            render();
+            updateReadoutOnly();
+            syncAngleSlider();
+            rafId = requestAnimationFrame(step);
+          };
+          rafId = requestAnimationFrame(step);
+        }
+
+        function stopAnimationLoop() {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+
+        function setupResize() {
+          if (!elements.vizMount || typeof ResizeObserver === "undefined") {
+            window.addEventListener("resize", () => refresh());
+            return;
+          }
+          resizeObserver = new ResizeObserver(() => {
+            render();
+          });
+          resizeObserver.observe(elements.vizMount);
         }
 
         function syncControlsFromState() {
-          if (elements.primaryValue) {
-            elements.primaryValue.value = String(state.primaryValue);
+          if (elements.angleSlider) {
+            elements.angleSlider.min = "0";
+            elements.angleSlider.max = String(thetaMax());
+            elements.angleSlider.step = String(thetaMax() / 4000);
+            elements.angleSlider.value = String(state.thetaRad);
           }
+          if (elements.unitRad) elements.unitRad.checked = state.units === "rad";
+          if (elements.unitDeg) elements.unitDeg.checked = state.units === "deg";
+          syncPlayButton();
+          if (elements.speedSlider) elements.speedSlider.value = String(state.speedRadPerSec);
+          syncSpeedLabel();
+          if (elements.revolutionsSlider) elements.revolutionsSlider.value = String(state.revolutions);
+          elements.visSin && (elements.visSin.checked = state.vis.sin);
+          elements.visCos && (elements.visCos.checked = state.vis.cos);
+          elements.visTan && (elements.visTan.checked = state.vis.tan);
+          elements.visCot && (elements.visCot.checked = state.vis.cot);
+          elements.visSec && (elements.visSec.checked = state.vis.sec);
+          elements.visCsc && (elements.visCsc.checked = state.vis.csc);
+          elements.guideCircleAxes && (elements.guideCircleAxes.checked = state.guides.circleAxes);
+          elements.guideAngleArc && (elements.guideAngleArc.checked = state.guides.angleArc);
+          elements.guideProjections && (elements.guideProjections.checked = state.guides.projections);
+          elements.guideGraphGrid && (elements.guideGraphGrid.checked = state.guides.graphGrid);
+          elements.guidePeriodMarkers && (elements.guidePeriodMarkers.checked = state.guides.periodMarkers);
+          syncAngleLabel();
+        }
 
-          if (elements.secondaryValue) {
-            elements.secondaryValue.value = String(state.secondaryValue);
+        function syncAngleSlider() {
+          if (elements.angleSlider) elements.angleSlider.value = String(state.thetaRad);
+        }
+
+        function syncSpeedLabel() {
+          if (elements.speedLabel) {
+            elements.speedLabel.textContent = "speed (rad/s)";
           }
+        }
+
+        function syncAngleLabel() {
+          if (!elements.angleLabel) return;
+          elements.angleLabel.textContent = state.units === "deg" ? "angle (deg)" : "angle (rad)";
         }
 
         function updateDerivedState() {
-          state.derived = {
-            derivedPreview: state.primaryValue * 2,
-            normalizedSecondaryValue: Math.max(0, state.secondaryValue),
+          const th = state.thetaRad;
+          const c = Math.cos(th);
+          const s = Math.sin(th);
+          const eps = 1e-12;
+          const derived = {
+            cos: c,
+            sin: s,
+            tan: Math.abs(c) < eps ? null : s / c,
+            cot: Math.abs(s) < eps ? null : c / s,
+            sec: Math.abs(c) < eps ? null : 1 / c,
+            csc: Math.abs(s) < eps ? null : 1 / s,
+            revolutionIndex: Math.floor(th / TAU),
+            thetaWrapped: positiveMod(th, TAU),
           };
+          state.derived = derived;
+        }
+
+        function formatAngleForDisplay(thetaRad) {
+          if (state.units === "deg") {
+            const d = (thetaRad * 180) / Math.PI;
+            return `${d.toFixed(4)}°`;
+          }
+          return `${thetaRad.toFixed(6)} rad`;
+        }
+
+        function formatNumber(y) {
+          if (y === null || y === undefined) return "undefined";
+          if (!Number.isFinite(y)) return "undefined";
+          if (Math.abs(y) > 1e6) return y > 0 ? "+∞" : "-∞";
+          return y.toFixed(6);
+        }
+
+        function updateReadoutOnly() {
+          if (!elements.readout) return;
+          const d = state.derived;
+          const rows = [
+            ["θ", formatAngleForDisplay(state.thetaRad)],
+            ["rev (⌊θ/(2π)⌋)", String(d.revolutionIndex)],
+            ["sin θ", formatNumber(d.sin), "sin"],
+            ["cos θ", formatNumber(d.cos), "cos"],
+            ["tan θ", formatNumber(d.tan), "tan"],
+            ["cot θ", formatNumber(d.cot), "cot"],
+            ["sec θ", formatNumber(d.sec), "sec"],
+            ["csc θ", formatNumber(d.csc), "csc"],
+          ];
+          const body = rows
+            .map(([k, v, cls]) => {
+              const tdClass = cls ? ` class="fn-${cls}"` : "";
+              return `<tr><th scope="row">${k}</th><td${tdClass}>${v}</td></tr>`;
+            })
+            .join("");
+          elements.readout.innerHTML = `<table><tbody>${body}</tbody></table>`;
+        }
+
+        function getCssColor(varName) {
+          return getComputedStyle(rootElement).getPropertyValue(varName).trim() || "#888";
+        }
+
+        function drawCircle() {
+          const canvas = elements.circleCanvas;
+          if (!canvas) return;
+          const wrap = canvas.parentElement;
+          const cssW = Math.max(200, Math.floor(wrap.clientWidth));
+          const cssH = cssW;
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          canvas.width = Math.round(cssW * dpr);
+          canvas.height = Math.round(cssH * dpr);
+          canvas.style.height = `${cssH}px`;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, cssW, cssH);
+
+          const cx = cssW / 2;
+          const cy = cssH / 2;
+          const R = Math.min(cssW, cssH) * 0.36;
+          const th = state.thetaRad;
+          const c = state.derived.cos;
+          const s = state.derived.sin;
+          const px = cx + R * c;
+          const py = cy - R * s;
+
+          const axis = getCssColor("--viz-axis");
+          const grid = getCssColor("--viz-grid");
+          const frame = getCssColor("--viz-frame");
+          const text = getCssColor("--viz-text");
+          const primary = getCssColor("--viz-sin");
+          const secondary = getCssColor("--viz-cos");
+          const point = getCssColor("--viz-point");
+
+          if (state.guides.circleAxes) {
+            ctx.strokeStyle = grid;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx - R * 1.35, cy);
+            ctx.lineTo(cx + R * 1.35, cy);
+            ctx.moveTo(cx, cy - R * 1.35);
+            ctx.lineTo(cx, cy + R * 1.35);
+            ctx.stroke();
+            ctx.strokeStyle = axis;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx - R * 1.2, cy);
+            ctx.lineTo(cx + R * 1.2, cy);
+            ctx.moveTo(cx, cy + R * 1.2);
+            ctx.lineTo(cx, cy - R * 1.2);
+            ctx.stroke();
+            ctx.fillStyle = text;
+            ctx.font = "11px ui-monospace, monospace";
+            ctx.fillText("x", cx + R * 1.22, cy + 12);
+            ctx.fillText("y", cx - 14, cy - R * 1.22);
+          }
+
+          ctx.strokeStyle = frame;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(cx, cy, R, 0, TAU);
+          ctx.stroke();
+
+          if (state.guides.angleArc && th > 1e-9) {
+            const arcAngle = state.derived.thetaWrapped;
+            ctx.strokeStyle = text;
+            ctx.lineWidth = 1.25;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.arc(cx, cy, R * 0.22, 0, -arcAngle, true);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          ctx.strokeStyle = axis;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+
+          if (state.guides.projections) {
+            ctx.strokeStyle = secondary;
+            ctx.lineWidth = 1.25;
+            ctx.setLineDash([5, 4]);
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px, cy);
+            ctx.stroke();
+            ctx.strokeStyle = primary;
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(cx, py);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          ctx.fillStyle = point;
+          ctx.beginPath();
+          ctx.arc(px, py, 5, 0, TAU);
+          ctx.fill();
+        }
+
+        function graphYBounds() {
+          const v = state.vis;
+          const extended = v.tan || v.cot || v.sec || v.csc;
+          if (extended) return { min: -8.5, max: 8.5 };
+          return { min: -1.35, max: 1.35 };
+        }
+
+        function sampleCount() {
+          return clamp(Math.floor(80 + state.revolutions * 140), 120, 720);
+        }
+
+        function tanValue(t) {
+          const co = Math.cos(t);
+          if (Math.abs(co) < 1e-12) return null;
+          return Math.sin(t) / co;
+        }
+
+        function cotValue(t) {
+          const si = Math.sin(t);
+          if (Math.abs(si) < 1e-12) return null;
+          return Math.cos(t) / si;
+        }
+
+        function secValue(t) {
+          const co = Math.cos(t);
+          if (Math.abs(co) < 1e-12) return null;
+          return 1 / co;
+        }
+
+        function cscValue(t) {
+          const si = Math.sin(t);
+          if (Math.abs(si) < 1e-12) return null;
+          return 1 / si;
+        }
+
+        function intervalHasCosZero(t0, t1) {
+          return Math.cos(t0) * Math.cos(t1) < 0;
+        }
+
+        function intervalHasSinZero(t0, t1) {
+          return Math.sin(t0) * Math.sin(t1) < 0;
+        }
+
+        function drawPolyline(ctx, mapX, mapY, samples, color, lineWidth, yMin, yMax) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lineWidth;
+          ctx.beginPath();
+          let penUp = true;
+          for (let i = 0; i < samples.length; i++) {
+            const p = samples[i];
+            if (p.y === null || !Number.isFinite(p.y)) {
+              penUp = true;
+              continue;
+            }
+            const y = p.y;
+            if (y < yMin || y > yMax) {
+              penUp = true;
+              continue;
+            }
+            const x = mapX(p.t);
+            const yy = mapY(y);
+            if (penUp) {
+              ctx.moveTo(x, yy);
+              penUp = false;
+            } else {
+              ctx.lineTo(x, yy);
+            }
+          }
+          ctx.stroke();
+        }
+
+        function buildSamples(getter, tMax, breaks) {
+          const n = sampleCount();
+          const arr = [];
+          for (let i = 0; i <= n; i++) {
+            const t = (i / n) * tMax;
+            let y;
+            try {
+              y = getter(t);
+            } catch {
+              y = null;
+            }
+            arr.push({ t, y });
+          }
+          for (let i = 1; i < arr.length; i++) {
+            const t0 = arr[i - 1].t;
+            const t1 = arr[i].t;
+            if (breaks.cos && intervalHasCosZero(t0, t1)) {
+              arr[i].y = null;
+              arr[i - 1].y = null;
+            }
+            if (breaks.sin && intervalHasSinZero(t0, t1)) {
+              arr[i].y = null;
+              arr[i - 1].y = null;
+            }
+          }
+          return arr;
+        }
+
+        function drawGraph() {
+          const canvas = elements.graphCanvas;
+          if (!canvas) return;
+          const wrap = canvas.parentElement;
+          const cssW = Math.max(240, Math.floor(wrap.clientWidth));
+          const cssH = 220;
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          canvas.width = Math.round(cssW * dpr);
+          canvas.height = Math.round(cssH * dpr);
+          canvas.style.height = `${cssH}px`;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, cssW, cssH);
+
+          const padL = 44;
+          const padR = 12;
+          const padT = 14;
+          const padB = 28;
+          const plotW = cssW - padL - padR;
+          const plotH = cssH - padT - padB;
+          const tMax = thetaMax();
+          const { min: yMin, max: yMax } = graphYBounds();
+
+          const mapX = (t) => padL + (t / tMax) * plotW;
+          const mapY = (y) => padT + ((yMax - y) / (yMax - yMin)) * plotH;
+
+          const grid = getCssColor("--viz-grid");
+          const axis = getCssColor("--viz-axis");
+          const text = getCssColor("--viz-text");
+
+          if (state.guides.graphGrid) {
+            ctx.strokeStyle = grid;
+            ctx.lineWidth = 1;
+            for (let g = -8; g <= 8; g++) {
+              if (g === 0) continue;
+              if (g > yMax || g < yMin) continue;
+              const yy = mapY(g);
+              ctx.beginPath();
+              ctx.moveTo(padL, yy);
+              ctx.lineTo(padL + plotW, yy);
+              ctx.stroke();
+            }
+            const vLines = 8 * state.revolutions;
+            for (let k = 1; k < vLines; k++) {
+              const x = padL + (k / vLines) * plotW;
+              ctx.beginPath();
+              ctx.moveTo(x, padT);
+              ctx.lineTo(x, padT + plotH);
+              ctx.stroke();
+            }
+          }
+
+          ctx.strokeStyle = axis;
+          ctx.lineWidth = 1.5;
+          const y0 = mapY(0);
+          ctx.beginPath();
+          ctx.moveTo(padL, y0);
+          ctx.lineTo(padL + plotW, y0);
+          ctx.stroke();
+
+          const showTanSecAsymptotes = state.vis.tan || state.vis.sec;
+          const showCotCscAsymptotes = state.vis.cot || state.vis.csc;
+
+          if (showTanSecAsymptotes) {
+            ctx.strokeStyle = grid;
+            ctx.setLineDash([3, 5]);
+            let tv = Math.PI / 2;
+            while (tv <= tMax + 1e-9) {
+              const x = mapX(tv);
+              ctx.beginPath();
+              ctx.moveTo(x, padT);
+              ctx.lineTo(x, padT + plotH);
+              ctx.stroke();
+              tv += Math.PI;
+            }
+            ctx.setLineDash([]);
+          }
+
+          if (showCotCscAsymptotes) {
+            ctx.strokeStyle = grid;
+            ctx.setLineDash([2, 4]);
+            for (let m = 0; m * Math.PI <= tMax + 1e-9; m++) {
+              const tv = m * Math.PI;
+              const x = mapX(tv);
+              ctx.beginPath();
+              ctx.moveTo(x, padT);
+              ctx.lineTo(x, padT + plotH);
+              ctx.stroke();
+            }
+            ctx.setLineDash([]);
+          }
+
+          if (state.guides.periodMarkers) {
+            ctx.fillStyle = text;
+            ctx.font = "10px ui-monospace, monospace";
+            for (let r = 1; r <= state.revolutions; r++) {
+              const tv = r * TAU;
+              if (tv > tMax) break;
+              const x = mapX(tv);
+              ctx.strokeStyle = axis;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(x, padT);
+              ctx.lineTo(x, padT + plotH);
+              ctx.stroke();
+              ctx.fillText(`2π·${r}`, x + 2, padT + plotH + 14);
+            }
+          }
+
+          const colSin = getCssColor("--viz-sin");
+          const colCos = getCssColor("--viz-cos");
+          const colTan = getCssColor("--viz-tan");
+          const colCot = getCssColor("--viz-cot");
+          const colSec = getCssColor("--viz-sec");
+          const colCsc = getCssColor("--viz-csc");
+
+          const none = { cos: false, sin: false };
+          const cosPole = { cos: true, sin: false };
+          const sinPole = { cos: false, sin: true };
+
+          if (state.vis.sin) {
+            const samples = buildSamples((t) => Math.sin(t), tMax, none);
+            drawPolyline(ctx, mapX, mapY, samples, colSin, 2, yMin, yMax);
+          }
+          if (state.vis.cos) {
+            const samples = buildSamples((t) => Math.cos(t), tMax, none);
+            drawPolyline(ctx, mapX, mapY, samples, colCos, 2, yMin, yMax);
+          }
+          if (state.vis.tan) {
+            const samples = buildSamples(tanValue, tMax, cosPole);
+            drawPolyline(ctx, mapX, mapY, samples, colTan, 1.5, yMin, yMax);
+          }
+          if (state.vis.cot) {
+            const samples = buildSamples(cotValue, tMax, sinPole);
+            drawPolyline(ctx, mapX, mapY, samples, colCot, 1.5, yMin, yMax);
+          }
+          if (state.vis.sec) {
+            const samples = buildSamples(secValue, tMax, cosPole);
+            drawPolyline(ctx, mapX, mapY, samples, colSec, 1.5, yMin, yMax);
+          }
+          if (state.vis.csc) {
+            const samples = buildSamples(cscValue, tMax, sinPole);
+            drawPolyline(ctx, mapX, mapY, samples, colCsc, 1.5, yMin, yMax);
+          }
+
+          const cx = mapX(state.thetaRad);
+          ctx.strokeStyle = getCssColor("--viz-highlight");
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(cx, padT);
+          ctx.lineTo(cx, padT + plotH);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = text;
+          ctx.font = "11px ui-monospace, monospace";
+          ctx.fillText("θ", padL + plotW - 4, y0 + 14);
+          ctx.fillText(formatAngleForDisplay(state.thetaRad), clamp(cx - 36, padL, padL + plotW - 80), padT - 2);
         }
 
         function render() {
-          if (!elements.vizMount) return;
-
-          elements.vizMount.textContent =
-            `primaryValue=${state.primaryValue}, secondaryValue=${state.secondaryValue}, derivedPreview=${state.derived.derivedPreview}`;
+          drawCircle();
+          drawGraph();
+          updateReadoutOnly();
         }
 
         function updateExplanation() {
           if (!elements.explanation) return;
-
           elements.explanation.innerHTML = `
-            <strong>Template role:</strong> this playground currently shows how live state,
-            derived state, rendering, and explanation updates stay synchronized in one predictable flow.
+            <strong>How to read this:</strong> the moving point is (cos θ, sin θ). Projections to the axes show cosine and sine as lengths (with sign from the quadrant).
+            The graph uses the same θ on the horizontal axis from 0 to 2π times the revolution count. Tangent, cotangent, secant, and cosecant blow up where their defining ratio divides by zero; the graph leaves gaps instead of connecting across those jumps.
+            Asymptote lines on the graph appear only while a related function is visible (tan or sec for cos θ = 0; cot or csc for sin θ = 0). Dragging the angle slider pauses animation.
           `;
         }
 
         function resetState() {
+          stopAnimationLoop();
           state = createInitialState();
           syncControlsFromState();
           refresh();
         }
 
         function refresh() {
+          state.thetaRad = clamp(state.thetaRad, 0, thetaMax());
+          syncControlsFromState();
           updateDerivedState();
           render();
-          updateExplanation();
         }
 
         window.mathExplorer = {

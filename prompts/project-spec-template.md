@@ -8,6 +8,8 @@ Target audience:
 Single biggest learning outcome:
 Required controls:
 Required visuals:
+Default visible features:
+Default hidden features:
 Must-have presets:
 What must be mathematically exact?
 What can be approximate for UX?

@@ -21,5 +21,14 @@ Important:
 - Respect the single-file template structure.
 - Only include features justified by the learning goal.
 
+Before finishing the plan, resolve any major v1 interaction or default-setting decisions that would otherwise be left open.
+
+For each core control or feature area, specify:
+- what the v1 implementation will be
+- what the default state will be
+- what alternatives were intentionally not chosen for v1, if relevant
+
+Do not leave core UX decisions as multiple open options unless the spec explicitly asks for alternatives.
+
 Project spec:
 [PASTE SPEC HERE]
