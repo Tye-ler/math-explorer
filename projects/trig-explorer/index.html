@@ -1233,7 +1233,20 @@
           const text = getCssColor("--viz-text");
           const primary = getCssColor("--viz-sin");
           const secondary = getCssColor("--viz-cos");
+          const tanColor = getCssColor("--viz-tan");
+          const cotColor = getCssColor("--viz-cot");
+          const secColor = getCssColor("--viz-sec");
+          const cscColor = getCssColor("--viz-csc");
           const point = getCssColor("--viz-point");
+          const plotLimit = 3.4;
+          const tanVal = state.derived.tan;
+          const cotVal = state.derived.cot;
+          const secVal = state.derived.sec;
+          const cscVal = state.derived.csc;
+          const tanVisible = tanVal !== null && Math.abs(tanVal) <= plotLimit;
+          const cotVisible = cotVal !== null && Math.abs(cotVal) <= plotLimit;
+          const secVisible = secVal !== null && Math.abs(tanVal ?? 999) <= plotLimit;
+          const cscVisible = cscVal !== null && Math.abs(cotVal ?? 999) <= plotLimit;
 
           if (state.guides.circleAxes) {
             ctx.strokeStyle = grid;
@@ -1300,6 +1313,84 @@
               ctx.lineTo(cx, py);
               ctx.stroke();
             }
+          }
+
+          if (state.guides.projections) {
+            if ((state.vis.tan || state.vis.sec) && tanVisible) {
+              const tx = cx + R;
+              const ty = cy - R * tanVal;
+              if (state.vis.tan) {
+                ctx.strokeStyle = tanColor;
+                ctx.lineWidth = 1.7;
+                ctx.beginPath();
+                ctx.moveTo(tx, cy);
+                ctx.lineTo(tx, ty);
+                ctx.stroke();
+                state.derived.circleCss.tanGuide = { x: tx, y: ty };
+              } else {
+                state.derived.circleCss.tanGuide = null;
+              }
+              if (state.vis.sec && secVisible) {
+                ctx.strokeStyle = secColor;
+                ctx.lineWidth = 1.7;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(tx, ty);
+                ctx.stroke();
+              }
+              ctx.strokeStyle = getCssColor("--viz-grid");
+              ctx.lineWidth = 1;
+              ctx.setLineDash([3, 4]);
+              ctx.beginPath();
+              ctx.moveTo(tx, cy - R * plotLimit);
+              ctx.lineTo(tx, cy + R * plotLimit);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            } else {
+              state.derived.circleCss.tanGuide = null;
+            }
+
+            if ((state.vis.cot || state.vis.csc) && cotVisible) {
+              const ux = cx + R * cotVal;
+              const uy = cy - R;
+              if (state.vis.cot) {
+                ctx.strokeStyle = cotColor;
+                ctx.lineWidth = 1.7;
+                ctx.beginPath();
+                ctx.moveTo(cx, uy);
+                ctx.lineTo(ux, uy);
+                ctx.stroke();
+                state.derived.circleCss.cotGuide = { x: ux, y: uy };
+              } else {
+                state.derived.circleCss.cotGuide = null;
+              }
+              if (state.vis.csc && cscVisible) {
+                ctx.strokeStyle = cscColor;
+                ctx.lineWidth = 1.7;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(ux, uy);
+                ctx.stroke();
+                state.derived.circleCss.cscGuide = { x: ux, y: uy };
+              } else {
+                state.derived.circleCss.cscGuide = null;
+              }
+              ctx.strokeStyle = getCssColor("--viz-grid");
+              ctx.lineWidth = 1;
+              ctx.setLineDash([3, 4]);
+              ctx.beginPath();
+              ctx.moveTo(cx - R * plotLimit, uy);
+              ctx.lineTo(cx + R * plotLimit, uy);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            } else {
+              state.derived.circleCss.cotGuide = null;
+              state.derived.circleCss.cscGuide = null;
+            }
+          } else {
+            state.derived.circleCss.tanGuide = null;
+            state.derived.circleCss.cotGuide = null;
+            state.derived.circleCss.cscGuide = null;
           }
 
           ctx.fillStyle = point;
@@ -1488,6 +1579,9 @@
             thetaX: mapX(state.thetaRad),
             sinY: mapY(clamp(Math.sin(state.thetaRad), yMin, yMax)),
             cosY: mapY(clamp(Math.cos(state.thetaRad), yMin, yMax)),
+            tanY: state.derived.tan === null ? null : mapY(clamp(state.derived.tan, yMin, yMax)),
+            cotY: state.derived.cot === null ? null : mapY(clamp(state.derived.cot, yMin, yMax)),
+            cscY: state.derived.csc === null ? null : mapY(clamp(state.derived.csc, yMin, yMax)),
           };
 
           const grid = getCssColor("--viz-grid");
@@ -1637,7 +1731,12 @@
           const graphCss = state.derived.graphCss;
           if (!circleCss || !graphCss) return;
 
-          if (!state.guides.projections || !state.vis.sin) {
+          const hasConnector =
+            state.vis.sin ||
+            (state.vis.tan && circleCss.tanGuide && graphCss.tanY !== null) ||
+            (state.vis.cot && circleCss.cotGuide && graphCss.cotY !== null) ||
+            (state.vis.csc && circleCss.cscGuide && graphCss.cscY !== null);
+          if (!state.guides.projections || !hasConnector) {
             const ctx = connector.getContext("2d");
             if (ctx) ctx.clearRect(0, 0, connector.width, connector.height);
             return;
@@ -1662,6 +1761,9 @@
           ctx.clearRect(0, 0, cssW, cssH);
 
           const colSin = getCssColor("--viz-sin");
+          const colTan = getCssColor("--viz-tan");
+          const colCot = getCssColor("--viz-cot");
+          const colCsc = getCssColor("--viz-csc");
           ctx.lineWidth = 1.5;
           ctx.setLineDash([6, 5]);
 
@@ -1682,6 +1784,42 @@
             ctx.beginPath();
             ctx.arc(s1x, s1y, 3.5, 0, TAU);
             ctx.fill();
+          }
+
+          if (state.vis.tan && circleCss.tanGuide && graphCss.tanY !== null) {
+            const t0x = cOffX + circleCss.tanGuide.x;
+            const t0y = cOffY + circleCss.tanGuide.y;
+            const t1x = gx;
+            const t1y = gOffY + graphCss.tanY;
+            ctx.strokeStyle = colTan;
+            ctx.beginPath();
+            ctx.moveTo(t0x, t0y);
+            ctx.lineTo(t1x, t1y);
+            ctx.stroke();
+          }
+
+          if (state.vis.cot && circleCss.cotGuide && graphCss.cotY !== null) {
+            const t0x = cOffX + circleCss.cotGuide.x;
+            const t0y = cOffY + circleCss.cotGuide.y;
+            const t1x = gx;
+            const t1y = gOffY + graphCss.cotY;
+            ctx.strokeStyle = colCot;
+            ctx.beginPath();
+            ctx.moveTo(t0x, t0y);
+            ctx.lineTo(t1x, t1y);
+            ctx.stroke();
+          }
+
+          if (state.vis.csc && circleCss.cscGuide && graphCss.cscY !== null) {
+            const t0x = cOffX + circleCss.cscGuide.x;
+            const t0y = cOffY + circleCss.cscGuide.y;
+            const t1x = gx;
+            const t1y = gOffY + graphCss.cscY;
+            ctx.strokeStyle = colCsc;
+            ctx.beginPath();
+            ctx.moveTo(t0x, t0y);
+            ctx.lineTo(t1x, t1y);
+            ctx.stroke();
           }
 
           ctx.setLineDash([]);
