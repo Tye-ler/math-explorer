@@ -1370,11 +1370,18 @@
           return getComputedStyle(rootElement).getPropertyValue(varName).trim() || "#888";
         }
 
+        function topPanelSharedSize() {
+          const circleWrap = elements.circleCanvas?.parentElement;
+          const width = circleWrap ? Math.floor(circleWrap.clientWidth) : 0;
+          return Math.max(140, width || 140);
+        }
+
         function drawCircle() {
           const canvas = elements.circleCanvas;
           if (!canvas) return;
           const wrap = canvas.parentElement;
-          const cssW = Math.max(200, Math.floor(wrap.clientWidth));
+          const sharedSize = topPanelSharedSize();
+          const cssW = Math.min(sharedSize, Math.max(140, Math.floor(wrap.clientWidth)));
           const cssH = cssW;
           const dpr = Math.min(2, window.devicePixelRatio || 1);
           canvas.width = Math.round(cssW * dpr);
@@ -1772,7 +1779,7 @@
           if (!canvas) return;
           const wrap = canvas.parentElement;
           const cssW = Math.max(240, Math.floor(wrap.clientWidth));
-          const cssH = Math.max(200, Math.floor(wrap.clientHeight || 220));
+          const cssH = topPanelSharedSize();
           const dpr = Math.min(2, window.devicePixelRatio || 1);
           canvas.width = Math.round(cssW * dpr);
           canvas.height = Math.round(cssH * dpr);
