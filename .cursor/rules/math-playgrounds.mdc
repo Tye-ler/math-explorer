@@ -1,0 +1,227 @@
+---
+description: Rules for building single-file math playgrounds in the math-explorer repo
+alwaysApply: true
+---
+
+You are working in the `math-explorer` repository.
+
+This repository exists to turn mathematical ideas into polished, correct, interactive, self-contained HTML playgrounds that can later be copied into the separate `Math-Project` website repository for publishing.
+
+## Core Objective
+
+For each playground, produce a static, browser-ready page that:
+- is mathematically correct
+- is visually clear
+- is easy to modify later
+- is easy to publish by copying into another repo
+- minimizes repetitive setup work across projects
+- fits a workflow that can be delegated to Cursor as much as possible
+
+## Repository Output Model
+
+Default output for each playground:
+- `projects/<slug>/index.html`
+
+Default assumptions:
+- single self-contained HTML file
+- CSS stays in a `<style>` block
+- JavaScript stays in a `<script>` block
+- no framework
+- no build step
+- no external dependencies unless explicitly approved
+
+Only introduce an `assets/` folder when the project truly requires static resources such as images, data files, or other local assets.
+
+Do not split HTML, CSS, and JS into separate files unless explicitly instructed.
+
+## Template Interpretation Rules
+
+The repository uses a shared HTML template as the default starting point for playgrounds.
+
+You must interpret that template correctly:
+
+- The template’s overall page shell is intentional and should generally be preserved.
+- The site header is intentional and useful. It is part of the normal published-page structure, not accidental bloat.
+- The template includes commented example/reference blocks. These are guidance patterns only.
+- Commented example blocks are not mandatory features.
+- Only activate, adapt, or keep reference patterns that are relevant to the current project.
+- Remove, replace, or ignore unused placeholder content in the final playground.
+- Do not preserve placeholder text, sample state, or sample rendering output unless the current project actually needs them.
+
+## What Is Standardized vs Flexible
+
+### Standardized and usually preserved
+These are part of the house structure and should remain unless there is a clear reason to change them:
+- the single-file architecture
+- the page shell structure
+- theme handling
+- reusable styling tokens
+- the visualization mount convention
+- the general lifecycle flow for playground logic
+- the expectation of clear controls, visualization, and explanation areas
+
+### Flexible and expected to change per project
+These should be replaced or adapted freely:
+- hero title and description
+- project-specific controls
+- placeholder sample inputs
+- placeholder state fields
+- placeholder derived values
+- visualization implementation
+- explanation content
+- math logic
+- project-specific UI details
+
+## Visualization Convention
+
+Use the standard visualization mount convention unless the project clearly needs a different one.
+
+Preferred mount target:
+- `#viz-mount`
+
+Interpretation:
+- `#viz-mount` is the canonical project visualization target
+- projects may render into it using canvas, SVG, DOM, or other simple in-page techniques
+- do not introduce unnecessary rendering abstraction
+
+## JavaScript Scaffold Interpretation
+
+The template contains a standard playground lifecycle scaffold.
+
+Interpret it like this:
+
+### The lifecycle pattern is intentional
+These functions represent the preferred house architecture and should usually remain in some form:
+- `cacheElements()`
+- `createInitialState()`
+- `bindControls()`
+- `syncControlsFromState()`
+- `updateDerivedState()`
+- `render()`
+- `updateExplanation()`
+- `resetState()`
+- `refresh()`
+- `initializePlayground()` or equivalent init flow
+
+The purpose of this pattern is:
+- controls update state
+- state updates derived values
+- derived values drive rendering
+- explanation reflects current state/interpretation
+
+### Placeholder logic is not a requirement
+Sample variable names, placeholder math, sample text, and placeholder render output are examples only.
+
+Examples of things that should usually be replaced:
+- generic sample values
+- placeholder derived calculations
+- placeholder explanation text
+- placeholder visualization text output
+
+Do not mistake sample logic for project requirements.
+
+## State and App Structure
+
+Prefer this internal organization:
+- `defaults` for canonical starting values
+- `state` for current mutable state
+- `elements` for cached DOM references
+
+Guidelines:
+- keep functions small and focused
+- avoid hidden state when possible
+- avoid unnecessary abstraction
+- prefer direct readable code over cleverness
+- do not create framework-like systems
+- do not introduce classes unless the project genuinely benefits from them
+- prefer a simple functional structure inside the single file
+
+## Controls and Interaction
+
+Controls should be:
+- relevant to the current mathematical concept
+- clearly labeled
+- safe by default
+- synchronized with state
+- easy to reset
+
+When applicable:
+- keep numeric controls bounded
+- handle invalid inputs gracefully
+- keep presets explicit and understandable
+- avoid adding controls that do not help the core learning goal
+
+Reference controls in the template are examples, not obligations.
+
+## Explanation Area
+
+Each playground should include explanation text that helps the user interpret what they are seeing.
+
+The explanation section should:
+- describe the current mathematical meaning of the state or visualization
+- note important caveats when needed
+- support learning, not just decorate the page
+
+Do not leave placeholder explanation text in finished playgrounds.
+
+## Mathematical Quality Standards
+
+Prioritize:
+- mathematical correctness
+- conceptual clarity
+- visual clarity
+- maintainability
+- responsiveness and basic usability
+
+When tradeoffs occur:
+- correctness beats visual flash
+- clarity beats novelty
+- simple robust interaction beats overbuilt architecture
+
+If a mathematical shortcut, approximation, or simplification is used, make that explicit in the explanation when it matters.
+
+## Implementation Workflow
+
+Default workflow for playground work:
+1. understand the concept in plain language
+2. define the exact mathematical behavior
+3. propose the UI and visualization approach
+4. identify risks or edge cases
+5. implement in bounded steps
+6. self-review for correctness and usability
+
+Before coding, prefer producing a bounded plan unless the requested change is very small and local.
+
+## Editing Behavior
+
+When modifying an existing playground:
+- do not rewrite the whole file unless necessary
+- preserve the established shell and useful house patterns
+- make the smallest clean change that satisfies the task
+- avoid introducing extra architectural layers
+- avoid file sprawl
+- avoid speculative abstractions
+
+## Code Style
+
+Keep everything:
+- KISS
+- YAGNI
+- DRY
+
+More specifically:
+- prefer small focused functions
+- use descriptive but not bloated names
+- keep comments for non-obvious math or rendering logic
+- do not add comments that merely restate the code
+- keep the code easy for future Cursor passes to understand and extend
+
+## Final Output Expectations
+
+After implementing meaningful changes, provide:
+- files changed
+- what was implemented
+- manual verification checklist
+- known limitations or caveats
+
+The final result should feel like a finished, publishable math playground, not a demo scaffold.
