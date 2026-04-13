@@ -14,8 +14,8 @@
       --space-3: 1.25rem;
       --space-4: 1.75rem;
       --accent: #86e1ff;
-      --viz-sin: #5f8fe8;
-      --viz-cos: #7f69ba;
+      --viz-sin: #4cc9f0;
+      --viz-cos: #f4a261;
       --viz-tan: #e8a43a;
       --viz-cot: #5fd4a5;
       --viz-sec: #e07070;
@@ -66,8 +66,8 @@
       --viz-secondary: #8c5bd6;
       --viz-highlight: #111111;
       --viz-point: #2f6fed;
-      --viz-sin: #2f6fed;
-      --viz-cos: #8c5bd6;
+      --viz-sin: #0b84f3;
+      --viz-cos: #c86a1a;
       --viz-tan: #c47a12;
       --viz-cot: #2a9d6d;
       --viz-sec: #c23b3b;
@@ -1293,15 +1293,14 @@
           const secColor = getCssColor("--viz-sec");
           const cscColor = getCssColor("--viz-csc");
           const point = getCssColor("--viz-point");
-          const plotLimit = 3.4;
           const tanVal = state.derived.tan;
           const cotVal = state.derived.cot;
           const secVal = state.derived.sec;
           const cscVal = state.derived.csc;
-          const tanVisible = tanVal !== null && Math.abs(tanVal) <= plotLimit;
-          const cotVisible = cotVal !== null && Math.abs(cotVal) <= plotLimit;
-          const secVisible = secVal !== null && Math.abs(tanVal ?? 999) <= plotLimit;
-          const cscVisible = cscVal !== null && Math.abs(cotVal ?? 999) <= plotLimit;
+          const tanDefined = tanVal !== null && Number.isFinite(tanVal);
+          const cotDefined = cotVal !== null && Number.isFinite(cotVal);
+          const secDefined = secVal !== null && Number.isFinite(secVal);
+          const cscDefined = cscVal !== null && Number.isFinite(cscVal);
 
           if (state.guides.circleAxes) {
             ctx.strokeStyle = grid;
@@ -1371,7 +1370,7 @@
           }
 
           if (state.guides.projections) {
-            if ((state.vis.tan || state.vis.sec) && tanVisible) {
+            if ((state.vis.tan || state.vis.sec) && tanDefined) {
               const tx = cx + R;
               const ty = cy - R * tanVal;
               if (state.vis.tan) {
@@ -1385,7 +1384,7 @@
               } else {
                 state.derived.circleCss.tanGuide = null;
               }
-              if (state.vis.sec && secVisible) {
+              if (state.vis.sec && secDefined) {
                 ctx.strokeStyle = secColor;
                 ctx.lineWidth = 1.7;
                 ctx.beginPath();
@@ -1397,15 +1396,15 @@
               ctx.lineWidth = 1;
               ctx.setLineDash([3, 4]);
               ctx.beginPath();
-              ctx.moveTo(tx, cy - R * plotLimit);
-              ctx.lineTo(tx, cy + R * plotLimit);
+              ctx.moveTo(tx, 0);
+              ctx.lineTo(tx, cssH);
               ctx.stroke();
               ctx.setLineDash([]);
             } else {
               state.derived.circleCss.tanGuide = null;
             }
 
-            if ((state.vis.cot || state.vis.csc) && cotVisible) {
+            if ((state.vis.cot || state.vis.csc) && cotDefined) {
               const ux = cx + R * cotVal;
               const uy = cy - R;
               if (state.vis.cot) {
@@ -1419,7 +1418,7 @@
               } else {
                 state.derived.circleCss.cotGuide = null;
               }
-              if (state.vis.csc && cscVisible) {
+              if (state.vis.csc && cscDefined) {
                 ctx.strokeStyle = cscColor;
                 ctx.lineWidth = 1.7;
                 ctx.beginPath();
@@ -1434,8 +1433,8 @@
               ctx.lineWidth = 1;
               ctx.setLineDash([3, 4]);
               ctx.beginPath();
-              ctx.moveTo(cx - R * plotLimit, uy);
-              ctx.lineTo(cx + R * plotLimit, uy);
+              ctx.moveTo(0, uy);
+              ctx.lineTo(cssW, uy);
               ctx.stroke();
               ctx.setLineDash([]);
             } else {
@@ -1627,16 +1626,22 @@
 
           const mapX = (t) => padL + (t / tMax) * plotW;
           const mapY = (y) => padT + ((yMax - y) / (yMax - yMin)) * plotH;
+          const visibleY = (value) => value !== null && Number.isFinite(value) && value >= yMin && value <= yMax;
+          const sinNow = Math.sin(state.thetaRad);
+          const cosNow = Math.cos(state.thetaRad);
+          const tanNow = state.derived.tan;
+          const cotNow = state.derived.cot;
+          const cscNow = state.derived.csc;
 
           state.derived.graphCss = {
             yMin,
             yMax,
             thetaX: mapX(state.thetaRad),
-            sinY: mapY(clamp(Math.sin(state.thetaRad), yMin, yMax)),
-            cosY: mapY(clamp(Math.cos(state.thetaRad), yMin, yMax)),
-            tanY: state.derived.tan === null ? null : mapY(clamp(state.derived.tan, yMin, yMax)),
-            cotY: state.derived.cot === null ? null : mapY(clamp(state.derived.cot, yMin, yMax)),
-            cscY: state.derived.csc === null ? null : mapY(clamp(state.derived.csc, yMin, yMax)),
+            sinY: visibleY(sinNow) ? mapY(sinNow) : null,
+            cosY: visibleY(cosNow) ? mapY(cosNow) : null,
+            tanY: visibleY(tanNow) ? mapY(tanNow) : null,
+            cotY: visibleY(cotNow) ? mapY(cotNow) : null,
+            cscY: visibleY(cscNow) ? mapY(cscNow) : null,
           };
 
           const grid = getCssColor("--viz-grid");
@@ -1787,7 +1792,7 @@
           if (!circleCss || !graphCss) return;
 
           const hasConnector =
-            state.vis.sin ||
+            (state.vis.sin && graphCss.sinY !== null) ||
             (state.vis.tan && circleCss.tanGuide && graphCss.tanY !== null) ||
             (state.vis.cot && circleCss.cotGuide && graphCss.cotY !== null) ||
             (state.vis.csc && circleCss.cscGuide && graphCss.cscY !== null);
@@ -1826,7 +1831,7 @@
           const thetaX = graphCss.thetaX;
           const gx = gOffX + thetaX;
 
-          if (state.vis.sin) {
+          if (state.vis.sin && graphCss.sinY !== null) {
             const s0x = cOffX + circleCss.px;
             const s0y = cOffY + circleCss.py;
             const s1x = gx;
