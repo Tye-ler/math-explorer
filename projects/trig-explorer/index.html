@@ -408,9 +408,26 @@
       width: 100%;
     }
 
+    .trig-viz-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+      gap: var(--space-2);
+      align-items: stretch;
+      width: 100%;
+    }
+
     .trig-canvas-wrap {
       width: 100%;
       position: relative;
+    }
+
+    .trig-circle-wrap {
+      aspect-ratio: 1 / 1;
+    }
+
+    .trig-graph-wrap {
+      height: 100%;
     }
 
     .trig-canvas-wrap canvas {
@@ -420,6 +437,16 @@
       vertical-align: middle;
       border: 1px solid var(--viz-frame);
       background: var(--viz-bg);
+    }
+
+    #connector-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: transparent;
+      border: 0;
     }
 
     .trig-readout {
@@ -587,6 +614,11 @@
                 <input id="revolutions-slider" type="range" min="1" max="4" value="2" step="1" />
               </div>
 
+              <div class="control">
+                <label for="graph-yscale-slider">graph y-scale</label>
+                <input id="graph-yscale-slider" type="range" min="0.5" max="4" value="1" step="0.1" />
+              </div>
+
               <p class="control-group-label">presets</p>
               <div class="preset-grid" role="group" aria-label="Angle presets">
                 <button type="button" class="preset-btn" data-theta="0">0</button>
@@ -660,11 +692,14 @@
             <div class="visualization-box">
               <div id="viz-mount" class="viz-mount" aria-label="interactive mathematical visualization">
                 <div class="trig-viz-stack">
-                  <div class="trig-canvas-wrap">
-                    <canvas id="circle-canvas" width="400" height="400" aria-label="Unit circle"></canvas>
-                  </div>
-                  <div class="trig-canvas-wrap">
-                    <canvas id="graph-canvas" width="800" height="280" aria-label="Trigonometric functions versus angle"></canvas>
+                  <div class="trig-viz-row" id="viz-row">
+                    <div class="trig-canvas-wrap trig-circle-wrap">
+                      <canvas id="circle-canvas" width="400" height="400" aria-label="Unit circle"></canvas>
+                    </div>
+                    <div class="trig-canvas-wrap trig-graph-wrap">
+                      <canvas id="graph-canvas" width="800" height="280" aria-label="Trigonometric functions versus angle"></canvas>
+                    </div>
+                    <canvas id="connector-canvas" width="800" height="420" aria-hidden="true"></canvas>
                   </div>
                   <div id="trig-readout" class="trig-readout" aria-live="polite"></div>
                 </div>
@@ -819,6 +854,7 @@
           playing: false,
           speedRadPerSec: 1.2,
           revolutions: 2,
+          graphYScale: 1.0,
           vis: { sin: true, cos: true, tan: false, cot: false, sec: false, csc: false },
           guides: {
             circleAxes: true,
@@ -850,6 +886,7 @@
             playing: defaults.playing,
             speedRadPerSec: defaults.speedRadPerSec,
             revolutions: defaults.revolutions,
+            graphYScale: defaults.graphYScale,
             vis: { ...defaults.vis },
             guides: { ...defaults.guides },
             derived: {},
@@ -858,8 +895,10 @@
 
         function cacheElements() {
           elements.vizMount = document.getElementById("viz-mount");
+          elements.vizRow = document.getElementById("viz-row");
           elements.circleCanvas = document.getElementById("circle-canvas");
           elements.graphCanvas = document.getElementById("graph-canvas");
+          elements.connectorCanvas = document.getElementById("connector-canvas");
           elements.readout = document.getElementById("trig-readout");
           elements.explanation = document.querySelector(".explanation");
           elements.angleSlider = document.getElementById("angle-slider");
@@ -871,6 +910,7 @@
           elements.speedSlider = document.getElementById("speed-slider");
           elements.speedLabel = document.getElementById("speed-label");
           elements.revolutionsSlider = document.getElementById("revolutions-slider");
+          elements.graphYScaleSlider = document.getElementById("graph-yscale-slider");
           elements.presetButtons = document.querySelectorAll(".preset-btn");
           elements.visSin = document.getElementById("vis-sin");
           elements.visCos = document.getElementById("vis-cos");
@@ -944,6 +984,13 @@
               state.revolutions = clamp(Math.round(Number(event.target.value)), 1, 4);
               state.thetaRad = clamp(state.thetaRad, 0, thetaMax());
               refresh();
+            });
+          }
+
+          if (elements.graphYScaleSlider) {
+            elements.graphYScaleSlider.addEventListener("input", (event) => {
+              state.graphYScale = clamp(Number(event.target.value), 0.5, 4.0);
+              render();
             });
           }
 
@@ -1057,6 +1104,7 @@
           if (elements.speedSlider) elements.speedSlider.value = String(state.speedRadPerSec);
           syncSpeedLabel();
           if (elements.revolutionsSlider) elements.revolutionsSlider.value = String(state.revolutions);
+          if (elements.graphYScaleSlider) elements.graphYScaleSlider.value = String(state.graphYScale);
           elements.visSin && (elements.visSin.checked = state.vis.sin);
           elements.visCos && (elements.visCos.checked = state.vis.cos);
           elements.visTan && (elements.visTan.checked = state.vis.tan);
@@ -1169,6 +1217,16 @@
           const px = cx + R * c;
           const py = cy - R * s;
 
+          state.derived.circleCss = {
+            cx,
+            cy,
+            R,
+            px,
+            py,
+            sinGuide: { x: cx, y: py },
+            cosGuide: { x: px, y: cy },
+          };
+
           const axis = getCssColor("--viz-axis");
           const grid = getCssColor("--viz-grid");
           const frame = getCssColor("--viz-frame");
@@ -1225,19 +1283,23 @@
           ctx.stroke();
 
           if (state.guides.projections) {
-            ctx.strokeStyle = secondary;
-            ctx.lineWidth = 1.25;
-            ctx.setLineDash([5, 4]);
-            ctx.beginPath();
-            ctx.moveTo(px, py);
-            ctx.lineTo(px, cy);
-            ctx.stroke();
-            ctx.strokeStyle = primary;
-            ctx.beginPath();
-            ctx.moveTo(px, py);
-            ctx.lineTo(cx, py);
-            ctx.stroke();
             ctx.setLineDash([]);
+            if (state.vis.cos) {
+              ctx.strokeStyle = secondary;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(px, cy);
+              ctx.stroke();
+            }
+            if (state.vis.sin) {
+              ctx.strokeStyle = primary;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(cx, py);
+              ctx.stroke();
+            }
           }
 
           ctx.fillStyle = point;
@@ -1249,8 +1311,9 @@
         function graphYBounds() {
           const v = state.vis;
           const extended = v.tan || v.cot || v.sec || v.csc;
-          if (extended) return { min: -8.5, max: 8.5 };
-          return { min: -1.35, max: 1.35 };
+          const base = extended ? 8.5 : 1.35;
+          const scaled = base * clamp(state.graphYScale, 0.5, 4.0);
+          return { min: -scaled, max: scaled };
         }
 
         function sampleCount() {
@@ -1289,30 +1352,72 @@
           return Math.sin(t0) * Math.sin(t1) < 0;
         }
 
+        /**
+         * Clip segment (t0,y0)-(t1,y1) to yMin <= y <= yMax (linear in t).
+         * Returns null if no part of the segment lies in the band (including same-side outside).
+         */
+        function clipSegmentToYBand(t0, y0, t1, y1, yMin, yMax) {
+          const dy = y1 - y0;
+          const dt = t1 - t0;
+          if (!Number.isFinite(dy) || !Number.isFinite(dt)) return null;
+          if (Math.abs(dy) < 1e-20) {
+            if (y0 >= yMin && y0 <= yMax) {
+              return { t0, y0, t1, y1 };
+            }
+            return null;
+          }
+          const uAtY = (y) => (y - y0) / dy;
+          let uLo;
+          let uHi;
+          if (dy > 0) {
+            uLo = Math.max(0, uAtY(yMin));
+            uHi = Math.min(1, uAtY(yMax));
+          } else {
+            uLo = Math.max(0, uAtY(yMax));
+            uHi = Math.min(1, uAtY(yMin));
+          }
+          if (uLo > uHi + 1e-12) return null;
+          const yLo = y0 + uLo * dy;
+          const yHi = y0 + uHi * dy;
+          if (Math.abs(uLo - uHi) < 1e-14) {
+            if (yLo < yMin - 1e-9 || yLo > yMax + 1e-9) return null;
+          }
+          return {
+            t0: t0 + uLo * dt,
+            y0: yLo,
+            t1: t0 + uHi * dt,
+            y1: yHi,
+          };
+        }
+
         function drawPolyline(ctx, mapX, mapY, samples, color, lineWidth, yMin, yMax) {
           ctx.strokeStyle = color;
           ctx.lineWidth = lineWidth;
           ctx.beginPath();
           let penUp = true;
-          for (let i = 0; i < samples.length; i++) {
-            const p = samples[i];
-            if (p.y === null || !Number.isFinite(p.y)) {
+          for (let i = 1; i < samples.length; i++) {
+            const p0 = samples[i - 1];
+            const p1 = samples[i];
+            if (p0.y === null || p1.y === null || !Number.isFinite(p0.y) || !Number.isFinite(p1.y)) {
               penUp = true;
               continue;
             }
-            const y = p.y;
-            if (y < yMin || y > yMax) {
+            const clip = clipSegmentToYBand(p0.t, p0.y, p1.t, p1.y, yMin, yMax);
+            if (!clip) {
               penUp = true;
               continue;
             }
-            const x = mapX(p.t);
-            const yy = mapY(y);
+            const x0 = mapX(clip.t0);
+            const y0c = mapY(clip.y0);
+            const x1 = mapX(clip.t1);
+            const y1c = mapY(clip.y1);
             if (penUp) {
-              ctx.moveTo(x, yy);
+              ctx.moveTo(x0, y0c);
               penUp = false;
             } else {
-              ctx.lineTo(x, yy);
+              ctx.lineTo(x0, y0c);
             }
+            ctx.lineTo(x1, y1c);
           }
           ctx.stroke();
         }
@@ -1350,7 +1455,7 @@
           if (!canvas) return;
           const wrap = canvas.parentElement;
           const cssW = Math.max(240, Math.floor(wrap.clientWidth));
-          const cssH = 220;
+          const cssH = Math.max(200, Math.floor(wrap.clientHeight || 220));
           const dpr = Math.min(2, window.devicePixelRatio || 1);
           canvas.width = Math.round(cssW * dpr);
           canvas.height = Math.round(cssH * dpr);
@@ -1362,8 +1467,8 @@
 
           const padL = 44;
           const padR = 12;
-          const padT = 14;
-          const padB = 28;
+          const padT = 22;
+          const padB = 22;
           const plotW = cssW - padL - padR;
           const plotH = cssH - padT - padB;
           const tMax = thetaMax();
@@ -1371,6 +1476,14 @@
 
           const mapX = (t) => padL + (t / tMax) * plotW;
           const mapY = (y) => padT + ((yMax - y) / (yMax - yMin)) * plotH;
+
+          state.derived.graphCss = {
+            yMin,
+            yMax,
+            thetaX: mapX(state.thetaRad),
+            sinY: mapY(clamp(Math.sin(state.thetaRad), yMin, yMax)),
+            cosY: mapY(clamp(Math.cos(state.thetaRad), yMin, yMax)),
+          };
 
           const grid = getCssColor("--viz-grid");
           const axis = getCssColor("--viz-axis");
@@ -1507,9 +1620,88 @@
           ctx.fillText(formatAngleForDisplay(state.thetaRad), clamp(cx - 36, padL, padL + plotW - 80), padT - 2);
         }
 
+        function drawConnectors() {
+          const row = elements.vizRow;
+          const connector = elements.connectorCanvas;
+          const circleCanvas = elements.circleCanvas;
+          const graphCanvas = elements.graphCanvas;
+          if (!row || !connector || !circleCanvas || !graphCanvas) return;
+
+          const circleCss = state.derived.circleCss;
+          const graphCss = state.derived.graphCss;
+          if (!circleCss || !graphCss) return;
+
+          if (!state.guides.projections || (!state.vis.sin && !state.vis.cos)) {
+            const ctx = connector.getContext("2d");
+            if (ctx) ctx.clearRect(0, 0, connector.width, connector.height);
+            return;
+          }
+
+          const rowRect = row.getBoundingClientRect();
+          const cRect = circleCanvas.getBoundingClientRect();
+          const gRect = graphCanvas.getBoundingClientRect();
+          const cOffX = cRect.left - rowRect.left;
+          const cOffY = cRect.top - rowRect.top;
+          const gOffX = gRect.left - rowRect.left;
+          const gOffY = gRect.top - rowRect.top;
+
+          const cssW = Math.max(1, Math.floor(row.clientWidth));
+          const cssH = Math.max(1, Math.floor(row.clientHeight));
+          const dpr = Math.min(2, window.devicePixelRatio || 1);
+          connector.width = Math.round(cssW * dpr);
+          connector.height = Math.round(cssH * dpr);
+          const ctx = connector.getContext("2d");
+          if (!ctx) return;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, cssW, cssH);
+
+          const colSin = getCssColor("--viz-sin");
+          const colCos = getCssColor("--viz-cos");
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 5]);
+
+          const thetaX = graphCss.thetaX;
+          const gx = gOffX + thetaX;
+
+          if (state.vis.sin) {
+            const s0x = cOffX + circleCss.px;
+            const s0y = cOffY + circleCss.py;
+            const s1x = gx;
+            const s1y = gOffY + graphCss.sinY;
+            ctx.strokeStyle = colSin;
+            ctx.beginPath();
+            ctx.moveTo(s0x, s0y);
+            ctx.lineTo(s1x, s1y);
+            ctx.stroke();
+            ctx.fillStyle = colSin;
+            ctx.beginPath();
+            ctx.arc(s1x, s1y, 3.5, 0, TAU);
+            ctx.fill();
+          }
+
+          if (state.vis.cos) {
+            const c0x = cOffX + circleCss.px;
+            const c0y = cOffY + circleCss.py;
+            const c1x = gx;
+            const c1y = gOffY + graphCss.cosY;
+            ctx.strokeStyle = colCos;
+            ctx.beginPath();
+            ctx.moveTo(c0x, c0y);
+            ctx.lineTo(c1x, c1y);
+            ctx.stroke();
+            ctx.fillStyle = colCos;
+            ctx.beginPath();
+            ctx.arc(c1x, c1y, 3.5, 0, TAU);
+            ctx.fill();
+          }
+
+          ctx.setLineDash([]);
+        }
+
         function render() {
           drawCircle();
           drawGraph();
+          drawConnectors();
           updateReadoutOnly();
         }
 
