@@ -471,11 +471,22 @@
 
     .trig-readout {
       border: 1px solid var(--viz-frame);
-      padding: var(--space-2);
+      padding: 0.55rem 0.65rem;
       font-size: 11px;
       line-height: 1.35;
       color: var(--viz-text);
       overflow-x: auto;
+    }
+
+    .readout-layout {
+      display: grid;
+      grid-template-columns: minmax(170px, 0.85fr) minmax(0, 1.15fr);
+      gap: 0.7rem;
+      align-items: start;
+    }
+
+    .readout-values {
+      min-width: 0;
     }
 
     .trig-readout table {
@@ -502,6 +513,53 @@
     .trig-readout td.fn-cot { color: var(--viz-cot); }
     .trig-readout td.fn-sec { color: var(--viz-sec); }
     .trig-readout td.fn-csc { color: var(--viz-csc); }
+
+    .readout-equations {
+      padding-left: 0.7rem;
+      border-left: 1px solid var(--viz-frame);
+      display: grid;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+
+    .equations-panel {
+      display: grid;
+      gap: 0.5rem;
+      font-size: 11px;
+      color: var(--viz-text);
+    }
+
+    .equation-group {
+      display: grid;
+      gap: 0.22rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .equation-group:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .equation-group-title {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+    }
+
+    .equation-line {
+      margin: 0;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    .equation-undefined {
+      color: var(--muted);
+      opacity: 0.85;
+      font-style: italic;
+    }
 
     .choice-row {
       display: flex;
@@ -546,6 +604,17 @@
 
       .trig-graph-wrap {
         height: auto;
+      }
+
+      .readout-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .readout-equations {
+        border-left: 0;
+        border-top: 1px solid var(--viz-frame);
+        padding-left: 0;
+        padding-top: var(--space-2);
       }
 
       .control-group {
@@ -753,6 +822,10 @@
                     <input type="checkbox" id="guide-connectors" checked />
                     <span>dotted connector lines</span>
                   </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-floating-labels" />
+                    <span>floating trig labels</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -914,6 +987,7 @@
             graphGrid: true,
             periodMarkers: true,
             connectors: true,
+            floatingLabels: false,
           },
         };
 
@@ -952,6 +1026,7 @@
           elements.graphCanvas = document.getElementById("graph-canvas");
           elements.connectorCanvas = document.getElementById("connector-canvas");
           elements.readout = document.getElementById("trig-readout");
+          elements.equationsPanel = null;
           elements.explanation = document.querySelector(".explanation");
           elements.angleSlider = document.getElementById("angle-slider");
           elements.angleLabel = document.getElementById("angle-label");
@@ -976,6 +1051,7 @@
           elements.guideGraphGrid = document.getElementById("guide-graph-grid");
           elements.guidePeriodMarkers = document.getElementById("guide-period-markers");
           elements.guideConnectors = document.getElementById("guide-connectors");
+          elements.guideFloatingLabels = document.getElementById("guide-floating-labels");
         }
 
         function thetaMax() {
@@ -1083,6 +1159,7 @@
             ["guideGraphGrid", "graphGrid"],
             ["guidePeriodMarkers", "periodMarkers"],
             ["guideConnectors", "connectors"],
+            ["guideFloatingLabels", "floatingLabels"],
           ];
           guideMap.forEach(([elKey, name]) => {
             const el = elements[elKey];
@@ -1171,6 +1248,7 @@
           elements.guideGraphGrid && (elements.guideGraphGrid.checked = state.guides.graphGrid);
           elements.guidePeriodMarkers && (elements.guidePeriodMarkers.checked = state.guides.periodMarkers);
           elements.guideConnectors && (elements.guideConnectors.checked = state.guides.connectors);
+          elements.guideFloatingLabels && (elements.guideFloatingLabels.checked = state.guides.floatingLabels);
           syncAngleLabel();
         }
 
@@ -1241,7 +1319,51 @@
               return `<tr><th scope="row">${k}</th><td${tdClass}>${v}</td></tr>`;
             })
             .join("");
-          elements.readout.innerHTML = `<table><tbody>${body}</tbody></table>`;
+          const sin = d.sin;
+          const cos = d.cos;
+          const tan = d.tan;
+          const sec = d.sec;
+          const csc = d.csc;
+          const cot = d.cot;
+          const sin2PlusCos2 = sin * sin + cos * cos;
+          const tanSecIdentity = (tan === null || sec === null)
+            ? '<span class="equation-undefined">undefined at this θ (cos θ = 0)</span>'
+            : `${formatNumber(1 + tan * tan)} = ${formatNumber(sec * sec)}`;
+          const cotCscIdentity = (cot === null || csc === null)
+            ? '<span class="equation-undefined">undefined at this θ (sin θ = 0)</span>'
+            : `${formatNumber(1 + cot * cot)} = ${formatNumber(csc * csc)}`;
+          const equationsHtml = `
+            <div class="equations-panel">
+              <div class="equation-group">
+                <p class="equation-group-title">live function equations</p>
+                <p class="equation-line">sin(θ) = ${formatMaybeUndefined(sin)}</p>
+                <p class="equation-line">cos(θ) = ${formatMaybeUndefined(cos)}</p>
+                <p class="equation-line">tan(θ) = sin(θ) / cos(θ) = ${formatMaybeUndefined(tan)}</p>
+                <p class="equation-line">sec(θ) = 1 / cos(θ) = ${formatMaybeUndefined(sec)}</p>
+                <p class="equation-line">csc(θ) = 1 / sin(θ) = ${formatMaybeUndefined(csc)}</p>
+                <p class="equation-line">cot(θ) = cos(θ) / sin(θ) = ${formatMaybeUndefined(cot)}</p>
+              </div>
+              <div class="equation-group">
+                <p class="equation-group-title">core identities</p>
+                <p class="equation-line">sin²(θ) + cos²(θ) = ${formatNumber(sin2PlusCos2)} (≈ 1)</p>
+                <p class="equation-line">1 + tan²(θ) = sec²(θ) → ${tanSecIdentity}</p>
+                <p class="equation-line">1 + cot²(θ) = csc²(θ) → ${cotCscIdentity}</p>
+              </div>
+            </div>
+          `;
+          elements.readout.innerHTML = `
+            <div class="readout-layout">
+              <div class="readout-values"><table><tbody>${body}</tbody></table></div>
+              <div class="readout-equations">${equationsHtml}</div>
+            </div>
+          `;
+        }
+
+        function formatMaybeUndefined(value) {
+          if (value === null || value === undefined || !Number.isFinite(value)) {
+            return '<span class="equation-undefined">undefined</span>';
+          }
+          return formatNumber(value);
         }
 
         function getCssColor(varName) {
@@ -1280,6 +1402,10 @@
             py,
             sinGuide: { x: cx, y: py },
             cosGuide: { x: px, y: cy },
+            tanGuide: null,
+            cotGuide: null,
+            secGuide: null,
+            cscGuide: null,
           };
 
           const axis = getCssColor("--viz-axis");
@@ -1391,6 +1517,9 @@
                 ctx.moveTo(cx, cy);
                 ctx.lineTo(tx, ty);
                 ctx.stroke();
+                state.derived.circleCss.secGuide = { x: tx, y: ty };
+              } else {
+                state.derived.circleCss.secGuide = null;
               }
               ctx.strokeStyle = getCssColor("--viz-grid");
               ctx.lineWidth = 1;
@@ -1402,6 +1531,7 @@
               ctx.setLineDash([]);
             } else {
               state.derived.circleCss.tanGuide = null;
+              state.derived.circleCss.secGuide = null;
             }
 
             if ((state.vis.cot || state.vis.csc) && cotDefined) {
@@ -1444,7 +1574,46 @@
           } else {
             state.derived.circleCss.tanGuide = null;
             state.derived.circleCss.cotGuide = null;
+            state.derived.circleCss.secGuide = null;
             state.derived.circleCss.cscGuide = null;
+          }
+
+          if (state.guides.floatingLabels) {
+            const drawFloatingLabel = (label, x, y, color, dx = 0, dy = 0) => {
+              const lx = x + dx;
+              const ly = y + dy;
+              ctx.font = "11px ui-monospace, monospace";
+              const w = ctx.measureText(label).width;
+              const padX = 4;
+              const padY = 2;
+              ctx.fillStyle = getCssColor("--viz-bg");
+              ctx.fillRect(lx - padX, ly - 10 - padY, w + padX * 2, 12 + padY * 2);
+              ctx.fillStyle = color;
+              ctx.fillText(label, lx, ly);
+            };
+
+            if (state.guides.projections && state.vis.sin) {
+              drawFloatingLabel("sin θ", (px + cx) / 2, py, primary, -14, -6);
+            }
+            if (state.guides.projections && state.vis.cos) {
+              drawFloatingLabel("cos θ", px, (py + cy) / 2, secondary, 6, 0);
+            }
+            if (state.guides.projections && state.vis.tan && state.derived.circleCss.tanGuide) {
+              const t = state.derived.circleCss.tanGuide;
+              drawFloatingLabel("tan θ", t.x, (t.y + cy) / 2, tanColor, 6, 0);
+            }
+            if (state.guides.projections && state.vis.cot && state.derived.circleCss.cotGuide) {
+              const t = state.derived.circleCss.cotGuide;
+              drawFloatingLabel("cot θ", (t.x + cx) / 2, t.y, cotColor, -12, -6);
+            }
+            if (state.guides.projections && state.vis.sec && state.derived.circleCss.secGuide) {
+              const t = state.derived.circleCss.secGuide;
+              drawFloatingLabel("sec θ", (t.x + cx) / 2, (t.y + cy) / 2, secColor, 6, -4);
+            }
+            if (state.guides.projections && state.vis.csc && state.derived.circleCss.cscGuide) {
+              const t = state.derived.circleCss.cscGuide;
+              drawFloatingLabel("csc θ", (t.x + cx) / 2, (t.y + cy) / 2, cscColor, 6, -4);
+            }
           }
 
           ctx.fillStyle = point;
