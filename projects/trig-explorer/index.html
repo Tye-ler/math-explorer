@@ -208,7 +208,7 @@
 
     .content-grid {
       display: grid;
-      grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+      grid-template-columns: 1fr;
       gap: var(--space-4);
       align-items: start;
     }
@@ -233,6 +233,26 @@
     .control-stack {
       display: grid;
       gap: var(--space-2);
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: var(--space-2);
+      align-items: start;
+    }
+
+    .control-group {
+      display: grid;
+      gap: var(--space-2);
+      padding: 0 var(--space-2) 0 0;
+      border-right: 1px solid var(--line);
+      min-width: 0;
+    }
+
+    .control-group:last-child {
+      border-right: 0;
+      padding-right: 0;
     }
 
     .control {
@@ -388,7 +408,7 @@
     }
 
     .visualization-box {
-      min-height: 280px;
+      min-height: 460px;
       border: 1px dashed var(--viz-frame);
       background: var(--viz-bg);
       color: var(--viz-text);
@@ -411,7 +431,7 @@
     .trig-viz-row {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
       gap: var(--space-2);
       align-items: stretch;
       width: 100%;
@@ -519,6 +539,25 @@
       .content-grid {
         grid-template-columns: 1fr;
       }
+
+      .trig-viz-row {
+        grid-template-columns: 1fr;
+      }
+
+      .trig-graph-wrap {
+        height: auto;
+      }
+
+      .control-group {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 0 0 var(--space-2) 0;
+      }
+
+      .control-group:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
     }
 
     @media (max-width: 640px) {
@@ -542,7 +581,7 @@
       }
 
       .visualization-box {
-        min-height: 220px;
+        min-height: 320px;
       }
 
       .button-row {
@@ -578,114 +617,6 @@
       </section>
 
       <div class="content-grid">
-        <aside class="section" aria-labelledby="controls-title">
-          <h2 id="controls-title">controls</h2>
-          <div class="surface">
-            <div class="control-stack">
-              <div class="control">
-                <label id="angle-label" for="angle-slider">angle (rad)</label>
-                <input id="angle-slider" type="range" min="0" max="12.566" value="0" step="0.001" />
-              </div>
-
-              <div class="control">
-                <span class="control-group-label">units</span>
-                <label class="choice-row">
-                  <input type="radio" name="angle-units" id="unit-rad" value="rad" checked />
-                  <span>radians</span>
-                </label>
-                <label class="choice-row">
-                  <input type="radio" name="angle-units" id="unit-deg" value="deg" />
-                  <span>degrees</span>
-                </label>
-              </div>
-
-              <div class="button-row">
-                <button type="button" id="play-toggle" aria-pressed="false">play</button>
-                <button type="button" id="reset-button">reset</button>
-              </div>
-
-              <div class="control">
-                <label id="speed-label" for="speed-slider">speed (rad/s)</label>
-                <input id="speed-slider" type="range" min="0.2" max="3" value="1.2" step="0.05" />
-              </div>
-
-              <div class="control">
-                <label for="revolutions-slider">graph revolutions (1–4)</label>
-                <input id="revolutions-slider" type="range" min="1" max="4" value="2" step="1" />
-              </div>
-
-              <div class="control">
-                <label for="graph-yscale-slider">graph y-scale</label>
-                <input id="graph-yscale-slider" type="range" min="0.5" max="4" value="1" step="0.1" />
-              </div>
-
-              <p class="control-group-label">presets</p>
-              <div class="preset-grid" role="group" aria-label="Angle presets">
-                <button type="button" class="preset-btn" data-theta="0">0</button>
-                <button type="button" class="preset-btn" data-theta="pi/6">π/6</button>
-                <button type="button" class="preset-btn" data-theta="pi/4">π/4</button>
-                <button type="button" class="preset-btn" data-theta="pi/3">π/3</button>
-                <button type="button" class="preset-btn" data-theta="pi/2">π/2</button>
-                <button type="button" class="preset-btn" data-theta="pi">π</button>
-                <button type="button" class="preset-btn" data-theta="3pi/2">3π/2</button>
-                <button type="button" class="preset-btn" data-theta="2pi">2π</button>
-              </div>
-
-              <p class="control-group-label">show curves</p>
-              <div class="control">
-                <label class="choice-row">
-                  <input type="checkbox" id="vis-sin" checked />
-                  <span>sin</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="vis-cos" checked />
-                  <span>cos</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="vis-tan" />
-                  <span>tan</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="vis-cot" />
-                  <span>cot</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="vis-sec" />
-                  <span>sec</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="vis-csc" />
-                  <span>csc</span>
-                </label>
-              </div>
-
-              <p class="control-group-label">guides</p>
-              <div class="control">
-                <label class="choice-row">
-                  <input type="checkbox" id="guide-circle-axes" checked />
-                  <span>circle axes</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="guide-angle-arc" checked />
-                  <span>angle arc</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="guide-projections" checked />
-                  <span>sin / cos projections</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="guide-graph-grid" checked />
-                  <span>graph grid</span>
-                </label>
-                <label class="choice-row">
-                  <input type="checkbox" id="guide-period-markers" checked />
-                  <span>period markers (2π)</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </aside>
-
         <section class="section" aria-labelledby="visualization-title">
           <h2 id="visualization-title">visualization</h2>
           <div class="surface">
@@ -702,6 +633,126 @@
                     <canvas id="connector-canvas" width="800" height="420" aria-hidden="true"></canvas>
                   </div>
                   <div id="trig-readout" class="trig-readout" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="controls-title">
+          <h2 id="controls-title">controls</h2>
+          <div class="surface">
+            <div class="controls-row">
+              <div class="control-group">
+                <p class="control-group-label">angle + mode</p>
+                <div class="control">
+                  <label id="angle-label" for="angle-slider">angle (rad)</label>
+                  <input id="angle-slider" type="range" min="0" max="12.566" value="0" step="0.001" />
+                </div>
+                <div class="control">
+                  <span class="control-group-label">units</span>
+                  <label class="choice-row">
+                    <input type="radio" name="angle-units" id="unit-rad" value="rad" checked />
+                    <span>radians</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="radio" name="angle-units" id="unit-deg" value="deg" />
+                    <span>degrees</span>
+                  </label>
+                </div>
+                <div class="button-row">
+                  <button type="button" id="play-toggle" aria-pressed="false">play</button>
+                  <button type="button" id="reset-button">reset</button>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <p class="control-group-label">range + scaling</p>
+                <div class="control">
+                  <label id="speed-label" for="speed-slider">speed (rad/s)</label>
+                  <input id="speed-slider" type="range" min="0.2" max="3" value="1.2" step="0.05" />
+                </div>
+                <div class="control">
+                  <label for="revolutions-slider">graph revolutions (1–4)</label>
+                  <input id="revolutions-slider" type="range" min="1" max="4" value="2" step="1" />
+                </div>
+                <div class="control">
+                  <label for="graph-yscale-slider">graph y-scale</label>
+                  <input id="graph-yscale-slider" type="range" min="0.5" max="4" value="1" step="0.1" />
+                </div>
+              </div>
+
+              <div class="control-group">
+                <p class="control-group-label">presets</p>
+                <div class="preset-grid" role="group" aria-label="Angle presets">
+                  <button type="button" class="preset-btn" data-theta="0">0</button>
+                  <button type="button" class="preset-btn" data-theta="pi/6">π/6</button>
+                  <button type="button" class="preset-btn" data-theta="pi/4">π/4</button>
+                  <button type="button" class="preset-btn" data-theta="pi/3">π/3</button>
+                  <button type="button" class="preset-btn" data-theta="pi/2">π/2</button>
+                  <button type="button" class="preset-btn" data-theta="pi">π</button>
+                  <button type="button" class="preset-btn" data-theta="3pi/2">3π/2</button>
+                  <button type="button" class="preset-btn" data-theta="2pi">2π</button>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <p class="control-group-label">show curves</p>
+                <div class="control">
+                  <label class="choice-row">
+                    <input type="checkbox" id="vis-sin" checked />
+                    <span>sin</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="vis-cos" checked />
+                    <span>cos</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="vis-tan" />
+                    <span>tan</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="vis-cot" />
+                    <span>cot</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="vis-sec" />
+                    <span>sec</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="vis-csc" />
+                    <span>csc</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="control-group">
+                <p class="control-group-label">guides</p>
+                <div class="control">
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-circle-axes" checked />
+                    <span>circle axes</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-angle-arc" checked />
+                    <span>angle arc</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-projections" checked />
+                    <span>sin / cos projections</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-graph-grid" checked />
+                    <span>graph grid</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-period-markers" checked />
+                    <span>period markers (2π)</span>
+                  </label>
+                  <label class="choice-row">
+                    <input type="checkbox" id="guide-connectors" checked />
+                    <span>dotted connector lines</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -862,6 +913,7 @@
             projections: true,
             graphGrid: true,
             periodMarkers: true,
+            connectors: true,
           },
         };
 
@@ -923,6 +975,7 @@
           elements.guideProjections = document.getElementById("guide-projections");
           elements.guideGraphGrid = document.getElementById("guide-graph-grid");
           elements.guidePeriodMarkers = document.getElementById("guide-period-markers");
+          elements.guideConnectors = document.getElementById("guide-connectors");
         }
 
         function thetaMax() {
@@ -1029,6 +1082,7 @@
             ["guideProjections", "projections"],
             ["guideGraphGrid", "graphGrid"],
             ["guidePeriodMarkers", "periodMarkers"],
+            ["guideConnectors", "connectors"],
           ];
           guideMap.forEach(([elKey, name]) => {
             const el = elements[elKey];
@@ -1116,6 +1170,7 @@
           elements.guideProjections && (elements.guideProjections.checked = state.guides.projections);
           elements.guideGraphGrid && (elements.guideGraphGrid.checked = state.guides.graphGrid);
           elements.guidePeriodMarkers && (elements.guidePeriodMarkers.checked = state.guides.periodMarkers);
+          elements.guideConnectors && (elements.guideConnectors.checked = state.guides.connectors);
           syncAngleLabel();
         }
 
@@ -1736,7 +1791,7 @@
             (state.vis.tan && circleCss.tanGuide && graphCss.tanY !== null) ||
             (state.vis.cot && circleCss.cotGuide && graphCss.cotY !== null) ||
             (state.vis.csc && circleCss.cscGuide && graphCss.cscY !== null);
-          if (!state.guides.projections || !hasConnector) {
+          if (!state.guides.connectors || !hasConnector) {
             const ctx = connector.getContext("2d");
             if (ctx) ctx.clearRect(0, 0, connector.width, connector.height);
             return;
@@ -1765,6 +1820,7 @@
           const colCot = getCssColor("--viz-cot");
           const colCsc = getCssColor("--viz-csc");
           ctx.lineWidth = 1.5;
+          ctx.lineCap = "butt";
           ctx.setLineDash([6, 5]);
 
           const thetaX = graphCss.thetaX;
