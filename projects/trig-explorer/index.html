@@ -1210,7 +1210,7 @@
 
           const cx = cssW / 2;
           const cy = cssH / 2;
-          const R = Math.min(cssW, cssH) * 0.36;
+          const R = Math.min(cssW, sharedCircleRadiusPx(cssH));
           const th = state.thetaRad;
           const c = state.derived.cos;
           const s = state.derived.sin;
@@ -1309,11 +1309,14 @@
         }
 
         function graphYBounds() {
-          const v = state.vis;
-          const extended = v.tan || v.cot || v.sec || v.csc;
-          const base = extended ? 8.5 : 1.35;
-          const scaled = base * clamp(state.graphYScale, 0.5, 4.0);
+          const scaled = clamp(state.graphYScale, 0.5, 4.0);
           return { min: -scaled, max: scaled };
+        }
+
+        function sharedCircleRadiusPx(cssH) {
+          const scale = clamp(state.graphYScale, 0.5, 4.0);
+          const baseRadius = cssH * 0.36;
+          return baseRadius / scale;
         }
 
         function sampleCount() {
@@ -1467,8 +1470,10 @@
 
           const padL = 44;
           const padR = 12;
-          const padT = 22;
-          const padB = 22;
+          const circleRadiusPx = sharedCircleRadiusPx(cssH);
+          const targetPlotH = Math.max(40, Math.min(cssH, circleRadiusPx * 2 * clamp(state.graphYScale, 0.5, 4.0)));
+          const padT = (cssH - targetPlotH) / 2;
+          const padB = padT;
           const plotW = cssW - padL - padR;
           const plotH = cssH - padT - padB;
           const tMax = thetaMax();
@@ -1492,7 +1497,8 @@
           if (state.guides.graphGrid) {
             ctx.strokeStyle = grid;
             ctx.lineWidth = 1;
-            for (let g = -8; g <= 8; g++) {
+            const gLim = Math.ceil(yMax);
+            for (let g = -gLim; g <= gLim; g++) {
               if (g === 0) continue;
               if (g > yMax || g < yMin) continue;
               const yy = mapY(g);
@@ -1631,7 +1637,7 @@
           const graphCss = state.derived.graphCss;
           if (!circleCss || !graphCss) return;
 
-          if (!state.guides.projections || (!state.vis.sin && !state.vis.cos)) {
+          if (!state.guides.projections || !state.vis.sin) {
             const ctx = connector.getContext("2d");
             if (ctx) ctx.clearRect(0, 0, connector.width, connector.height);
             return;
@@ -1656,7 +1662,6 @@
           ctx.clearRect(0, 0, cssW, cssH);
 
           const colSin = getCssColor("--viz-sin");
-          const colCos = getCssColor("--viz-cos");
           ctx.lineWidth = 1.5;
           ctx.setLineDash([6, 5]);
 
@@ -1676,22 +1681,6 @@
             ctx.fillStyle = colSin;
             ctx.beginPath();
             ctx.arc(s1x, s1y, 3.5, 0, TAU);
-            ctx.fill();
-          }
-
-          if (state.vis.cos) {
-            const c0x = cOffX + circleCss.px;
-            const c0y = cOffY + circleCss.py;
-            const c1x = gx;
-            const c1y = gOffY + graphCss.cosY;
-            ctx.strokeStyle = colCos;
-            ctx.beginPath();
-            ctx.moveTo(c0x, c0y);
-            ctx.lineTo(c1x, c1y);
-            ctx.stroke();
-            ctx.fillStyle = colCos;
-            ctx.beginPath();
-            ctx.arc(c1x, c1y, 3.5, 0, TAU);
             ctx.fill();
           }
 
