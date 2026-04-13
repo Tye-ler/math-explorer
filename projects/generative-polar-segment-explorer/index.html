@@ -219,22 +219,31 @@
     }
 
     .controls-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      align-items: stretch;
+      display: grid;
+      grid-template-columns: minmax(190px, 0.95fr) minmax(220px, 1.2fr) minmax(220px, 1fr) minmax(220px, 1fr);
+      grid-template-areas:
+        "presets polar motion connectors"
+        "segments polar motion connectors"
+        "trails polar motion connectors";
+      gap: 0.55rem;
+      align-items: start;
     }
 
     .subsystem {
-      flex: 1 1 220px;
-      min-width: min(100%, 200px);
-      max-width: 100%;
       display: grid;
-      gap: var(--space-2);
-      padding: var(--space-2);
+      gap: 0.4rem;
+      padding: 0.55rem;
       border: 1px solid var(--line);
       background: rgba(0, 0, 0, 0.12);
+      align-content: start;
     }
+
+    .subsystem-presets { grid-area: presets; }
+    .subsystem-segments { grid-area: segments; }
+    .subsystem-trails { grid-area: trails; }
+    .subsystem-polar { grid-area: polar; }
+    .subsystem-motion { grid-area: motion; }
+    .subsystem-connectors { grid-area: connectors; }
 
     .subsystem-title {
       margin: 0;
@@ -247,8 +256,8 @@
 
     .control-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: var(--space-2);
+      grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+      gap: 0.45rem;
       align-items: end;
     }
 
@@ -319,6 +328,27 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
       transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .control select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: var(--menu-bg);
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--control-text) 50%),
+        linear-gradient(135deg, var(--control-text) 50%, transparent 50%);
+      background-position:
+        calc(100% - 13px) calc(50% - 2px),
+        calc(100% - 8px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      padding-right: 24px;
+    }
+
+    .control select option {
+      background: var(--menu-bg);
+      color: var(--control-text-hover);
     }
 
     .control input:not([type="checkbox"]):not([type="radio"]):hover,
@@ -452,8 +482,15 @@
         gap: var(--space-3);
       }
 
-      .subsystem {
-        flex: 1 1 100%;
+      .controls-strip {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "presets"
+          "segments"
+          "trails"
+          "polar"
+          "motion"
+          "connectors";
       }
 
       .visualization-box {
@@ -513,10 +550,19 @@
       </section>
 
       <div class="content-grid">
+        <section class="section" aria-labelledby="visualization-title">
+          <h2 id="visualization-title">visualization</h2>
+          <div class="surface">
+            <div class="visualization-box">
+              <div id="viz-mount" class="viz-mount" aria-label="polar segment visualization"></div>
+            </div>
+          </div>
+        </section>
+
         <section class="section" aria-labelledby="controls-title">
           <h2 id="controls-title">controls</h2>
           <div class="controls-strip">
-            <div class="subsystem" aria-labelledby="sub-presets">
+            <div class="subsystem subsystem-presets" aria-labelledby="sub-presets">
               <h3 class="subsystem-title" id="sub-presets">presets &amp; reset</h3>
               <div class="control">
                 <label for="preset-select">preset</label>
@@ -535,7 +581,7 @@
               </div>
             </div>
 
-            <div class="subsystem" aria-labelledby="sub-segments">
+            <div class="subsystem subsystem-segments" aria-labelledby="sub-segments">
               <h3 class="subsystem-title" id="sub-segments">segments</h3>
               <div class="control-row">
                 <div class="control">
@@ -557,7 +603,7 @@
               </div>
             </div>
 
-            <div class="subsystem" aria-labelledby="sub-polar">
+            <div class="subsystem subsystem-polar" aria-labelledby="sub-polar">
               <h3 class="subsystem-title" id="sub-polar">polar placement</h3>
               <div class="control-row">
                 <div class="control">
@@ -607,7 +653,7 @@
               </div>
             </div>
 
-            <div class="subsystem" aria-labelledby="sub-motion">
+            <div class="subsystem subsystem-motion" aria-labelledby="sub-motion">
               <h3 class="subsystem-title" id="sub-motion">motion</h3>
               <div class="control-row">
                 <label class="choice-row" for="phase-motion-enabled">
@@ -645,7 +691,7 @@
               </div>
             </div>
 
-            <div class="subsystem" aria-labelledby="sub-connectors">
+            <div class="subsystem subsystem-connectors" aria-labelledby="sub-connectors">
               <h3 class="subsystem-title" id="sub-connectors">connectors</h3>
               <div class="control-row">
                 <label class="choice-row" for="connectors-enabled">
@@ -684,7 +730,7 @@
               </div>
             </div>
 
-            <div class="subsystem" aria-labelledby="sub-trails">
+            <div class="subsystem subsystem-trails" aria-labelledby="sub-trails">
               <h3 class="subsystem-title" id="sub-trails">trails</h3>
               <div class="control-row">
                 <label class="choice-row" for="trail-enabled">
@@ -696,15 +742,6 @@
                   <input id="trail-persistence" type="range" min="0" max="1" step="0.01" value="0.55" />
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" aria-labelledby="visualization-title">
-          <h2 id="visualization-title">visualization</h2>
-          <div class="surface">
-            <div class="visualization-box">
-              <div id="viz-mount" class="viz-mount" aria-label="polar segment visualization"></div>
             </div>
           </div>
         </section>
@@ -1018,6 +1055,8 @@
 
         let state = createInitialState();
         const trailState = { canvas: null, ctx: null, width: 0, height: 0, dpr: 1 };
+        let viewTransform = { cx: 0, cy: 0, scale: 1 };
+        let lastViewSignature = "";
         let rafId = 0;
         let timeStart = performance.now();
         let lastFrameTime = timeStart;
@@ -1268,6 +1307,7 @@
           readControlsIntoState();
           updateDeltaThetaVisibility();
           updateDerivedState();
+          updateViewTransformIfNeeded(true);
           updateExplanation();
           if (needsAnimationLoop()) {
             startLoop();
@@ -1553,6 +1593,7 @@
           trailState.width = main.width;
           trailState.height = main.height;
           trailState.dpr = dpr;
+          updateViewTransformIfNeeded(true);
         }
 
         function clearTrailSurface() {
@@ -1562,16 +1603,54 @@
           trailState.ctx.setTransform(trailState.dpr, 0, 0, trailState.dpr, 0, 0);
         }
 
-        function worldToScreen(x, y, bounds, cssW, cssH) {
+        function computeViewTransform(bounds, cssW, cssH) {
           const bw = bounds.maxX - bounds.minX;
           const bh = bounds.maxY - bounds.minY;
           const span = Math.max(bw, bh, 1e-6);
-          const scale = 0.92 * Math.min(cssW, cssH) / span;
-          const cx = (bounds.minX + bounds.maxX) * 0.5;
-          const cy = (bounds.minY + bounds.maxY) * 0.5;
-          const sx = cssW * 0.5 + (x - cx) * scale;
-          const sy = cssH * 0.5 - (y - cy) * scale;
-          return { sx, sy, scale };
+          return {
+            scale: 0.92 * Math.min(cssW, cssH) / span,
+            cx: (bounds.minX + bounds.maxX) * 0.5,
+            cy: (bounds.minY + bounds.maxY) * 0.5,
+          };
+        }
+
+        function getViewSignature(config, cssW, cssH) {
+          return [
+            cssW,
+            cssH,
+            config.N,
+            config.L,
+            config.placementMode,
+            config.deltaTheta.toFixed(4),
+            config.thetaBase.toFixed(4),
+            config.polarPreset,
+            config.amplitude.toFixed(4),
+            config.harmonicK,
+            config.connectorsEnabled ? 1 : 0,
+            config.connectionKind,
+            config.connectionOffsetK,
+            config.connectionStride,
+          ].join("|");
+        }
+
+        function updateViewTransformIfNeeded(force = false) {
+          if (!elements.mainCanvas || !state.derived) return;
+          const cssW = elements.mainCanvas.clientWidth;
+          const cssH = elements.mainCanvas.clientHeight;
+          if (!cssW || !cssH) return;
+
+          const signature = getViewSignature(state.config, cssW, cssH);
+          if (!force && signature === lastViewSignature) return;
+
+          const bounds = computeBounds(state.derived);
+          viewTransform = computeViewTransform(bounds, cssW, cssH);
+          lastViewSignature = signature;
+        }
+
+        function worldToScreen(x, y, view, cssW, cssH) {
+          const sx = cssW * 0.5 + (x - view.cx) * view.scale;
+          const sy = cssH * 0.5 - (y - view.cy) * view.scale;
+          return { sx, sy };
         }
 
         function renderFrame(t) {
@@ -1584,8 +1663,9 @@
           const ctx = main.getContext("2d");
           const cssW = main.clientWidth;
           const cssH = main.clientHeight;
-          const bounds = computeBounds(derived);
           const c = state.config;
+          updateViewTransformIfNeeded(false);
+          const view = viewTransform;
 
           ctx.setTransform(1, 0, 0, 1, 0, 0);
           ctx.clearRect(0, 0, main.width, main.height);
@@ -1607,8 +1687,8 @@
             trailState.ctx.strokeStyle = c.primaryColor;
 
             derived.segments.forEach((s) => {
-              const a = worldToScreen(s.Aw.x, s.Aw.y, bounds, cssW, cssH);
-              const b = worldToScreen(s.Bw.x, s.Bw.y, bounds, cssW, cssH);
+              const a = worldToScreen(s.Aw.x, s.Aw.y, view, cssW, cssH);
+              const b = worldToScreen(s.Bw.x, s.Bw.y, view, cssW, cssH);
               trailState.ctx.beginPath();
               trailState.ctx.moveTo(a.sx, a.sy);
               trailState.ctx.lineTo(b.sx, b.sy);
@@ -1619,8 +1699,8 @@
               trailState.ctx.globalAlpha = 0.1 + c.trailPersistence * 0.12;
               trailState.ctx.strokeStyle = c.connectorColor;
               derived.connections.forEach((ln) => {
-                const p1 = worldToScreen(ln.x1, ln.y1, bounds, cssW, cssH);
-                const p2 = worldToScreen(ln.x2, ln.y2, bounds, cssW, cssH);
+                const p1 = worldToScreen(ln.x1, ln.y1, view, cssW, cssH);
+                const p2 = worldToScreen(ln.x2, ln.y2, view, cssW, cssH);
                 trailState.ctx.beginPath();
                 trailState.ctx.moveTo(p1.sx, p1.sy);
                 trailState.ctx.lineTo(p2.sx, p2.sy);
@@ -1645,7 +1725,7 @@
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
 
-          const o = worldToScreen(0, 0, bounds, cssW, cssH);
+          const o = worldToScreen(0, 0, view, cssW, cssH);
           ctx.strokeStyle = "rgba(255,255,255,0.2)";
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -1655,8 +1735,8 @@
           ctx.strokeStyle = c.primaryColor;
           ctx.lineWidth = 1.6;
           derived.segments.forEach((s) => {
-            const a = worldToScreen(s.Aw.x, s.Aw.y, bounds, cssW, cssH);
-            const b = worldToScreen(s.Bw.x, s.Bw.y, bounds, cssW, cssH);
+            const a = worldToScreen(s.Aw.x, s.Aw.y, view, cssW, cssH);
+            const b = worldToScreen(s.Bw.x, s.Bw.y, view, cssW, cssH);
             ctx.beginPath();
             ctx.moveTo(a.sx, a.sy);
             ctx.lineTo(b.sx, b.sy);
@@ -1668,8 +1748,8 @@
             ctx.lineWidth = 1.1;
             ctx.globalAlpha = 0.95;
             derived.connections.forEach((ln) => {
-              const p1 = worldToScreen(ln.x1, ln.y1, bounds, cssW, cssH);
-              const p2 = worldToScreen(ln.x2, ln.y2, bounds, cssW, cssH);
+              const p1 = worldToScreen(ln.x1, ln.y1, view, cssW, cssH);
+              const p2 = worldToScreen(ln.x2, ln.y2, view, cssW, cssH);
               ctx.beginPath();
               ctx.moveTo(p1.sx, p1.sy);
               ctx.lineTo(p2.sx, p2.sy);
