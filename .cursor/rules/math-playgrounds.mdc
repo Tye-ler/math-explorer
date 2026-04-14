@@ -153,6 +153,23 @@ Examples:
 - prefer explicit default-visible and default-hidden function states
 - prefer one global guide toggle for a visual system instead of many overlapping toggles when that is sufficient
 
+## UI layout correction rule
+
+When a controls/dashboard layout has already required more than 2 correction passes, stop making incremental spacing or width tweaks.
+
+Instead:
+- replace the entire affected layout subsystem in one pass
+- use an explicit CSS grid/flex structure
+- define exact panel arrangement and internal card layout
+- preserve IDs and behavior, but do not preserve broken layout markup/CSS
+
+Do not continue local tuning once overlap, overflow, or panel drift has appeared more than once.
+
+For dashboards with multiple control cards:
+- do not default to equal tile sizing
+- prefer explicit column wrappers when columns need independent vertical stacking
+- if one panel must sit directly under another regardless of neighboring panel heights, do not use a shared row-based grid for those cards
+
 ## Layout and Responsiveness Rules
 
 When a playground has multiple coordinated visual panels:
