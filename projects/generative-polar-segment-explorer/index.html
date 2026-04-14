@@ -376,6 +376,7 @@
     }
 
     #primary-color,
+    #secondary-segment-color,
     #connector-color {
       width: 100%;
       max-width: 100%;
@@ -737,6 +738,21 @@
                     <input id="primary-color" type="color" value="#5f8fe8" />
                   </div>
                 </div>
+                <div class="control-row control-row--cols-2">
+                  <div class="control">
+                    <label for="secondary-segment-color">secondary segment color</label>
+                    <input id="secondary-segment-color" type="color" value="#7f69ba" />
+                  </div>
+                  <div class="control">
+                    <label for="segment-color-mode">segment color mode</label>
+                    <select id="segment-color-mode">
+                      <option value="solidPrimary">solid primary</option>
+                      <option value="endToEndGradient">end-to-end gradient</option>
+                      <option value="radiusGradient">radius gradient</option>
+                      <option value="revolutionGradient">revolution gradient</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -865,6 +881,36 @@
                       <span data-role="min" data-slider-min-for="omega-global"></span>
                       <span data-role="zero" data-slider-zero-for="omega-global">0</span>
                       <span data-role="max" data-slider-max-for="omega-global"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="control-row">
+                  <label class="choice-row" for="linear-ping-pong-enabled">
+                    <input type="checkbox" id="linear-ping-pong-enabled" />
+                    enable linear ping-pong
+                  </label>
+                  <div class="control">
+                    <label class="has-slider-value" for="omega-linear-ping-pong">linear ping-pong speed (rad/s) <span class="slider-current" data-slider-current-for="omega-linear-ping-pong"></span></label>
+                    <input id="omega-linear-ping-pong" type="range" min="0" max="3" step="0.01" value="0.6" data-slider-display />
+                    <div class="slider-meta">
+                      <span data-role="min" data-slider-min-for="omega-linear-ping-pong"></span>
+                      <span data-role="zero" data-slider-zero-for="omega-linear-ping-pong">0</span>
+                      <span data-role="max" data-slider-max-for="omega-linear-ping-pong"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="control-row">
+                  <label class="choice-row" for="index-phase-offset-enabled">
+                    <input type="checkbox" id="index-phase-offset-enabled" />
+                    index phase offset
+                  </label>
+                  <div class="control">
+                    <label class="has-slider-value" for="phase-offset-per-segment">phase offset per segment (rad) <span class="slider-current" data-slider-current-for="phase-offset-per-segment"></span></label>
+                    <input id="phase-offset-per-segment" type="range" min="0" max="1.57" step="0.01" value="0.12" data-slider-display />
+                    <div class="slider-meta">
+                      <span data-role="min" data-slider-min-for="phase-offset-per-segment"></span>
+                      <span data-role="zero" data-slider-zero-for="phase-offset-per-segment">0</span>
+                      <span data-role="max" data-slider-max-for="phase-offset-per-segment"></span>
                     </div>
                   </div>
                 </div>
@@ -1300,7 +1346,13 @@
             connectorColor: src.connectorColor,
             trailEnabled: src.trailEnabled,
             trailPersistence: src.trailPersistence,
-            activePresetId: "simple-circle",
+            secondaryColor: src.secondaryColor ?? "#7f69ba",
+            segmentColorMode: src.segmentColorMode ?? "solidPrimary",
+            linearPingPongEnabled: src.linearPingPongEnabled ?? false,
+            omegaLinearPingPong: src.omegaLinearPingPong ?? 0.6,
+            indexPhaseOffsetEnabled: src.indexPhaseOffsetEnabled ?? false,
+            phaseOffsetPerSegment: src.phaseOffsetPerSegment ?? 0.12,
+            activePresetId: src.activePresetId ?? "simple-circle",
           };
         }
 
@@ -1311,6 +1363,8 @@
           elements.segmentCount = document.getElementById("segment-count");
           elements.segmentLength = document.getElementById("segment-length");
           elements.primaryColor = document.getElementById("primary-color");
+          elements.secondarySegmentColor = document.getElementById("secondary-segment-color");
+          elements.segmentColorMode = document.getElementById("segment-color-mode");
           elements.placementMode = document.getElementById("placement-mode");
           elements.deltaTheta = document.getElementById("delta-theta");
           elements.deltaThetaWrap = document.getElementById("delta-theta-wrap");
@@ -1326,6 +1380,10 @@
           elements.mirroredLocal = document.getElementById("mirrored-local");
           elements.globalRotationEnabled = document.getElementById("global-rotation-enabled");
           elements.omegaGlobal = document.getElementById("omega-global");
+          elements.linearPingPongEnabled = document.getElementById("linear-ping-pong-enabled");
+          elements.omegaLinearPingPong = document.getElementById("omega-linear-ping-pong");
+          elements.indexPhaseOffsetEnabled = document.getElementById("index-phase-offset-enabled");
+          elements.phaseOffsetPerSegment = document.getElementById("phase-offset-per-segment");
           elements.connectorsEnabled = document.getElementById("connectors-enabled");
           elements.connectionKind = document.getElementById("connection-kind");
           elements.connectionOffsetK = document.getElementById("connection-offset-k");
@@ -1381,6 +1439,8 @@
             elements.segmentCount,
             elements.segmentLength,
             elements.primaryColor,
+            elements.secondarySegmentColor,
+            elements.segmentColorMode,
             elements.placementMode,
             elements.deltaTheta,
             elements.thetaBaseDeg,
@@ -1395,6 +1455,10 @@
             elements.mirroredLocal,
             elements.globalRotationEnabled,
             elements.omegaGlobal,
+            elements.linearPingPongEnabled,
+            elements.omegaLinearPingPong,
+            elements.indexPhaseOffsetEnabled,
+            elements.phaseOffsetPerSegment,
             elements.connectorsEnabled,
             elements.connectionKind,
             elements.connectionOffsetK,
@@ -1415,6 +1479,8 @@
           if (elements.segmentCount) elements.segmentCount.value = String(clamp(Math.round(c.N), 1, UI_N_MAX));
           if (elements.segmentLength) elements.segmentLength.value = String(c.L);
           if (elements.primaryColor) elements.primaryColor.value = c.primaryColor;
+          if (elements.secondarySegmentColor) elements.secondarySegmentColor.value = c.secondaryColor;
+          if (elements.segmentColorMode) elements.segmentColorMode.value = c.segmentColorMode;
           if (elements.placementMode) elements.placementMode.value = c.placementMode;
           if (elements.deltaTheta) elements.deltaTheta.value = String(c.deltaTheta);
           if (elements.thetaBaseDeg) elements.thetaBaseDeg.value = String((c.thetaBase * 180) / Math.PI);
@@ -1429,6 +1495,10 @@
           if (elements.mirroredLocal) elements.mirroredLocal.checked = c.mirroredLocal;
           if (elements.globalRotationEnabled) elements.globalRotationEnabled.checked = c.globalRotationEnabled;
           if (elements.omegaGlobal) elements.omegaGlobal.value = String(c.omegaGlobal);
+          if (elements.linearPingPongEnabled) elements.linearPingPongEnabled.checked = c.linearPingPongEnabled;
+          if (elements.omegaLinearPingPong) elements.omegaLinearPingPong.value = String(c.omegaLinearPingPong);
+          if (elements.indexPhaseOffsetEnabled) elements.indexPhaseOffsetEnabled.checked = c.indexPhaseOffsetEnabled;
+          if (elements.phaseOffsetPerSegment) elements.phaseOffsetPerSegment.value = String(c.phaseOffsetPerSegment);
           if (elements.connectorsEnabled) elements.connectorsEnabled.checked = c.connectorsEnabled;
           if (elements.connectionKind) elements.connectionKind.value = c.connectionKind;
           if (elements.connectionOffsetK) elements.connectionOffsetK.value = String(c.connectionOffsetK);
@@ -1487,6 +1557,8 @@
           c.N = clamp(Math.round(Number(elements.segmentCount && elements.segmentCount.value)), 1, Math.min(UI_N_MAX, INTERNAL_N_MAX));
           c.L = Number(elements.segmentLength && elements.segmentLength.value);
           c.primaryColor = (elements.primaryColor && elements.primaryColor.value) || "#5f8fe8";
+          c.secondaryColor = (elements.secondarySegmentColor && elements.secondarySegmentColor.value) || "#7f69ba";
+          c.segmentColorMode = (elements.segmentColorMode && elements.segmentColorMode.value) || "solidPrimary";
           c.placementMode = (elements.placementMode && elements.placementMode.value) || "fullCircle";
           c.deltaTheta = Math.max(0.0001, Number(elements.deltaTheta && elements.deltaTheta.value));
           c.thetaBase = ((Number(elements.thetaBaseDeg && elements.thetaBaseDeg.value) || 0) * Math.PI) / 180;
@@ -1501,6 +1573,10 @@
           c.mirroredLocal = Boolean(elements.mirroredLocal && elements.mirroredLocal.checked);
           c.globalRotationEnabled = Boolean(elements.globalRotationEnabled && elements.globalRotationEnabled.checked);
           c.omegaGlobal = Number(elements.omegaGlobal && elements.omegaGlobal.value);
+          c.linearPingPongEnabled = Boolean(elements.linearPingPongEnabled && elements.linearPingPongEnabled.checked);
+          c.omegaLinearPingPong = Number(elements.omegaLinearPingPong && elements.omegaLinearPingPong.value);
+          c.indexPhaseOffsetEnabled = Boolean(elements.indexPhaseOffsetEnabled && elements.indexPhaseOffsetEnabled.checked);
+          c.phaseOffsetPerSegment = Number(elements.phaseOffsetPerSegment && elements.phaseOffsetPerSegment.value);
           c.connectorsEnabled = Boolean(elements.connectorsEnabled && elements.connectorsEnabled.checked);
           c.connectionKind = (elements.connectionKind && elements.connectionKind.value) || "AA";
           c.connectionOffsetK = Math.round(Number(elements.connectionOffsetK && elements.connectionOffsetK.value));
@@ -1516,7 +1592,8 @@
           const motion =
             (c.phaseMotionEnabled && c.omegaPhase !== 0) ||
             (c.localRotationEnabled && c.omegaLocal !== 0) ||
-            (c.globalRotationEnabled && c.omegaGlobal !== 0);
+            (c.globalRotationEnabled && c.omegaGlobal !== 0) ||
+            (c.linearPingPongEnabled && c.omegaLinearPingPong !== 0);
           return motion || c.trailEnabled;
         }
 
@@ -1622,8 +1699,19 @@
             const { rRaw, theta: thetaEval } = evalPolar(thetaSample, config, polarPhase);
             const { rEff, thetaPlacement } = applyNegativeRadiusRule(rRaw, thetaEval);
 
-            const mx = rEff * Math.cos(thetaPlacement);
-            const my = rEff * Math.sin(thetaPlacement);
+            const mxPolar = rEff * Math.cos(thetaPlacement);
+            const myPolar = rEff * Math.sin(thetaPlacement);
+
+            let mx = mxPolar;
+            let my = myPolar;
+            if (config.linearPingPongEnabled) {
+              const basePhase = config.omegaLinearPingPong * t;
+              const indexOffset =
+                config.indexPhaseOffsetEnabled ? i * config.phaseOffsetPerSegment : 0;
+              const s = Math.sin(basePhase + indexOffset);
+              mx = s * mxPolar;
+              my = s * myPolar;
+            }
 
             // Keep endpoint identity stable: orientation follows sampled theta,
             // while negative-r remapping only affects anchor placement.
@@ -1850,6 +1938,10 @@
             config.connectionKind,
             config.connectionOffsetK,
             config.connectionStride,
+            config.linearPingPongEnabled ? 1 : 0,
+            config.omegaLinearPingPong.toFixed(4),
+            config.indexPhaseOffsetEnabled ? 1 : 0,
+            config.phaseOffsetPerSegment.toFixed(4),
           ].join("|");
         }
 
@@ -1873,6 +1965,67 @@
           return { sx, sy };
         }
 
+        function parseHexColor(hex) {
+          const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || "");
+          if (!m) return { r: 95, g: 143, b: 232 };
+          return {
+            r: parseInt(m[1], 16),
+            g: parseInt(m[2], 16),
+            b: parseInt(m[3], 16),
+          };
+        }
+
+        function mixHexColors(primaryHex, secondaryHex, primaryWeight) {
+          const p = parseHexColor(primaryHex);
+          const s = parseHexColor(secondaryHex);
+          const w = Math.min(1, Math.max(0, primaryWeight));
+          const r = Math.round(s.r + (p.r - s.r) * w);
+          const g = Math.round(s.g + (p.g - s.g) * w);
+          const b = Math.round(s.b + (p.b - s.b) * w);
+          return `rgb(${r},${g},${b})`;
+        }
+
+        function setSegmentStrokeStyle(ctx, cfg, seg, rMaxAnchor, ptA, ptB) {
+          const mode = cfg.segmentColorMode || "solidPrimary";
+          if (mode === "solidPrimary") {
+            ctx.strokeStyle = cfg.primaryColor;
+            return;
+          }
+
+          if (mode === "endToEndGradient") {
+            const dx = ptB.sx - ptA.sx;
+            const dy = ptB.sy - ptA.sy;
+            if (dx * dx + dy * dy < 1e-6) {
+              ctx.strokeStyle = cfg.primaryColor;
+              return;
+            }
+            const grd = ctx.createLinearGradient(ptA.sx, ptA.sy, ptB.sx, ptB.sy);
+            grd.addColorStop(0, cfg.primaryColor);
+            grd.addColorStop(1, cfg.secondaryColor);
+            ctx.strokeStyle = grd;
+            return;
+          }
+
+          if (mode === "radiusGradient") {
+            const r = Math.hypot(seg.Mw.x, seg.Mw.y);
+            const t = rMaxAnchor > 1e-12 ? Math.min(1, r / rMaxAnchor) : 0.5;
+            ctx.strokeStyle = mixHexColors(cfg.primaryColor, cfg.secondaryColor, t);
+            return;
+          }
+
+          if (mode === "revolutionGradient") {
+            const r = Math.hypot(seg.Mw.x, seg.Mw.y);
+            let t = 0.5;
+            if (r > 1e-12) {
+              t = (1 + seg.Mw.x / r) / 2;
+            }
+            ctx.strokeStyle = mixHexColors(cfg.primaryColor, cfg.secondaryColor, t);
+            return;
+          }
+
+          ctx.strokeStyle = cfg.primaryColor;
+        }
+
         function renderFrame(t) {
           readControlsIntoState();
           updateDerivedState();
@@ -1886,6 +2039,14 @@
           const c = state.config;
           updateViewTransformIfNeeded(false);
           const view = viewTransform;
+
+          let rMaxAnchor = 0;
+          if (c.segmentColorMode === "radiusGradient") {
+            derived.segments.forEach((s) => {
+              const r = Math.hypot(s.Mw.x, s.Mw.y);
+              if (r > rMaxAnchor) rMaxAnchor = r;
+            });
+          }
 
           ctx.setTransform(1, 0, 0, 1, 0, 0);
           ctx.clearRect(0, 0, main.width, main.height);
@@ -1904,11 +2065,11 @@
             trailState.ctx.lineCap = "round";
             trailState.ctx.lineJoin = "round";
             trailState.ctx.globalAlpha = 0.14 + c.trailPersistence * 0.18;
-            trailState.ctx.strokeStyle = c.primaryColor;
 
             derived.segments.forEach((s) => {
               const a = worldToScreen(s.Aw.x, s.Aw.y, view, cssW, cssH);
               const b = worldToScreen(s.Bw.x, s.Bw.y, view, cssW, cssH);
+              setSegmentStrokeStyle(trailState.ctx, c, s, rMaxAnchor, a, b);
               trailState.ctx.beginPath();
               trailState.ctx.moveTo(a.sx, a.sy);
               trailState.ctx.lineTo(b.sx, b.sy);
@@ -1952,11 +2113,11 @@
           ctx.arc(o.sx, o.sy, 3, 0, Math.PI * 2);
           ctx.stroke();
 
-          ctx.strokeStyle = c.primaryColor;
           ctx.lineWidth = 1.6;
           derived.segments.forEach((s) => {
             const a = worldToScreen(s.Aw.x, s.Aw.y, view, cssW, cssH);
             const b = worldToScreen(s.Bw.x, s.Bw.y, view, cssW, cssH);
+            setSegmentStrokeStyle(ctx, c, s, rMaxAnchor, a, b);
             ctx.beginPath();
             ctx.moveTo(a.sx, a.sy);
             ctx.lineTo(b.sx, b.sy);
