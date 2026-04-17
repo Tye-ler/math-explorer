@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Explorer Template</title>
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 960px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255,255,255,0.10);
+      --line-strong: rgba(255,255,255,0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255,255,255,0.14);
+      --viz-grid: rgba(255,255,255,0.08);
+      --viz-axis: rgba(255,255,255,0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+    }
+
+    :root[data-theme="light"] {
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0,0,0,0.08);
+      --line-strong: rgba(0,0,0,0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0,0,0,0.10);
+      --viz-grid: rgba(0,0,0,0.05);
+      --viz-axis: rgba(0,0,0,0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ta-site-header,
+    .ta-site-header * {
+      box-sizing: border-box;
+    }
+
+    .ta-site-header {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    .control input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+    .control select:focus-visible,
+    .control textarea:focus-visible,
+    button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .ta-site-project-shell {
+      min-height: calc(100vh - var(--ta-site-header-height));
+    }
+
+    .page-shell {
+      width: min(100% - 2rem, var(--max-width));
+      margin: 0 auto;
+      padding: var(--space-4) 0;
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .page-topbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      text-align: center;
+    }
+
+    .hero {
+      display: grid;
+      gap: 0.45rem;
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.15;
+      font-weight: 400;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 68ch;
+      font-size: 12px;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+      gap: var(--space-4);
+      align-items: start;
+    }
+
+    .section {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      padding: var(--space-2);
+    }
+
+    .control-stack {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .control {
+      display: grid;
+      gap: 0.3rem;
+    }
+
+    .control label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .stepper-button {
+      min-width: 28px;
+      padding: 4px 8px;
+    }
+
+    .stepper .control-input {
+      text-align: center;
+      padding-left: 8px;
+      padding-right: 8px;
+      cursor: text;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-2);
+    }
+
+    .control input:not([type="checkbox"]):not([type="radio"]),
+    .control select,
+    .control textarea,
+    button {
+      min-height: 28px;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .control input:not([type="checkbox"]):not([type="radio"]):hover,
+    .control select:hover,
+    .control textarea:hover,
+    button:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    button:disabled,
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    button:disabled:hover,
+    button[disabled]:hover {
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    .control input[type="number"]::-webkit-outer-spin-button,
+    .control input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .control input[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .control input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 16px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .control input[type="range"]::-webkit-slider-runnable-track {
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 4px;
+      height: 14px;
+      margin-top: -6.5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .control input[type="range"]::-moz-range-track {
+      height: 1px;
+      background: var(--line-strong);
+      border: 0;
+    }
+
+    .control input[type="range"]::-moz-range-thumb {
+      width: 4px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .control input[type="range"]:hover::-webkit-slider-runnable-track,
+    .control input[type="range"]:focus-visible::-webkit-slider-runnable-track,
+    .control input[type="range"]:hover::-moz-range-track,
+    .control input[type="range"]:focus-visible::-moz-range-track {
+      background: var(--control-text-hover);
+    }
+
+    .control input[type="range"]:hover::-webkit-slider-thumb,
+    .control input[type="range"]:focus-visible::-webkit-slider-thumb,
+    .control input[type="range"]:hover::-moz-range-thumb,
+    .control input[type="range"]:focus-visible::-moz-range-thumb {
+      border-color: var(--control-text-hover);
+      background: var(--control-text-hover);
+    }
+
+    .visualization-box {
+      min-height: 280px;
+      border: 1px dashed var(--viz-frame);
+      background: var(--viz-bg);
+      color: var(--viz-text);
+      padding: var(--space-2);
+      font-size: 12px;
+    }
+
+    .viz-mount {
+      width: 100%;
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+    }
+
+    .explanation {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .explanation strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    @media (max-width: 900px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .ta-site-project-shell {
+        min-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+
+      .page-shell {
+        padding: var(--space-3) 0;
+        gap: var(--space-3);
+      }
+
+      .content-grid {
+        gap: var(--space-3);
+      }
+
+      .visualization-box {
+        min-height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="ta-site-header" data-project-header data-root="../" aria-label="Site header">
+    <div class="ta-site-nav">
+      <a class="ta-site-brand" data-project-header-link="home" href="../">Tyeler Ahern</a>
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" data-project-header-link="home" href="../">Home</a>
+        <a class="ta-site-link" data-project-header-link="projects" href="../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="ta-site-project-shell">
+    <div class="page-shell">
+      <div class="page-topbar">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+      </div>
+
+      <section class="hero" aria-labelledby="project-title">
+        <h1 id="project-title">Math Explorer Template</h1>
+        <p>
+          Reusable single-file playground scaffold with a stable structure, token-based theming, and room for project-specific math.
+        </p>
+      </section>
+
+      <div class="content-grid">
+        <aside class="section" aria-labelledby="controls-title">
+          <h2 id="controls-title">controls</h2>
+          <div class="surface">
+            <div class="control-stack">
+              <div class="control">
+                <label for="primary-value">primary value</label>
+                <input id="primary-value" type="range" min="0" max="10" value="5" />
+              </div>
+
+              <div class="control">
+                <label for="secondary-value">secondary value</label>
+                <div class="stepper" data-stepper>
+                  <button type="button" class="stepper-button" data-step="-1" aria-label="decrease secondary value">-</button>
+                  <input id="secondary-value" class="control-input" type="number" min="0" max="100" step="1" value="12" inputmode="numeric" />
+                  <button type="button" class="stepper-button" data-step="1" aria-label="increase secondary value">+</button>
+                </div>
+              </div>
+
+              <div class="button-row">
+                <button type="button" id="reset-button">reset</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="section" aria-labelledby="visualization-title">
+          <h2 id="visualization-title">visualization</h2>
+          <div class="surface">
+            <div class="visualization-box">
+              <div id="viz-mount" class="viz-mount" aria-label="interactive mathematical visualization"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- sample visualization reference: keep as source-only reference for future playgrounds
+        <div class="viz-demo">
+          <svg viewBox="0 0 520 240" aria-label="theme-aware sample visualization">
+            <rect x="0" y="0" width="520" height="240" fill="var(--viz-bg)" />
+
+            <g stroke="var(--viz-grid)" stroke-width="1">
+              <line x1="40" y1="30" x2="40" y2="200" />
+              <line x1="120" y1="30" x2="120" y2="200" />
+              <line x1="200" y1="30" x2="200" y2="200" />
+              <line x1="280" y1="30" x2="280" y2="200" />
+              <line x1="360" y1="30" x2="360" y2="200" />
+              <line x1="440" y1="30" x2="440" y2="200" />
+              <line x1="40" y1="30" x2="480" y2="30" />
+              <line x1="40" y1="72" x2="480" y2="72" />
+              <line x1="40" y1="114" x2="480" y2="114" />
+              <line x1="40" y1="156" x2="480" y2="156" />
+              <line x1="40" y1="198" x2="480" y2="198" />
+            </g>
+
+            <g stroke="var(--viz-axis)" stroke-width="1.5">
+              <line x1="40" y1="198" x2="480" y2="198" />
+              <line x1="40" y1="198" x2="40" y2="30" />
+            </g>
+
+            <polyline
+              fill="none"
+              stroke="var(--viz-primary)"
+              stroke-width="2"
+              points="40,182 120,156 200,126 280,96 360,78 440,58"
+            />
+
+            <polyline
+              fill="none"
+              stroke="var(--viz-secondary)"
+              stroke-width="2"
+              stroke-dasharray="5 4"
+              points="40,64 120,84 200,102 280,122 360,144 440,164"
+            />
+
+            <circle cx="280" cy="96" r="4" fill="var(--viz-point)" />
+
+            <g fill="var(--viz-text)" font-family="inherit" font-size="11">
+              <text x="484" y="202">x</text>
+              <text x="30" y="24">y</text>
+              <text x="290" y="90">f(x)</text>
+              <text x="292" y="136">g(x)</text>
+            </g>
+          </svg>
+        </div>
+        -->
+      </div>
+
+      <section class="section" aria-labelledby="explanation-title">
+        <h2 id="explanation-title">explanation</h2>
+        <div class="surface">
+          <p class="explanation">
+            <strong>Template role:</strong> explain what the current state means, what the visualization shows, and any mathematical caveats or interpretation notes.
+          </p>
+        </div>
+      </section>
+
+      <!-- optional control patterns: keep as source-only reference for future playgrounds
+      <div class="control">
+        <label for="sample-mode">mode</label>
+        <select id="sample-mode">
+          <option>default</option>
+          <option>compare</option>
+          <option>explore</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>
+          <input type="checkbox" checked />
+          show guides
+        </label>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>view</legend>
+        <label class="choice-row">
+          <input type="radio" name="sample-view" value="cartesian" checked />
+          <span>cartesian</span>
+        </label>
+        <label class="choice-row">
+          <input type="radio" name="sample-view" value="polar" />
+          <span>polar</span>
+        </label>
+      </fieldset>
+
+      <div class="control">
+        <label for="sample-notes">notes</label>
+        <textarea id="sample-notes" rows="4">example input, expression notes, or set contents</textarea>
+      </div>
+
+      <div class="button-row">
+        <button type="button">preset a</button>
+        <button type="button">preset b</button>
+        <button type="button">reset</button>
+        <button type="button" disabled>disabled</button>
+      </div>
+      -->
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const rootElement = document.documentElement;
+      const themeToggle = document.querySelector("#theme-toggle");
+      const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+      let themeMode = "auto";
+
+      initializeTheme();
+      initializeHeaderLinks();
+      initializeSteppers();
+      initializePlayground();
+
+      function initializeTheme() {
+        themeMode = "auto";
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+
+        if (themeToggle) {
+          themeToggle.addEventListener("click", cycleThemeMode);
+        }
+
+        if (mediaQuery) {
+          const handleChange = () => {
+            if (themeMode === "auto") {
+              applyTheme("auto");
+              updateThemeToggleLabel();
+            }
+          };
+
+          if (typeof mediaQuery.addEventListener === "function") {
+            mediaQuery.addEventListener("change", handleChange);
+          } else if (typeof mediaQuery.addListener === "function") {
+            mediaQuery.addListener(handleChange);
+          }
+        }
+      }
+
+      function applyTheme(mode) {
+        rootElement.setAttribute("data-theme", resolveTheme(mode));
+      }
+
+      function cycleThemeMode() {
+        if (themeMode === "auto") {
+          themeMode = resolveTheme("auto") === "dark" ? "light" : "dark";
+        } else if (themeMode === "light") {
+          themeMode = "dark";
+        } else {
+          themeMode = "auto";
+        }
+
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+      }
+
+      function updateThemeToggleLabel() {
+        if (!themeToggle) return;
+        themeToggle.textContent = `theme: ${themeMode}`;
+      }
+
+      function resolveTheme(mode) {
+        if (mode === "auto") {
+          return mediaQuery && mediaQuery.matches ? "dark" : "light";
+        }
+        return mode;
+      }
+
+      function initializeSteppers() {
+        document.querySelectorAll("[data-stepper]").forEach((stepper) => {
+          const input = stepper.querySelector('input[type="number"]');
+          if (!input) return;
+
+          stepper.querySelectorAll("[data-step]").forEach((button) => {
+            button.addEventListener("click", () => {
+              const amount = Number(button.getAttribute("data-step") || 0);
+              if (!amount) return;
+
+              const step = Number(input.step) || 1;
+              const min = input.min === "" ? -Infinity : Number(input.min);
+              const max = input.max === "" ? Infinity : Number(input.max);
+              const current = input.value === "" ? 0 : Number(input.value);
+              const next = clamp(current + amount * step, min, max);
+
+              input.value = String(next);
+              input.dispatchEvent(new Event("input", { bubbles: true }));
+              input.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+          });
+        });
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function initializeHeaderLinks() {
+        const header = document.querySelector("[data-project-header]");
+        if (!header) return;
+
+        const root = normalizeRoot(header.getAttribute("data-root") || "./");
+
+        const linkTargets = {
+          home: root,
+          projects: `${root}#projects`,
+        };
+
+        header.querySelectorAll("[data-project-header-link]").forEach((link) => {
+          const key = link.getAttribute("data-project-header-link");
+          if (linkTargets[key]) {
+            link.setAttribute("href", linkTargets[key]);
+          }
+        });
+
+        header.querySelectorAll(".ta-site-link").forEach((link) => {
+          const url = new URL(link.getAttribute("href"), window.location.href);
+          const samePath = stripIndex(url.pathname) === stripIndex(window.location.pathname);
+          const sameHash = url.hash ? url.hash === window.location.hash : !window.location.hash;
+
+          if (samePath && sameHash) {
+            link.setAttribute("aria-current", "page");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        });
+      }
+
+      function normalizeRoot(value) {
+        if (!value || value === ".") return "./";
+        return /[#/]$/.test(value) ? value : `${value}/`;
+      }
+
+      function stripIndex(pathname) {
+        return pathname.replace(/\/index\.html$/i, "/");
+      }
+
+      // ---------------------------------------------------
+      // Playground-specific lifecycle
+      // Replace placeholder state, math, and rendering logic
+      // while preserving the general control -> state ->
+      // derived state -> render -> explanation flow.
+      // ---------------------------------------------------
+      function initializePlayground() {
+        const defaults = {
+          primaryValue: 5,
+          secondaryValue: 12,
+        };
+
+        let state = createInitialState();
+        const elements = {};
+
+        cacheElements();
+        bindControls();
+        syncControlsFromState();
+        updateDerivedState();
+        render();
+        updateExplanation();
+
+        function cacheElements() {
+          elements.primaryValue = document.getElementById("primary-value");
+          elements.secondaryValue = document.getElementById("secondary-value");
+          elements.resetButton = document.getElementById("reset-button");
+          elements.vizMount = document.getElementById("viz-mount");
+          elements.explanation = document.querySelector(".explanation");
+        }
+
+        function createInitialState() {
+          return {
+            primaryValue: defaults.primaryValue,
+            secondaryValue: defaults.secondaryValue,
+            derived: {},
+          };
+        }
+
+        function bindControls() {
+          if (elements.primaryValue) {
+            elements.primaryValue.addEventListener("input", (event) => {
+              state.primaryValue = Number(event.target.value);
+              refresh();
+            });
+          }
+
+          if (elements.secondaryValue) {
+            elements.secondaryValue.addEventListener("input", (event) => {
+              const value = Number(event.target.value);
+              state.secondaryValue = Number.isFinite(value) ? value : defaults.secondaryValue;
+              refresh();
+            });
+          }
+
+          if (elements.resetButton) {
+            elements.resetButton.addEventListener("click", () => {
+              resetState();
+            });
+          }
+        }
+
+        function syncControlsFromState() {
+          if (elements.primaryValue) {
+            elements.primaryValue.value = String(state.primaryValue);
+          }
+
+          if (elements.secondaryValue) {
+            elements.secondaryValue.value = String(state.secondaryValue);
+          }
+        }
+
+        function updateDerivedState() {
+          state.derived = {
+            derivedPreview: state.primaryValue * 2,
+            normalizedSecondaryValue: Math.max(0, state.secondaryValue),
+          };
+        }
+
+        function render() {
+          if (!elements.vizMount) return;
+
+          elements.vizMount.textContent =
+            `primaryValue=${state.primaryValue}, secondaryValue=${state.secondaryValue}, derivedPreview=${state.derived.derivedPreview}`;
+        }
+
+        function updateExplanation() {
+          if (!elements.explanation) return;
+
+          elements.explanation.innerHTML = `
+            <strong>Template role:</strong> this playground currently shows how live state,
+            derived state, rendering, and explanation updates stay synchronized in one predictable flow.
+          `;
+        }
+
+        function resetState() {
+          state = createInitialState();
+          syncControlsFromState();
+          refresh();
+        }
+
+        function refresh() {
+          updateDerivedState();
+          render();
+          updateExplanation();
+        }
+
+        window.mathExplorer = {
+          resetState,
+          getState: () => structuredCloneSafe(state),
+        };
+      }
+
+      function structuredCloneSafe(value) {
+        try {
+          return structuredClone(value);
+        } catch {
+          return JSON.parse(JSON.stringify(value));
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
