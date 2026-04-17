@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Math Explorer Template</title>
+  <title>Prime Explorer</title>
   <style>
     :root {
       --ta-site-header-height: 3.25rem;
@@ -14,6 +14,8 @@
       --space-3: 1.25rem;
       --space-4: 1.75rem;
       --accent: #86e1ff;
+      --prime-color: #7ee787;
+      --neutral-point: #6b8cce;
     }
 
     :root,
@@ -196,7 +198,7 @@
 
     .content-grid {
       display: grid;
-      grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
       gap: var(--space-4);
       align-items: start;
     }
@@ -233,6 +235,46 @@
       color: var(--muted);
     }
 
+    .factor-row {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .factor-input-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .factor-status {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .factor-status[data-state="clean"] {
+      border-color: rgba(94, 200, 120, 0.45);
+      color: #8fd4a4;
+    }
+
+    .factor-status[data-state="warning"] {
+      border-color: rgba(230, 190, 80, 0.55);
+      color: #e6c060;
+    }
+
+    .factor-status[data-state="invalid"] {
+      border-color: rgba(230, 100, 100, 0.55);
+      color: #e07070;
+    }
+
+    .mode-hidden {
+      display: none !important;
+    }
+
     .stepper {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
@@ -252,10 +294,21 @@
       cursor: text;
     }
 
-    .button-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: var(--space-2);
+    .summary-block {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .summary-block strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .summary-block code {
+      font-size: 11px;
+      color: var(--viz-text);
     }
 
     .control input:not([type="checkbox"]):not([type="radio"]),
@@ -286,12 +339,6 @@
     button[disabled] {
       opacity: 0.45;
       cursor: not-allowed;
-      border-color: var(--line);
-      color: var(--muted);
-    }
-
-    button:disabled:hover,
-    button[disabled]:hover {
       border-color: var(--line);
       color: var(--muted);
     }
@@ -365,7 +412,7 @@
     }
 
     .visualization-box {
-      min-height: 280px;
+      min-height: 320px;
       border: 1px dashed var(--viz-frame);
       background: var(--viz-bg);
       color: var(--viz-text);
@@ -375,20 +422,15 @@
 
     .viz-mount {
       width: 100%;
-      min-height: 240px;
-      display: grid;
-      place-items: center;
+      min-height: 300px;
+      display: block;
     }
 
-    .explanation {
-      margin: 0;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .explanation strong {
-      color: var(--text);
-      font-weight: 400;
+    .viz-mount canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: middle;
     }
 
     @media (max-width: 900px) {
@@ -418,18 +460,18 @@
       }
 
       .visualization-box {
-        min-height: 220px;
+        min-height: 260px;
       }
     }
   </style>
 </head>
 <body>
-  <header class="ta-site-header" data-project-header data-root="../" aria-label="Site header">
+  <header class="ta-site-header" data-project-header data-root="../../" aria-label="Site header">
     <div class="ta-site-nav">
-      <a class="ta-site-brand" data-project-header-link="home" href="../">Tyeler Ahern</a>
+      <a class="ta-site-brand" data-project-header-link="home" href="../../">Tyeler Ahern</a>
       <nav class="ta-site-links" aria-label="Site navigation">
-        <a class="ta-site-link" data-project-header-link="home" href="../">Home</a>
-        <a class="ta-site-link" data-project-header-link="projects" href="../#projects">Projects</a>
+        <a class="ta-site-link" data-project-header-link="home" href="../../">Home</a>
+        <a class="ta-site-link" data-project-header-link="projects" href="../../#projects">Projects</a>
         <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
       </nav>
     </div>
@@ -442,9 +484,9 @@
       </div>
 
       <section class="hero" aria-labelledby="project-title">
-        <h1 id="project-title">Math Explorer Template</h1>
+        <h1 id="project-title">Prime Explorer</h1>
         <p>
-          Reusable single-file playground scaffold with a stable structure, token-based theming, and room for project-specific math.
+          Plot integers 1…N on a Cartesian canvas using a polar or square spiral. Highlight primes, filter composites by prime factors, and read the active equations live.
         </p>
       </section>
 
@@ -454,137 +496,100 @@
           <div class="surface">
             <div class="control-stack">
               <div class="control">
-                <label for="primary-value">primary value</label>
-                <input id="primary-value" type="range" min="0" max="10" value="5" />
+                <label for="plot-mode">plot mode</label>
+                <select id="plot-mode">
+                  <option value="polar">polar spiral</option>
+                  <option value="square">square spiral</option>
+                </select>
               </div>
 
               <div class="control">
-                <label for="secondary-value">secondary value</label>
-                <div class="stepper" data-stepper>
-                  <button type="button" class="stepper-button" data-step="-1" aria-label="decrease secondary value">-</button>
-                  <input id="secondary-value" class="control-input" type="number" min="0" max="100" step="1" value="12" inputmode="numeric" />
-                  <button type="button" class="stepper-button" data-step="1" aria-label="increase secondary value">+</button>
+                <label for="visibility-mode">display / visibility</label>
+                <select id="visibility-mode">
+                  <option value="all">show all</option>
+                  <option value="composites">show only composites</option>
+                  <option value="primes">show only primes</option>
+                </select>
+              </div>
+
+              <div class="control factor-row">
+                <label for="factor-input">prime factor filter (composites)</label>
+                <div class="factor-input-wrap">
+                  <input id="factor-input" type="text" placeholder="e.g. 2, 3, 5" autocomplete="off" spellcheck="false" />
+                  <span id="factor-status" class="factor-status" data-state="clean" title="Factor parse status">ok</span>
                 </div>
               </div>
 
-              <div class="button-row">
-                <button type="button" id="reset-button">reset</button>
+              <div class="control">
+                <label for="max-n">max integer N (1…<span id="max-n-cap-label">10000</span>)</label>
+                <div class="stepper" data-stepper>
+                  <button type="button" class="stepper-button" data-step="-1" aria-label="decrease N">-</button>
+                  <input id="max-n" class="control-input" type="number" min="1" max="10000" step="1" value="400" inputmode="numeric" />
+                  <button type="button" class="stepper-button" data-step="1" aria-label="increase N">+</button>
+                </div>
+              </div>
+
+              <div class="control">
+                <label for="point-size">point size</label>
+                <input id="point-size" type="range" min="1" max="8" step="0.5" value="2.5" />
+              </div>
+
+              <div class="control">
+                <label>
+                  <input id="show-grid" type="checkbox" checked />
+                  show grid
+                </label>
+              </div>
+
+              <div id="polar-controls" class="control-stack">
+                <div class="control">
+                  <label for="polar-m">m (Δθ = 2π / m)</label>
+                  <div class="stepper" data-stepper>
+                    <button type="button" class="stepper-button" data-step="-1" aria-label="decrease m">-</button>
+                    <input id="polar-m" class="control-input" type="number" min="1" max="360" step="1" value="12" inputmode="numeric" />
+                    <button type="button" class="stepper-button" data-step="1" aria-label="increase m">+</button>
+                  </div>
+                </div>
+                <div class="control">
+                  <label for="polar-a">radius scale a</label>
+                  <input id="polar-a" type="range" min="0.05" max="3" step="0.01" value="0.35" />
+                </div>
+                <div class="control">
+                  <label for="radius-preset">radius preset</label>
+                  <select id="radius-preset">
+                    <option value="sqrt">r_n = a√n</option>
+                    <option value="linear">r_n = an</option>
+                    <option value="log">r_n = a log(n + 1)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="square-controls" class="control-stack mode-hidden">
+                <div class="control">
+                  <label for="cell-spacing">cell spacing / scale</label>
+                  <input id="cell-spacing" type="range" min="0.2" max="2" step="0.02" value="1" />
+                </div>
               </div>
             </div>
           </div>
         </aside>
 
         <section class="section" aria-labelledby="visualization-title">
-          <h2 id="visualization-title">visualization</h2>
+          <h2 id="visualization-title">canvas</h2>
           <div class="surface">
             <div class="visualization-box">
-              <div id="viz-mount" class="viz-mount" aria-label="interactive mathematical visualization"></div>
+              <div id="viz-mount" class="viz-mount" aria-label="prime distribution plot"></div>
             </div>
           </div>
         </section>
-
-        <!-- sample visualization reference: keep as source-only reference for future playgrounds
-        <div class="viz-demo">
-          <svg viewBox="0 0 520 240" aria-label="theme-aware sample visualization">
-            <rect x="0" y="0" width="520" height="240" fill="var(--viz-bg)" />
-
-            <g stroke="var(--viz-grid)" stroke-width="1">
-              <line x1="40" y1="30" x2="40" y2="200" />
-              <line x1="120" y1="30" x2="120" y2="200" />
-              <line x1="200" y1="30" x2="200" y2="200" />
-              <line x1="280" y1="30" x2="280" y2="200" />
-              <line x1="360" y1="30" x2="360" y2="200" />
-              <line x1="440" y1="30" x2="440" y2="200" />
-              <line x1="40" y1="30" x2="480" y2="30" />
-              <line x1="40" y1="72" x2="480" y2="72" />
-              <line x1="40" y1="114" x2="480" y2="114" />
-              <line x1="40" y1="156" x2="480" y2="156" />
-              <line x1="40" y1="198" x2="480" y2="198" />
-            </g>
-
-            <g stroke="var(--viz-axis)" stroke-width="1.5">
-              <line x1="40" y1="198" x2="480" y2="198" />
-              <line x1="40" y1="198" x2="40" y2="30" />
-            </g>
-
-            <polyline
-              fill="none"
-              stroke="var(--viz-primary)"
-              stroke-width="2"
-              points="40,182 120,156 200,126 280,96 360,78 440,58"
-            />
-
-            <polyline
-              fill="none"
-              stroke="var(--viz-secondary)"
-              stroke-width="2"
-              stroke-dasharray="5 4"
-              points="40,64 120,84 200,102 280,122 360,144 440,164"
-            />
-
-            <circle cx="280" cy="96" r="4" fill="var(--viz-point)" />
-
-            <g fill="var(--viz-text)" font-family="inherit" font-size="11">
-              <text x="484" y="202">x</text>
-              <text x="30" y="24">y</text>
-              <text x="290" y="90">f(x)</text>
-              <text x="292" y="136">g(x)</text>
-            </g>
-          </svg>
-        </div>
-        -->
       </div>
 
-      <section class="section" aria-labelledby="explanation-title">
-        <h2 id="explanation-title">explanation</h2>
+      <section class="section" aria-labelledby="equation-title">
+        <h2 id="equation-title">equation summary</h2>
         <div class="surface">
-          <p class="explanation">
-            <strong>Template role:</strong> explain what the current state means, what the visualization shows, and any mathematical caveats or interpretation notes.
-          </p>
+          <p id="equation-summary" class="summary-block"></p>
         </div>
       </section>
-
-      <!-- optional control patterns: keep as source-only reference for future playgrounds
-      <div class="control">
-        <label for="sample-mode">mode</label>
-        <select id="sample-mode">
-          <option>default</option>
-          <option>compare</option>
-          <option>explore</option>
-        </select>
-      </div>
-
-      <div class="control">
-        <label>
-          <input type="checkbox" checked />
-          show guides
-        </label>
-      </div>
-
-      <fieldset class="control-group">
-        <legend>view</legend>
-        <label class="choice-row">
-          <input type="radio" name="sample-view" value="cartesian" checked />
-          <span>cartesian</span>
-        </label>
-        <label class="choice-row">
-          <input type="radio" name="sample-view" value="polar" />
-          <span>polar</span>
-        </label>
-      </fieldset>
-
-      <div class="control">
-        <label for="sample-notes">notes</label>
-        <textarea id="sample-notes" rows="4">example input, expression notes, or set contents</textarea>
-      </div>
-
-      <div class="button-row">
-        <button type="button">preset a</button>
-        <button type="button">preset b</button>
-        <button type="button">reset</button>
-        <button type="button" disabled>disabled</button>
-      </div>
-      -->
     </div>
   </main>
 
@@ -594,6 +599,9 @@
       const themeToggle = document.querySelector("#theme-toggle");
       const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       let themeMode = "auto";
+
+      const N_MAX = 10000;
+      const FIT_PADDING = 28;
 
       initializeTheme();
       initializeHeaderLinks();
@@ -614,6 +622,9 @@
             if (themeMode === "auto") {
               applyTheme("auto");
               updateThemeToggleLabel();
+              if (window.mathExplorer && typeof window.mathExplorer.rerender === "function") {
+                window.mathExplorer.rerender();
+              }
             }
           };
 
@@ -640,6 +651,9 @@
 
         applyTheme(themeMode);
         updateThemeToggleLabel();
+        if (window.mathExplorer && typeof window.mathExplorer.rerender === "function") {
+          window.mathExplorer.rerender();
+        }
       }
 
       function updateThemeToggleLabel() {
@@ -722,124 +736,462 @@
         return pathname.replace(/\/index\.html$/i, "/");
       }
 
-      // ---------------------------------------------------
-      // Playground-specific lifecycle
-      // Replace placeholder state, math, and rendering logic
-      // while preserving the general control -> state ->
-      // derived state -> render -> explanation flow.
-      // ---------------------------------------------------
       function initializePlayground() {
-        const defaults = {
-          primaryValue: 5,
-          secondaryValue: 12,
+        const els = {
+          plotMode: document.getElementById("plot-mode"),
+          visibilityMode: document.getElementById("visibility-mode"),
+          factorInput: document.getElementById("factor-input"),
+          factorStatus: document.getElementById("factor-status"),
+          maxN: document.getElementById("max-n"),
+          maxNCapLabel: document.getElementById("max-n-cap-label"),
+          pointSize: document.getElementById("point-size"),
+          showGrid: document.getElementById("show-grid"),
+          polarControls: document.getElementById("polar-controls"),
+          squareControls: document.getElementById("square-controls"),
+          polarM: document.getElementById("polar-m"),
+          polarA: document.getElementById("polar-a"),
+          radiusPreset: document.getElementById("radius-preset"),
+          cellSpacing: document.getElementById("cell-spacing"),
+          vizMount: document.getElementById("viz-mount"),
+          equationSummary: document.getElementById("equation-summary"),
         };
 
-        let state = createInitialState();
-        const elements = {};
-
-        cacheElements();
-        bindControls();
-        syncControlsFromState();
-        updateDerivedState();
-        render();
-        updateExplanation();
-
-        function cacheElements() {
-          elements.primaryValue = document.getElementById("primary-value");
-          elements.secondaryValue = document.getElementById("secondary-value");
-          elements.resetButton = document.getElementById("reset-button");
-          elements.vizMount = document.getElementById("viz-mount");
-          elements.explanation = document.querySelector(".explanation");
+        if (els.maxNCapLabel) {
+          els.maxNCapLabel.textContent = String(N_MAX);
+        }
+        if (els.maxN) {
+          els.maxN.max = String(N_MAX);
         }
 
-        function createInitialState() {
-          return {
-            primaryValue: defaults.primaryValue,
-            secondaryValue: defaults.secondaryValue,
-            derived: {},
-          };
+        let canvas = null;
+        let ctx = null;
+
+        function ensureCanvas() {
+          if (!els.vizMount) return;
+          if (!canvas) {
+            canvas = document.createElement("canvas");
+            canvas.setAttribute("role", "img");
+            canvas.setAttribute("aria-label", "Integer plot");
+            els.vizMount.innerHTML = "";
+            els.vizMount.appendChild(canvas);
+            ctx = canvas.getContext("2d");
+          }
         }
 
-        function bindControls() {
-          if (elements.primaryValue) {
-            elements.primaryValue.addEventListener("input", (event) => {
-              state.primaryValue = Number(event.target.value);
-              refresh();
+        function readCssColor(prop, fallback) {
+          try {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
+            return v || fallback;
+          } catch {
+            return fallback;
+          }
+        }
+
+        function bind() {
+          const rerender = () => renderAll();
+          [
+            els.plotMode,
+            els.visibilityMode,
+            els.factorInput,
+            els.maxN,
+            els.pointSize,
+            els.showGrid,
+            els.polarM,
+            els.polarA,
+            els.radiusPreset,
+            els.cellSpacing,
+          ].forEach((el) => {
+            if (el) {
+              el.addEventListener("input", rerender);
+              el.addEventListener("change", rerender);
+            }
+          });
+
+          if (els.plotMode) {
+            els.plotMode.addEventListener("change", () => {
+              syncModePanels();
+              renderAll();
             });
           }
 
-          if (elements.secondaryValue) {
-            elements.secondaryValue.addEventListener("input", (event) => {
-              const value = Number(event.target.value);
-              state.secondaryValue = Number.isFinite(value) ? value : defaults.secondaryValue;
-              refresh();
-            });
-          }
+          syncModePanels();
+        }
 
-          if (elements.resetButton) {
-            elements.resetButton.addEventListener("click", () => {
-              resetState();
-            });
+        function syncModePanels() {
+          const polar = els.plotMode && els.plotMode.value === "polar";
+          if (els.polarControls) {
+            els.polarControls.classList.toggle("mode-hidden", !polar);
+          }
+          if (els.squareControls) {
+            els.squareControls.classList.toggle("mode-hidden", polar);
           }
         }
 
-        function syncControlsFromState() {
-          if (elements.primaryValue) {
-            elements.primaryValue.value = String(state.primaryValue);
+        function sievePrimes(limit) {
+          const isPrime = new Array(Math.max(2, limit + 1)).fill(true);
+          isPrime[0] = false;
+          isPrime[1] = false;
+          const max = Math.floor(Math.sqrt(limit));
+          for (let p = 2; p <= max; p++) {
+            if (!isPrime[p]) continue;
+            for (let m = p * p; m <= limit; m += p) {
+              isPrime[m] = false;
+            }
+          }
+          return isPrime;
+        }
+
+        function classify(n, isPrimeArr) {
+          if (n === 1) return "neither";
+          return isPrimeArr[n] ? "prime" : "composite";
+        }
+
+        function parseFactorInput(raw) {
+          const trimmed = String(raw || "").trim();
+          if (trimmed === "") {
+            return { state: "clean", invalid: false, effective: new Set(), warnings: [] };
           }
 
-          if (elements.secondaryValue) {
-            elements.secondaryValue.value = String(state.secondaryValue);
+          const parts = trimmed.split(",");
+          const values = [];
+          let invalid = false;
+
+          for (let i = 0; i < parts.length; i++) {
+            const token = parts[i].replace(/\s+/g, "");
+            if (token === "") {
+              invalid = true;
+              break;
+            }
+            if (!/^-?\d+$/.test(token)) {
+              invalid = true;
+              break;
+            }
+            const v = Number(token);
+            if (!Number.isFinite(v)) {
+              invalid = true;
+              break;
+            }
+            values.push(v);
+          }
+
+          if (invalid) {
+            return { state: "invalid", invalid: true, effective: new Set(), warnings: [] };
+          }
+
+          const effective = new Set();
+          const warnings = [];
+          for (const v of values) {
+            if (v === 1) {
+              warnings.push(1);
+              continue;
+            }
+            if (v < 2 || !Number.isInteger(v)) {
+              warnings.push(v);
+              continue;
+            }
+            if (!isPrimeTrial(v)) {
+              warnings.push(v);
+              continue;
+            }
+            effective.add(v);
+          }
+
+          const state = warnings.length ? "warning" : "clean";
+          return { state, invalid: false, effective, warnings };
+        }
+
+        function isPrimeTrial(n) {
+          if (n < 2) return false;
+          if (n === 2) return true;
+          if (n % 2 === 0) return false;
+          const r = Math.floor(Math.sqrt(n));
+          for (let d = 3; d <= r; d += 2) {
+            if (n % d === 0) return false;
+          }
+          return true;
+        }
+
+        /** Classic square spiral: 1→(0,0), 2→(1,0), 3→(1,1), 4→(0,1), 5→(-1,1), 6→(-1,0), … */
+        function squareSpiralLattice(n) {
+          if (n === 1) return { x: 0, y: 0 };
+          const dx = [1, 0, -1, 0];
+          const dy = [0, 1, 0, -1];
+          let x = 0;
+          let y = 0;
+          let k = 2;
+          let len = 1;
+          let dir = 0;
+          for (;;) {
+            for (let side = 0; side < 2; side++) {
+              for (let s = 0; s < len; s++) {
+                x += dx[dir];
+                y += dy[dir];
+                if (k === n) return { x, y };
+                k++;
+              }
+              dir = (dir + 1) % 4;
+            }
+            len++;
           }
         }
 
-        function updateDerivedState() {
-          state.derived = {
-            derivedPreview: state.primaryValue * 2,
-            normalizedSecondaryValue: Math.max(0, state.secondaryValue),
-          };
+        function polarXY(n, m, a, preset) {
+          const dTheta = (2 * Math.PI) / m;
+          const theta = n * dTheta;
+          let r;
+          if (preset === "sqrt") {
+            r = a * Math.sqrt(n);
+          } else if (preset === "linear") {
+            r = a * n;
+          } else {
+            r = a * Math.log(n + 1);
+          }
+          return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
         }
 
-        function render() {
-          if (!elements.vizMount) return;
-
-          elements.vizMount.textContent =
-            `primaryValue=${state.primaryValue}, secondaryValue=${state.secondaryValue}, derivedPreview=${state.derived.derivedPreview}`;
+        function radiusLabel(preset) {
+          if (preset === "sqrt") return "r_n = a√n";
+          if (preset === "linear") return "r_n = an";
+          return "r_n = a log(n + 1) (natural log)";
         }
 
-        function updateExplanation() {
-          if (!elements.explanation) return;
-
-          elements.explanation.innerHTML = `
-            <strong>Template role:</strong> this playground currently shows how live state,
-            derived state, rendering, and explanation updates stay synchronized in one predictable flow.
-          `;
+        function shouldShowInteger(n, kind, visibility, factorResult, useFilter) {
+          if (visibility === "primes" && kind !== "prime") return false;
+          if (visibility === "composites" && kind !== "composite") return false;
+          if (kind !== "composite") return true;
+          if (!useFilter) return true;
+          for (const p of factorResult.effective) {
+            if (p !== 0 && n % p === 0) {
+              return false;
+            }
+          }
+          return true;
         }
 
-        function resetState() {
-          state = createInitialState();
-          syncControlsFromState();
-          refresh();
+        function renderAll() {
+          ensureCanvas();
+          if (!canvas || !ctx || !els.equationSummary) return;
+
+          const N = clamp(Math.floor(Number(els.maxN && els.maxN.value) || 1), 1, N_MAX);
+          if (els.maxN && String(els.maxN.value) !== String(N)) {
+            els.maxN.value = String(N);
+          }
+
+          const plotMode = els.plotMode ? els.plotMode.value : "polar";
+          const visibility = els.visibilityMode ? els.visibilityMode.value : "all";
+          const pointRadius = clamp(Number(els.pointSize && els.pointSize.value) || 2, 0.5, 20);
+          const showGrid = els.showGrid && els.showGrid.checked;
+          const m = clamp(Math.floor(Number(els.polarM && els.polarM.value) || 1), 1, 360);
+          const a = clamp(Number(els.polarA && els.polarA.value) || 0.1, 0.01, 100);
+          const preset = els.radiusPreset ? els.radiusPreset.value : "sqrt";
+          const cell = clamp(Number(els.cellSpacing && els.cellSpacing.value) || 1, 0.05, 50);
+
+          if (els.polarM) {
+            els.polarM.value = String(m);
+          }
+
+          const factorResult = parseFactorInput(els.factorInput ? els.factorInput.value : "");
+          const useFilter = !factorResult.invalid;
+
+          if (els.factorStatus) {
+            els.factorStatus.dataset.state = factorResult.invalid ? "invalid" : factorResult.state;
+            if (factorResult.invalid) {
+              els.factorStatus.textContent = "invalid";
+              els.factorStatus.title = "Malformed input — factor filtering disabled";
+            } else if (factorResult.state === "warning") {
+              els.factorStatus.textContent = "warn";
+              els.factorStatus.title = "Non-prime entries ignored: " + factorResult.warnings.join(", ");
+            } else {
+              els.factorStatus.textContent = "ok";
+              els.factorStatus.title = "All entries prime (or empty)";
+            }
+          }
+
+          const isPrimeArr = sievePrimes(N);
+
+          const points = [];
+          for (let n = 1; n <= N; n++) {
+            const kind = classify(n, isPrimeArr);
+            if (!shouldShowInteger(n, kind, visibility, factorResult, useFilter)) continue;
+
+            let wx;
+            let wy;
+            if (plotMode === "square") {
+              const p = squareSpiralLattice(n);
+              wx = p.x * cell;
+              wy = p.y * cell;
+            } else {
+              const p = polarXY(n, m, a, preset);
+              wx = p.x;
+              wy = p.y;
+            }
+            points.push({ n, kind, x: wx, y: wy });
+          }
+
+          const dpr = window.devicePixelRatio || 1;
+          const rect = els.vizMount.getBoundingClientRect();
+          const cssW = Math.max(200, Math.floor(rect.width));
+          const cssH = Math.max(240, Math.floor(rect.width * 0.62));
+
+          canvas.style.width = `${cssW}px`;
+          canvas.style.height = `${cssH}px`;
+          canvas.width = Math.floor(cssW * dpr);
+          canvas.height = Math.floor(cssH * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          const w = cssW;
+          const h = cssH;
+
+          const primeColor = readCssColor("--prime-color", "#7ee787");
+          const neutralColor = readCssColor("--neutral-point", "#6b8cce");
+          const bg = readCssColor("--viz-bg", "#1f1f1f");
+          const gridColor = readCssColor("--viz-grid", "rgba(255,255,255,0.08)");
+          const axisColor = readCssColor("--viz-axis", "rgba(255,255,255,0.24)");
+
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, w, h);
+
+          let minX = 0;
+          let maxX = 0;
+          let minY = 0;
+          let maxY = 0;
+          for (const p of points) {
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y);
+            maxY = Math.max(maxY, p.y);
+          }
+
+          const halfSpanX = Math.max(Math.abs(minX), Math.abs(maxX), 1e-6);
+          const halfSpanY = Math.max(Math.abs(minY), Math.abs(maxY), 1e-6);
+          const worldHalfW = Math.max(halfSpanX, 1e-9);
+          const worldHalfH = Math.max(halfSpanY, 1e-9);
+
+          const innerW = Math.max(1, w - FIT_PADDING * 2);
+          const innerH = Math.max(1, h - FIT_PADDING * 2);
+          const scale = Math.min(innerW / (2 * worldHalfW), innerH / (2 * worldHalfH));
+          const cx = w / 2;
+          const cy = h / 2;
+
+          function worldToCanvas(x, y) {
+            return {
+              x: cx + x * scale,
+              y: cy - y * scale,
+            };
+          }
+
+          if (showGrid) {
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            const stepWorld = niceStep((2 * worldHalfW) / 10);
+            const x0 = -worldHalfW;
+            const x1 = worldHalfW;
+            const y0 = -worldHalfH;
+            const y1 = worldHalfH;
+            for (let xw = Math.floor(x0 / stepWorld) * stepWorld; xw <= x1; xw += stepWorld) {
+              const p1 = worldToCanvas(xw, y0);
+              const p2 = worldToCanvas(xw, y1);
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
+            }
+            for (let yw = Math.floor(y0 / stepWorld) * stepWorld; yw <= y1; yw += stepWorld) {
+              const p1 = worldToCanvas(x0, yw);
+              const p2 = worldToCanvas(x1, yw);
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.stroke();
+            }
+          }
+
+          ctx.strokeStyle = axisColor;
+          ctx.lineWidth = 1.25;
+          const o1 = worldToCanvas(-worldHalfW, 0);
+          const o2 = worldToCanvas(worldHalfW, 0);
+          ctx.beginPath();
+          ctx.moveTo(o1.x, o1.y);
+          ctx.lineTo(o2.x, o2.y);
+          ctx.stroke();
+          const v1 = worldToCanvas(0, -worldHalfH);
+          const v2 = worldToCanvas(0, worldHalfH);
+          ctx.beginPath();
+          ctx.moveTo(v1.x, v1.y);
+          ctx.lineTo(v2.x, v2.y);
+          ctx.stroke();
+
+          for (const p of points) {
+            const c = worldToCanvas(p.x, p.y);
+            const fill = p.kind === "prime" ? primeColor : neutralColor;
+            ctx.fillStyle = fill;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, pointRadius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          const effList = Array.from(factorResult.effective).sort((a, b) => a - b);
+          const filterNote = factorResult.invalid
+            ? "factor filter: <strong>disabled</strong> (invalid syntax)"
+            : effList.length
+              ? `factor filter (composites): hide if divisible by { ${effList.join(", ")} }`
+              : "factor filter: <em>none</em> (empty or no prime entries)";
+
+          const visLabel =
+            visibility === "all" ? "show all (subject to filter)" :
+            visibility === "primes" ? "show only primes" :
+            "show only composites";
+
+          if (plotMode === "polar") {
+            const dThetaStr = (2 * Math.PI / m).toFixed(6);
+            els.equationSummary.innerHTML = `
+              <strong>Polar spiral.</strong> Δθ = 2π / m ≈ ${dThetaStr} rad; θ_n = n · Δθ.
+              Active radius: <code>${radiusLabel(preset)}</code> with a = ${a.toFixed(4)}, m = ${m}.
+              <br />
+              Cartesian: x_n = r_n cos(θ_n), y_n = r_n sin(θ_n).
+              <br />
+              <strong>Display:</strong> ${visLabel}. ${filterNote}.
+            `;
+          } else {
+            els.equationSummary.innerHTML = `
+              <strong>Square spiral.</strong> Integer n maps to lattice steps from the center; world position scales by cell spacing s = ${cell.toFixed(3)}:
+              (x, y)_world = s · (x, y)_lattice.
+              <br />
+              <strong>Display:</strong> ${visLabel}. ${filterNote}.
+            `;
+          }
+
+          window.mathExplorer = window.mathExplorer || {};
+          window.mathExplorer.getSnapshot = () => ({
+            N,
+            plotMode,
+            visibility,
+            points: points.length,
+            factor: factorResult,
+          });
+          window.mathExplorer.rerender = renderAll;
         }
 
-        function refresh() {
-          updateDerivedState();
-          render();
-          updateExplanation();
+        function niceStep(span) {
+          const exp = Math.floor(Math.log10(span));
+          const base = Math.pow(10, exp);
+          const frac = span / base;
+          let nice;
+          if (frac < 1.5) nice = 1;
+          else if (frac < 3.5) nice = 2;
+          else if (frac < 7.5) nice = 5;
+          else nice = 10;
+          return nice * base;
         }
 
-        window.mathExplorer = {
-          resetState,
-          getState: () => structuredCloneSafe(state),
-        };
-      }
+        bind();
+        renderAll();
 
-      function structuredCloneSafe(value) {
-        try {
-          return structuredClone(value);
-        } catch {
-          return JSON.parse(JSON.stringify(value));
-        }
+        let resizeTimer = null;
+        window.addEventListener("resize", () => {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => renderAll(), 80);
+        });
       }
     })();
   </script>
