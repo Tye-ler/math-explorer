@@ -1,264 +1,137 @@
 ---
-description: Rules for building single-file math playgrounds in the math-explorer repo
+description: Rules for building single-file mathematical / geometric playgrounds in this repo
+globs:
+  - "projects/**/index.html"
 alwaysApply: true
 ---
 
-You are working in the `math-explorer` repository.
+# Math Playground Rules
 
-This repository exists to turn mathematical ideas into polished, correct, interactive, self-contained HTML playgrounds that can later be copied into the separate `Math-Project` website repository for publishing.
+## Core Goal
+This repo is a factory for creating contained mathematical / geometric exploration pages that are:
+- single-file when possible
+- visually clean
+- mathematically correct
+- structurally predictable
+- easy to move into the publish repo later
 
-## Core Objective
+Favor correctness, bounded scope, and structural clarity over cleverness.
 
-For each playground, produce a static, browser-ready page that:
-- is mathematically correct
-- is visually clear
-- is easy to modify later
-- is easy to publish by copying into another repo
-- minimizes repetitive setup work across projects
-- fits a workflow that can be delegated to Cursor as much as possible
+## Project Boundaries
+- Treat the shared template as the reusable base.
+- Edit project instances, not the master template, unless the task explicitly targets the template.
+- Preserve single-file architecture unless the task explicitly requires expansion.
+- Do not introduce unnecessary abstraction, framework behavior, or multi-file decomposition.
 
-## Repository Output Model
+## Working Style
+- Follow KISS / YAGNI / DRY.
+- Do not make assumptions when exact behavior matters.
+- Resolve important v1 product decisions early instead of leaving them vague.
+- Prefer bounded implementations over open-ended systems.
+- Keep controls and rendering logic understandable and inspectable.
 
-Default output for each playground:
-- `projects/<slug>/index.html`
+## Planning Requirements
+Before implementation, identify:
+1. what the feature changes:
+   - geometry
+   - motion
+   - rendering/color
+   - controls/UI
+   - layout
+   - export
+   - view/framing
+2. whether the feature is:
+   - additive layer
+   - mutually exclusive mode
+   - replacement of an existing subsystem
+3. which existing systems must remain compatible
+4. any mathematical invariants that must remain true
+5. any responsive/layout invariants that must remain true
 
-Default assumptions:
-- single self-contained HTML file
-- CSS stays in a `<style>` block
-- JavaScript stays in a `<script>` block
-- no framework
-- no build step
-- no external dependencies unless explicitly approved
+Do not start coding until those are clear.
 
-Only introduce an `assets/` folder when the project truly requires static resources such as images, data files, or other local assets.
+## Layout Rules
+- Do not default dashboards to equal-size tiles.
+- Group controls by subsystem, not by visual symmetry.
+- Use explicit column/wrapper structure when independent stacking is required.
+- If one card must sit directly under another regardless of neighboring heights, do not use a shared row-based grid for those cards.
+- Preserve important layout invariants explicitly.
 
-Do not split HTML, CSS, and JS into separate files unless explicitly instructed.
+## Layout Rescue Rule
+If layout work has already failed 2 times:
+- stop incremental spacing/margin tweaks
+- stop micro-adjusting widths/heights
+- rebuild the layout structure in one pass
+- preserve behavior/IDs, but replace the broken layout subsystem if needed
 
-## Template Interpretation Rules
+Do not waste time on repeated cosmetic nudges when the structure is wrong.
 
-The repository uses a shared HTML template as the default starting point for playgrounds.
+## Motion-System Rules
+When adding motion:
+- prefer additive motion layers when the project goal is emergent behavior from stacked simple systems
+- do not turn additive motion requests into exclusive modes unless explicitly requested
+- define transform/evaluation order before implementing
+- preserve compatibility with existing active motion systems unless explicitly told otherwise
 
-You must interpret that template correctly:
-- The template’s overall page shell is intentional and should generally be preserved.
-- The site header is intentional and useful. It is part of the normal published-page structure, not accidental bloat.
-- The template includes commented example/reference blocks. These are guidance patterns only.
-- Commented example blocks are not mandatory features.
-- Only activate, adapt, or keep reference patterns that are relevant to the current project.
-- Remove, replace, or ignore unused placeholder content in the final playground.
-- Do not preserve placeholder text, sample state, or sample rendering output unless the current project actually needs them.
+For motion features, explicitly decide:
+1. what object moves
+2. what defines the base state
+3. what defines the added motion
+4. whether motion is shared-phase or index-offset
+5. where in the transform order the motion is applied
 
-## Standardized vs Flexible
+## Transform / Evaluation Order
+When a feature touches motion or geometry, define and preserve a clear order such as:
+1. base sampled geometry
+2. anchor/midpoint motion layers
+3. local segment orientation
+4. global transforms
+5. connector generation
+6. rendering/color pass
 
-### Standardized and usually preserved
-These are part of the house structure and should remain unless there is a clear reason to change them:
-- the single-file architecture
-- the page shell structure
-- theme handling
-- reusable styling tokens
-- the visualization mount convention
-- the general lifecycle flow for playground logic
-- the expectation of clear controls, visualization, and explanation/information areas
+Do not implement new motion ambiguously.
 
-### Flexible and expected to change per project
-These should be replaced or adapted freely:
-- hero title and description
-- project-specific controls
-- placeholder sample inputs
-- placeholder state fields
-- placeholder derived values
-- visualization implementation
-- explanation content
-- math logic
-- project-specific UI details
+## Rendering / Color Rules
+Before adding visual variation, explicitly decide whether the color behavior is:
+- per-object
+- per-segment
+- per-endpoint
+- per-point along a segment
+- per-frame state based
+- anchor-position based
 
-## Visualization Convention
+For any radius-, angle-, or state-based color mapping:
+- define the normalization strategy explicitly
+- avoid unstable mappings tied to noisy instantaneous extrema unless that is intentional
+- keep modes mutually exclusive by default unless stacking is explicitly requested
 
-Use the standard visualization mount convention unless the project clearly needs a different one.
+## View / Framing Rules
+- Do not change camera/view-fit/framing logic unless the task explicitly asks for it.
+- Do not let rendering or control changes silently alter framing behavior.
+- Treat view behavior as its own subsystem.
 
-Preferred mount target:
-- `#viz-mount`
+## Math / Geometry Rules
+- Preserve mathematical correctness over visual improvisation.
+- If the feature depends on sampling, symmetry, periodicity, or normalization, reason about those explicitly.
+- Distinguish true bugs from expected sampling artifacts before “fixing” them.
+- Do not hide mathematically meaningful behavior by patching over it blindly.
 
-Interpretation:
-- `#viz-mount` is the canonical project visualization target
-- projects may render into it using canvas, SVG, DOM, or other simple in-page techniques
-- do not introduce unnecessary rendering abstraction
+## UI Rules
+- Add controls to the existing subsystem card/panel whenever reasonable.
+- Do not create new cards for small bounded features unless necessary.
+- Keep v1 controls compact.
+- Avoid expanding the dashboard structure unless the feature genuinely warrants it.
 
-## JavaScript Scaffold Interpretation
+## Change Discipline
+- Make the smallest clean change that satisfies the request.
+- Do not “improve” adjacent systems unless explicitly asked.
+- Do not rewrite layout, view logic, or unrelated rendering while implementing a local feature.
+- Preserve existing IDs and behavior when modifying UI/layout.
 
-The template contains a standard playground lifecycle scaffold.
-
-Interpret it like this:
-
-### The lifecycle pattern is intentional
-These functions represent the preferred house architecture and should usually remain in some form:
-- `cacheElements()`
-- `createInitialState()`
-- `bindControls()`
-- `syncControlsFromState()`
-- `updateDerivedState()`
-- `render()`
-- `updateExplanation()`
-- `resetState()`
-- `refresh()`
-- `initializePlayground()` or equivalent init flow
-
-The purpose of this pattern is:
-- controls update state
-- state updates derived values
-- derived values drive rendering
-- explanation reflects current state/interpretation
-
-### Placeholder logic is not a requirement
-Sample variable names, placeholder math, sample text, and placeholder render output are examples only.
-
-Examples of things that should usually be replaced:
-- generic sample values
-- placeholder derived calculations
-- placeholder explanation text
-- placeholder visualization text output
-
-Do not mistake sample logic for project requirements.
-
-## State and App Structure
-
-Prefer this internal organization:
-- `defaults` for canonical starting values
-- `state` for current mutable state
-- `elements` for cached DOM references
-
-Guidelines:
-- keep functions small and focused
-- avoid hidden state when possible
-- avoid unnecessary abstraction
-- prefer direct readable code over cleverness
-- do not create framework-like systems
-- do not introduce classes unless the project genuinely benefits from them
-- prefer a simple functional structure inside the single file
-
-## Control and UX Decision Rules
-
-When the project spec leaves multiple valid implementation choices, choose the simplest bounded v1 option that best supports the main learning outcome.
-
-Prefer:
-- fewer controls over more controls
-- beginner-friendly defaults
-- explicit default visibility states
-- one bounded control instead of a more flexible but more complex control system
-- one strong visualization relationship over multiple competing visual ideas
-
-Do not leave major v1 interaction decisions unresolved in the plan when a reasonable default can be chosen.
-
-Examples:
-- prefer a bounded “revolutions” control over free-form min/max theta controls if both satisfy the learning goal
-- prefer explicit default-visible and default-hidden function states
-- prefer one global guide toggle for a visual system instead of many overlapping toggles when that is sufficient
-
-## UI layout correction rule
-
-When a controls/dashboard layout has already required more than 2 correction passes, stop making incremental spacing or width tweaks.
-
-Instead:
-- replace the entire affected layout subsystem in one pass
-- use an explicit CSS grid/flex structure
-- define exact panel arrangement and internal card layout
-- preserve IDs and behavior, but do not preserve broken layout markup/CSS
-
-Do not continue local tuning once overlap, overflow, or panel drift has appeared more than once.
-
-For dashboards with multiple control cards:
-- do not default to equal tile sizing
-- prefer explicit column wrappers when columns need independent vertical stacking
-- if one panel must sit directly under another regardless of neighboring panel heights, do not use a shared row-based grid for those cards
-
-## Layout and Responsiveness Rules
-
-When a playground has multiple coordinated visual panels:
-- explicitly preserve the intended visual relationship during resize
-- if one panel is supposed to remain square, keep it square
-- if two top-row panels are meant to share height, preserve that relationship during resize
-- if a lower information panel is meant to span the full width, preserve that relationship during resize
-- do not assume CSS alone is sufficient if the intended geometry clearly requires a small amount of resize logic
-
-When responsive behavior affects mathematical interpretation, prioritize preserving the intended geometric relationship over purely fluid layout.
-
-## Graphing and Visibility Rules
-
-For graph-based playgrounds:
-- do not fabricate continuity across undefined regions or poles
-- break curves at true discontinuities
-- if a branch approaches the visible graph boundary, prefer clipping to the boundary rather than dropping the line early
-- keep readouts honest even when drawing uses display-only clipping
-- when connector lines are used between a geometric construction and a graph, only draw a connector if the current graph point is actually visible in the graph viewport
-- do not imply a live visible mapping when the graph point is off-screen or undefined
-
-## Explanatory Panels and Information Density
-
-When adding equations, identities, or readout content:
-- prefer integrating related information into an existing panel before creating a new stacked panel
-- avoid unnecessary extra surfaces when the information can fit cleanly into an existing one
-- use dead space intentionally
-- keep equations and values visually associated with the graph or visualization they explain
-- avoid turning the page into a formula dump
-
-## Mathematical Quality Standards
-
-Prioritize:
-- mathematical correctness
-- conceptual clarity
-- visual clarity
-- maintainability
-- responsiveness and basic usability
-
-When tradeoffs occur:
-- correctness beats visual flash
-- clarity beats novelty
-- simple robust interaction beats overbuilt architecture
-
-If a mathematical shortcut, approximation, or simplification is used, make that explicit in the explanation when it matters.
-
-## Implementation Workflow
-
-Default workflow for playground work:
-1. understand the concept in plain language
-2. define the exact mathematical behavior
-3. propose the UI and visualization approach
-4. identify risks or edge cases
-5. resolve key v1 decisions explicitly
-6. implement in bounded steps
-7. self-review for correctness and usability
-
-Before coding, prefer producing a bounded plan unless the requested change is very small and local.
-
-## Editing Behavior
-
-When modifying an existing playground:
-- do not rewrite the whole file unless necessary
-- preserve the established shell and useful house patterns
-- make the smallest clean change that satisfies the task
-- avoid introducing extra architectural layers
-- avoid file sprawl
-- avoid speculative abstractions
-
-## Code Style
-
-Keep everything:
-- KISS
-- YAGNI
-- DRY
-
-More specifically:
-- prefer small focused functions
-- use descriptive but not bloated names
-- keep comments for non-obvious math or rendering logic
-- do not add comments that merely restate the code
-- keep the code easy for future Cursor passes to understand and extend
-
-## Final Output Expectations
-
-After implementing meaningful changes, provide:
-- files changed
-- what was implemented
-- manual verification checklist
-- known limitations or caveats
-
-The final result should feel like a finished, publishable math playground, not a demo scaffold.
+## Delivery Requirements
+When finishing implementation, report:
+1. what changed
+2. what remained intentionally unchanged
+3. how the math/logic works
+4. what systems were preserved for compatibility
+5. any limitations, edge cases, or deferred improvements

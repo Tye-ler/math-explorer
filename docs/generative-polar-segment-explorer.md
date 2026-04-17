@@ -187,3 +187,6 @@ Notes / constraints:
 - Must be easy to copy into the website repo for publishing
 - The implementation plan should explicitly define the internal data model before coding
 - The implementation plan should explicitly define how segment indexing, polar placement, endpoint computation, and connection targeting work
+
+[presets & resets] | [polar sampling] | [motion] | [connectors]
+[segments]         |                  |          | [trails] 
