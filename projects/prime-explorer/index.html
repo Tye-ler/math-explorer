@@ -14,8 +14,9 @@
       --space-3: 1.25rem;
       --space-4: 1.75rem;
       --accent: #86e1ff;
-      --prime-color: #7ee787;
+      --prime-color: #f44336;
       --neutral-point: #9ca3af;
+      --composite-fill: rgba(128, 128, 128, 0.5);
     }
 
     :root,
@@ -64,6 +65,7 @@
       --viz-highlight: #111111;
       --viz-point: #2f6fed;
       --neutral-point: #6b7280;
+      --composite-fill: rgba(128, 128, 128, 0.5);
       --spiral-guide: rgba(47, 111, 237, 0.35);
     }
 
@@ -651,6 +653,16 @@
                   </div>
                 </div>
                 <div class="control">
+                  <label>
+                    <input id="derive-m-from-filter" type="checkbox" />
+                    derive m from valid filter primes
+                  </label>
+                </div>
+                <div class="control">
+                  <label for="polar-radial-spacing">radial spacing (× r_n)</label>
+                  <input id="polar-radial-spacing" type="range" min="0.2" max="3" step="0.02" value="1" />
+                </div>
+                <div class="control">
                   <label for="polar-a">radius scale a</label>
                   <input id="polar-a" type="range" min="0.05" max="3" step="0.01" value="0.35" />
                 </div>
@@ -858,6 +870,8 @@
           polarControls: document.getElementById("polar-controls"),
           squareControls: document.getElementById("square-controls"),
           polarM: document.getElementById("polar-m"),
+          deriveMFromFilter: document.getElementById("derive-m-from-filter"),
+          polarRadialSpacing: document.getElementById("polar-radial-spacing"),
           polarA: document.getElementById("polar-a"),
           radiusPreset: document.getElementById("radius-preset"),
           showSpiralGuide: document.getElementById("show-spiral-guide"),
@@ -873,7 +887,8 @@
         const layoutToggle = document.getElementById("layout-toggle");
 
         const ZOOM_MIN = 0.25;
-        const ZOOM_MAX = 8;
+        const ZOOM_MAX = 64;
+        const M_DERIVED_FALLBACK = 12;
         let viewZoom = 1;
 
         let lastHitTest = { points: [], threshold: 16, w: 0, h: 0 };
@@ -1065,6 +1080,8 @@
             els.pointSize,
             els.showGrid,
             els.polarM,
+            els.deriveMFromFilter,
+            els.polarRadialSpacing,
             els.polarA,
             els.radiusPreset,
             els.showSpiralGuide,
@@ -1219,11 +1236,35 @@
           return Math.log(n + 1);
         }
 
-        function polarXY(n, m, a, preset) {
+        /** m = product of valid filter primes, clamped to [1, 360]; empty/invalid → M_DERIVED_FALLBACK */
+        function derivedMFromFactorFilter(factorResult) {
+          const primes = Array.from(factorResult.effective);
+          if (primes.length === 0) return M_DERIVED_FALLBACK;
+          let prod = 1;
+          for (const p of primes) {
+            prod *= p;
+            if (prod > 1e12) return 360;
+          }
+          return clamp(Math.floor(prod), 1, 360);
+        }
+
+        function syncPolarMDerivedUI(derived) {
+          if (!els.polarM) return;
+          els.polarM.disabled = derived;
+          const stepper = els.polarM.closest("[data-stepper]");
+          if (stepper) {
+            stepper.querySelectorAll(".stepper-button").forEach((b) => {
+              b.disabled = derived;
+            });
+          }
+        }
+
+        function polarXY(n, m, a, preset, radialSpacing) {
+          const s = radialSpacing === undefined ? 1 : radialSpacing;
           const dTheta = (2 * Math.PI) / m;
           const theta = n * dTheta;
           const rTilde = polarRtilde(n, preset);
-          const r = a * rTilde;
+          const r = s * a * rTilde;
           return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
         }
 
@@ -1276,17 +1317,26 @@
           const visibility = els.visibilityMode ? els.visibilityMode.value : "all";
           const pointRadius = clamp(Number(els.pointSize && els.pointSize.value) || 2, 0.5, 20);
           const showGrid = els.showGrid && els.showGrid.checked;
-          const m = clamp(Math.floor(Number(els.polarM && els.polarM.value) || 1), 1, 360);
           const a = clamp(Number(els.polarA && els.polarA.value) || 0.1, 0.01, 100);
           const preset = els.radiusPreset ? els.radiusPreset.value : "sqrt";
           const cell = clamp(Number(els.cellSpacing && els.cellSpacing.value) || 1, 0.05, 50);
-
-          if (els.polarM) {
-            els.polarM.value = String(m);
-          }
+          const radialSpacing = clamp(Number(els.polarRadialSpacing && els.polarRadialSpacing.value) || 1, 0.2, 3);
 
           const factorResult = parseFactorInput(els.factorInput ? els.factorInput.value : "");
           const useFilter = !factorResult.invalid;
+
+          const deriveMActive = plotMode === "polar" && els.deriveMFromFilter && els.deriveMFromFilter.checked;
+          let m;
+          if (deriveMActive) {
+            m = derivedMFromFactorFilter(factorResult);
+          } else {
+            m = clamp(Math.floor(Number(els.polarM && els.polarM.value) || 1), 1, 360);
+          }
+
+          syncPolarMDerivedUI(deriveMActive);
+          if (els.polarM) {
+            els.polarM.value = String(m);
+          }
 
           if (els.factorStatus) {
             els.factorStatus.dataset.state = factorResult.invalid ? "invalid" : factorResult.state;
@@ -1324,7 +1374,7 @@
               wx = p.x * cell;
               wy = p.y * cell;
             } else {
-              const p = polarXY(n, m, a, preset);
+              const p = polarXY(n, m, a, preset, radialSpacing);
               wx = p.x;
               wy = p.y;
             }
@@ -1345,8 +1395,8 @@
           const w = cssW;
           const h = cssH;
 
-          const primeColor = readCssColor("--prime-color", "#7ee787");
-          const neutralColor = readCssColor("--neutral-point", "#9ca3af");
+          const primeColor = readCssColor("--prime-color", "#f44336");
+          const compositeFill = readCssColor("--composite-fill", "rgba(128, 128, 128, 0.5)");
           const spiralGuideColor = readCssColor("--spiral-guide", "rgba(95, 143, 232, 0.35)");
           const bg = readCssColor("--viz-bg", "#1f1f1f");
           const gridColor = readCssColor("--viz-grid", "rgba(255,255,255,0.08)");
@@ -1366,8 +1416,8 @@
 
           if (plotMode === "polar") {
             const rTildeMax = Math.max(polarRtilde(N, preset), 1e-9);
-            worldHalfW = a * rTildeMax;
-            worldHalfH = a * rTildeMax;
+            worldHalfW = a * rTildeMax * radialSpacing;
+            worldHalfH = a * rTildeMax * radialSpacing;
             const baseScale = Math.min(innerW / (2 * rTildeMax), innerH / (2 * rTildeMax));
             scale = baseScale * viewZoom;
           } else {
@@ -1445,7 +1495,7 @@
             ctx.beginPath();
             let started = false;
             for (let n = 1; n <= N; n++) {
-              const q = polarXY(n, m, a, preset);
+              const q = polarXY(n, m, a, preset, radialSpacing);
               const c = worldToCanvas(q.x, q.y);
               if (!started) {
                 ctx.moveTo(c.x, c.y);
@@ -1459,7 +1509,7 @@
 
           for (const p of points) {
             const c = worldToCanvas(p.x, p.y);
-            const fill = p.kind === "prime" ? primeColor : neutralColor;
+            const fill = p.kind === "prime" ? primeColor : compositeFill;
             ctx.fillStyle = fill;
             ctx.beginPath();
             ctx.arc(c.x, c.y, pointRadius, 0, Math.PI * 2);
@@ -1509,11 +1559,16 @@
 
           if (plotMode === "polar") {
             const dThetaStr = (2 * Math.PI / m).toFixed(6);
+            const mLine = deriveMActive
+              ? `m = ${m} (derived from product of valid filter primes, clamped to [1, 360]; fallback ${M_DERIVED_FALLBACK} if none).`
+              : `m = ${m} (manual).`;
             els.equationSummary.innerHTML = `
               <strong>Polar spiral.</strong> Δθ = 2π / m ≈ ${dThetaStr} rad; θ_n = n · Δθ.
-              Active radius: <code>${radiusLabel(preset)}</code> with a = ${a.toFixed(4)}, m = ${m}.
+              ${mLine}
+              Base radius from preset: <code>${radiusLabel(preset)}</code> with a = ${a.toFixed(4)}.
+              Radial spacing multiplier: s = ${radialSpacing.toFixed(2)}; plotted radius r'_n = s · a · r̃(n).
               <br />
-              Cartesian: x_n = r_n cos(θ_n), y_n = r_n sin(θ_n).
+              Cartesian: x_n = r'_n cos(θ_n), y_n = r'_n sin(θ_n).
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
             `;
