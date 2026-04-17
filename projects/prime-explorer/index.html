@@ -15,7 +15,7 @@
       --space-4: 1.75rem;
       --accent: #86e1ff;
       --prime-color: #7ee787;
-      --neutral-point: #6b8cce;
+      --neutral-point: #9ca3af;
     }
 
     :root,
@@ -39,6 +39,7 @@
       --viz-secondary: #7f69ba;
       --viz-highlight: #e1e1e1;
       --viz-point: #5f8fe8;
+      --spiral-guide: rgba(95, 143, 232, 0.35);
     }
 
     :root[data-theme="light"] {
@@ -62,6 +63,8 @@
       --viz-secondary: #8c5bd6;
       --viz-highlight: #111111;
       --viz-point: #2f6fed;
+      --neutral-point: #6b7280;
+      --spiral-guide: rgba(47, 111, 237, 0.35);
     }
 
     * { box-sizing: border-box; }
@@ -269,6 +272,18 @@
     .factor-status[data-state="invalid"] {
       border-color: rgba(230, 100, 100, 0.55);
       color: #e07070;
+    }
+
+    .factor-survivor {
+      margin: 0.1rem 0 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .factor-survivor strong {
+      font-weight: 400;
+      color: var(--text);
     }
 
     .mode-hidden {
@@ -518,6 +533,10 @@
                   <input id="factor-input" type="text" placeholder="e.g. 2, 3, 5" autocomplete="off" spellcheck="false" />
                   <span id="factor-status" class="factor-status" data-state="clean" title="Factor parse status">ok</span>
                 </div>
+                <p class="factor-survivor" aria-live="polite">
+                  <strong>Smallest surviving composite:</strong>
+                  <span id="surviving-composite-out">—</span>
+                </p>
               </div>
 
               <div class="control">
@@ -561,6 +580,12 @@
                     <option value="linear">r_n = an</option>
                     <option value="log">r_n = a log(n + 1)</option>
                   </select>
+                </div>
+                <div class="control">
+                  <label>
+                    <input id="show-spiral-guide" type="checkbox" checked />
+                    show spiral guide
+                  </label>
                 </div>
               </div>
 
@@ -742,6 +767,7 @@
           visibilityMode: document.getElementById("visibility-mode"),
           factorInput: document.getElementById("factor-input"),
           factorStatus: document.getElementById("factor-status"),
+          survivingCompositeOut: document.getElementById("surviving-composite-out"),
           maxN: document.getElementById("max-n"),
           maxNCapLabel: document.getElementById("max-n-cap-label"),
           pointSize: document.getElementById("point-size"),
@@ -751,10 +777,15 @@
           polarM: document.getElementById("polar-m"),
           polarA: document.getElementById("polar-a"),
           radiusPreset: document.getElementById("radius-preset"),
+          showSpiralGuide: document.getElementById("show-spiral-guide"),
           cellSpacing: document.getElementById("cell-spacing"),
           vizMount: document.getElementById("viz-mount"),
           equationSummary: document.getElementById("equation-summary"),
         };
+
+        const ZOOM_MIN = 0.25;
+        const ZOOM_MAX = 8;
+        let viewZoom = 1;
 
         if (els.maxNCapLabel) {
           els.maxNCapLabel.textContent = String(N_MAX);
@@ -775,6 +806,16 @@
             els.vizMount.innerHTML = "";
             els.vizMount.appendChild(canvas);
             ctx = canvas.getContext("2d");
+            canvas.addEventListener(
+              "wheel",
+              (e) => {
+                e.preventDefault();
+                const factor = Math.exp(-e.deltaY * 0.0015);
+                viewZoom = clamp(viewZoom * factor, ZOOM_MIN, ZOOM_MAX);
+                renderAll();
+              },
+              { passive: false }
+            );
           }
         }
 
@@ -799,6 +840,7 @@
             els.polarM,
             els.polarA,
             els.radiusPreset,
+            els.showSpiralGuide,
             els.cellSpacing,
           ].forEach((el) => {
             if (el) {
@@ -935,17 +977,17 @@
           }
         }
 
+        function polarRtilde(n, preset) {
+          if (preset === "sqrt") return Math.sqrt(n);
+          if (preset === "linear") return n;
+          return Math.log(n + 1);
+        }
+
         function polarXY(n, m, a, preset) {
           const dTheta = (2 * Math.PI) / m;
           const theta = n * dTheta;
-          let r;
-          if (preset === "sqrt") {
-            r = a * Math.sqrt(n);
-          } else if (preset === "linear") {
-            r = a * n;
-          } else {
-            r = a * Math.log(n + 1);
-          }
+          const rTilde = polarRtilde(n, preset);
+          const r = a * rTilde;
           return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
         }
 
@@ -966,6 +1008,23 @@
             }
           }
           return true;
+        }
+
+        /** Smallest composite in [1..N] not divisible by any active filter prime; uses factorResult.effective (empty if invalid input). Ignores visibility. */
+        function smallestSurvivingComposite(N, factorResult, isPrimeArr) {
+          const active = factorResult.effective;
+          for (let n = 4; n <= N; n++) {
+            if (classify(n, isPrimeArr) !== "composite") continue;
+            let blocked = false;
+            for (const p of active) {
+              if (p !== 0 && n % p === 0) {
+                blocked = true;
+                break;
+              }
+            }
+            if (!blocked) return n;
+          }
+          return null;
         }
 
         function renderAll() {
@@ -1009,6 +1068,14 @@
 
           const isPrimeArr = sievePrimes(N);
 
+          if (els.survivingCompositeOut) {
+            const survivor = smallestSurvivingComposite(N, factorResult, isPrimeArr);
+            els.survivingCompositeOut.textContent =
+              survivor === null
+                ? "No surviving composite within current range"
+                : String(survivor);
+          }
+
           const points = [];
           for (let n = 1; n <= N; n++) {
             const kind = classify(n, isPrimeArr);
@@ -1043,7 +1110,8 @@
           const h = cssH;
 
           const primeColor = readCssColor("--prime-color", "#7ee787");
-          const neutralColor = readCssColor("--neutral-point", "#6b8cce");
+          const neutralColor = readCssColor("--neutral-point", "#9ca3af");
+          const spiralGuideColor = readCssColor("--spiral-guide", "rgba(95, 143, 232, 0.35)");
           const bg = readCssColor("--viz-bg", "#1f1f1f");
           const gridColor = readCssColor("--viz-grid", "rgba(255,255,255,0.08)");
           const axisColor = readCssColor("--viz-axis", "rgba(255,255,255,0.24)");
@@ -1051,27 +1119,39 @@
           ctx.fillStyle = bg;
           ctx.fillRect(0, 0, w, h);
 
-          let minX = 0;
-          let maxX = 0;
-          let minY = 0;
-          let maxY = 0;
-          for (const p of points) {
-            minX = Math.min(minX, p.x);
-            maxX = Math.max(maxX, p.x);
-            minY = Math.min(minY, p.y);
-            maxY = Math.max(maxY, p.y);
-          }
-
-          const halfSpanX = Math.max(Math.abs(minX), Math.abs(maxX), 1e-6);
-          const halfSpanY = Math.max(Math.abs(minY), Math.abs(maxY), 1e-6);
-          const worldHalfW = Math.max(halfSpanX, 1e-9);
-          const worldHalfH = Math.max(halfSpanY, 1e-9);
-
           const innerW = Math.max(1, w - FIT_PADDING * 2);
           const innerH = Math.max(1, h - FIT_PADDING * 2);
-          const scale = Math.min(innerW / (2 * worldHalfW), innerH / (2 * worldHalfH));
           const cx = w / 2;
           const cy = h / 2;
+
+          let worldHalfW = 1e-6;
+          let worldHalfH = 1e-6;
+          let scale = 1;
+
+          if (plotMode === "polar") {
+            const rTildeMax = Math.max(polarRtilde(N, preset), 1e-9);
+            worldHalfW = a * rTildeMax;
+            worldHalfH = a * rTildeMax;
+            const baseScale = Math.min(innerW / (2 * rTildeMax), innerH / (2 * rTildeMax));
+            scale = baseScale * viewZoom;
+          } else {
+            let minX = 0;
+            let maxX = 0;
+            let minY = 0;
+            let maxY = 0;
+            for (const p of points) {
+              minX = Math.min(minX, p.x);
+              maxX = Math.max(maxX, p.x);
+              minY = Math.min(minY, p.y);
+              maxY = Math.max(maxY, p.y);
+            }
+            const halfSpanX = Math.max(Math.abs(minX), Math.abs(maxX), 1e-6);
+            const halfSpanY = Math.max(Math.abs(minY), Math.abs(maxY), 1e-6);
+            worldHalfW = Math.max(halfSpanX, 1e-9);
+            worldHalfH = Math.max(halfSpanY, 1e-9);
+            const baseScale = Math.min(innerW / (2 * worldHalfW), innerH / (2 * worldHalfH));
+            scale = baseScale * viewZoom;
+          }
 
           function worldToCanvas(x, y) {
             return {
@@ -1083,7 +1163,7 @@
           if (showGrid) {
             ctx.strokeStyle = gridColor;
             ctx.lineWidth = 1;
-            const stepWorld = niceStep((2 * worldHalfW) / 10);
+            const stepWorld = niceStep((2 * Math.max(worldHalfW, worldHalfH)) / 10);
             const x0 = -worldHalfW;
             const x1 = worldHalfW;
             const y0 = -worldHalfH;
@@ -1120,6 +1200,26 @@
           ctx.moveTo(v1.x, v1.y);
           ctx.lineTo(v2.x, v2.y);
           ctx.stroke();
+
+          if (plotMode === "polar" && els.showSpiralGuide && els.showSpiralGuide.checked && N >= 2) {
+            ctx.strokeStyle = spiralGuideColor;
+            ctx.lineWidth = 1.25;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            let started = false;
+            for (let n = 1; n <= N; n++) {
+              const q = polarXY(n, m, a, preset);
+              const c = worldToCanvas(q.x, q.y);
+              if (!started) {
+                ctx.moveTo(c.x, c.y);
+                started = true;
+              } else {
+                ctx.lineTo(c.x, c.y);
+              }
+            }
+            ctx.stroke();
+          }
 
           for (const p of points) {
             const c = worldToCanvas(p.x, p.y);
