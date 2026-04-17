@@ -163,11 +163,64 @@
       gap: var(--space-4);
     }
 
+    .page-shell[data-layout="expanded"] {
+      max-width: min(100% - 2rem, 1120px);
+    }
+
     .page-topbar {
       display: flex;
       justify-content: flex-end;
       align-items: center;
       gap: var(--space-2);
+    }
+
+    .layout-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 118px;
+      text-align: center;
+    }
+
+    @media (min-width: 901px) {
+      .layout-toggle {
+        display: inline-flex;
+      }
+
+      .page-shell[data-layout="expanded"] .content-grid {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+
+      .page-shell[data-layout="expanded"] .content-grid > aside.section {
+        order: 2;
+        max-width: none;
+      }
+
+      .page-shell[data-layout="expanded"] .content-grid > section.section[aria-labelledby="visualization-title"] {
+        order: 1;
+      }
+
+      .page-shell[data-layout="expanded"] .control-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2) var(--space-3);
+        align-items: flex-start;
+      }
+
+      .page-shell[data-layout="expanded"] .control-stack > .control,
+      .page-shell[data-layout="expanded"] .control-stack > #polar-controls,
+      .page-shell[data-layout="expanded"] .control-stack > #square-controls {
+        flex: 1 1 160px;
+        min-width: min(180px, 100%);
+        max-width: 100%;
+      }
+
+      .page-shell[data-layout="expanded"] #polar-controls,
+      .page-shell[data-layout="expanded"] #square-controls {
+        display: grid;
+        gap: var(--space-2);
+      }
     }
 
     .theme-toggle {
@@ -427,7 +480,8 @@
     }
 
     .visualization-box {
-      min-height: 320px;
+      position: relative;
+      min-height: 0;
       border: 1px dashed var(--viz-frame);
       background: var(--viz-bg);
       color: var(--viz-text);
@@ -437,8 +491,9 @@
 
     .viz-mount {
       width: 100%;
-      min-height: 300px;
+      aspect-ratio: 1 / 1;
       display: block;
+      max-width: 100%;
     }
 
     .viz-mount canvas {
@@ -446,6 +501,34 @@
       width: 100%;
       height: auto;
       vertical-align: middle;
+      touch-action: none;
+    }
+
+    .plot-tooltip {
+      position: absolute;
+      z-index: 6;
+      pointer-events: none;
+      padding: 4px 8px;
+      font-size: 11px;
+      line-height: 1.2;
+      background: var(--menu-bg);
+      border: 1px solid var(--line-strong);
+      color: var(--text);
+      border-radius: 3px;
+      white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.08s ease;
+    }
+
+    .plot-tooltip.is-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .plot-tooltip--tap {
+      pointer-events: none;
     }
 
     @media (max-width: 900px) {
@@ -474,9 +557,6 @@
         gap: var(--space-3);
       }
 
-      .visualization-box {
-        min-height: 260px;
-      }
     }
   </style>
 </head>
@@ -493,8 +573,9 @@
   </header>
 
   <main class="ta-site-project-shell">
-    <div class="page-shell">
+    <div class="page-shell" data-layout="standard">
       <div class="page-topbar">
+        <button type="button" id="layout-toggle" class="layout-toggle" aria-label="Toggle desktop layout" title="Toggle desktop layout (wide canvas)">layout: standard</button>
         <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
       </div>
 
@@ -604,6 +685,8 @@
           <div class="surface">
             <div class="visualization-box">
               <div id="viz-mount" class="viz-mount" aria-label="prime distribution plot"></div>
+              <div id="plot-tooltip-hover" class="plot-tooltip" aria-hidden="true"></div>
+              <div id="plot-tooltip-tap" class="plot-tooltip plot-tooltip--tap" aria-hidden="true"></div>
             </div>
           </div>
         </section>
@@ -780,12 +863,24 @@
           showSpiralGuide: document.getElementById("show-spiral-guide"),
           cellSpacing: document.getElementById("cell-spacing"),
           vizMount: document.getElementById("viz-mount"),
+          vizBox: document.querySelector(".visualization-box"),
+          plotTooltipHover: document.getElementById("plot-tooltip-hover"),
+          plotTooltipTap: document.getElementById("plot-tooltip-tap"),
           equationSummary: document.getElementById("equation-summary"),
         };
+
+        const pageShell = document.querySelector(".page-shell");
+        const layoutToggle = document.getElementById("layout-toggle");
 
         const ZOOM_MIN = 0.25;
         const ZOOM_MAX = 8;
         let viewZoom = 1;
+
+        let lastHitTest = { points: [], threshold: 16, w: 0, h: 0 };
+        let mobileTapN = null;
+        let multiTouchGesture = false;
+        let pinchStartDist = 0;
+        let pinchStartZoom = 1;
 
         if (els.maxNCapLabel) {
           els.maxNCapLabel.textContent = String(N_MAX);
@@ -796,6 +891,97 @@
 
         let canvas = null;
         let ctx = null;
+
+        function touchDistance(t0, t1) {
+          const dx = t0.clientX - t1.clientX;
+          const dy = t0.clientY - t1.clientY;
+          return Math.hypot(dx, dy);
+        }
+
+        function hideHoverTooltip() {
+          const el = els.plotTooltipHover;
+          if (!el) return;
+          el.classList.remove("is-visible");
+          el.setAttribute("aria-hidden", "true");
+        }
+
+        function hideTapTooltip() {
+          const el = els.plotTooltipTap;
+          if (!el) return;
+          el.classList.remove("is-visible");
+          el.setAttribute("aria-hidden", "true");
+        }
+
+        function positionTooltipInBox(el, localX, localY, boxW, boxH) {
+          const pad = 10;
+          const tw = 72;
+          const th = 22;
+          let left = localX + pad;
+          let top = localY + pad;
+          left = clamp(left, 4, Math.max(4, boxW - tw));
+          top = clamp(top, 4, Math.max(4, boxH - th));
+          el.style.left = `${left}px`;
+          el.style.top = `${top}px`;
+        }
+
+        function nearestHitPoint(clientX, clientY) {
+          if (!canvas || !lastHitTest.points.length) return null;
+          const rect = canvas.getBoundingClientRect();
+          const lx = clientX - rect.left;
+          const ly = clientY - rect.top;
+          let best = null;
+          let bestD = Infinity;
+          for (const p of lastHitTest.points) {
+            const dx = lx - p.sx;
+            const dy = ly - p.sy;
+            const d = Math.hypot(dx, dy);
+            if (d <= lastHitTest.threshold && d < bestD) {
+              bestD = d;
+              best = p;
+            }
+          }
+          return best;
+        }
+
+        function updateHoverTooltip(clientX, clientY) {
+          const el = els.plotTooltipHover;
+          const box = els.vizBox;
+          if (!el || !box) return;
+          const p = nearestHitPoint(clientX, clientY);
+          if (!p) {
+            hideHoverTooltip();
+            return;
+          }
+          el.textContent = `n = ${p.n}`;
+          el.classList.add("is-visible");
+          el.setAttribute("aria-hidden", "false");
+          const b = box.getBoundingClientRect();
+          const rect = canvas.getBoundingClientRect();
+          const lx = p.sx + (rect.left - b.left);
+          const ly = p.sy + (rect.top - b.top);
+          positionTooltipInBox(el, lx, ly, b.width, b.height);
+        }
+
+        function handleCanvasTap(clientX, clientY) {
+          const p = nearestHitPoint(clientX, clientY);
+          if (!p) {
+            mobileTapN = null;
+            hideTapTooltip();
+            return;
+          }
+          mobileTapN = p.n;
+          const el = els.plotTooltipTap;
+          const box = els.vizBox;
+          if (!el || !box) return;
+          el.textContent = `n = ${p.n}`;
+          el.classList.add("is-visible");
+          el.setAttribute("aria-hidden", "false");
+          const b = box.getBoundingClientRect();
+          const rect = canvas.getBoundingClientRect();
+          const lx = p.sx + (rect.left - b.left);
+          const ly = p.sy + (rect.top - b.top);
+          positionTooltipInBox(el, lx, ly, b.width, b.height);
+        }
 
         function ensureCanvas() {
           if (!els.vizMount) return;
@@ -816,6 +1002,47 @@
               },
               { passive: false }
             );
+
+            canvas.addEventListener("touchstart", (e) => {
+              if (e.touches.length >= 2) {
+                multiTouchGesture = true;
+                pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+                pinchStartZoom = viewZoom;
+              }
+            }, { passive: true });
+
+            canvas.addEventListener(
+              "touchmove",
+              (e) => {
+                if (e.touches.length === 2 && pinchStartDist > 1) {
+                  e.preventDefault();
+                  const d = touchDistance(e.touches[0], e.touches[1]);
+                  const ratio = d / pinchStartDist;
+                  viewZoom = clamp(pinchStartZoom * ratio, ZOOM_MIN, ZOOM_MAX);
+                  renderAll();
+                }
+              },
+              { passive: false }
+            );
+
+            canvas.addEventListener("touchend", (e) => {
+              if (e.touches.length > 0) return;
+              const wasMulti = multiTouchGesture;
+              multiTouchGesture = false;
+              pinchStartDist = 0;
+              if (wasMulti) return;
+              if (e.changedTouches.length !== 1) return;
+              const t = e.changedTouches[0];
+              handleCanvasTap(t.clientX, t.clientY);
+            }, { passive: true });
+
+            canvas.addEventListener("mousemove", (e) => {
+              updateHoverTooltip(e.clientX, e.clientY);
+            });
+
+            canvas.addEventListener("mouseleave", () => {
+              hideHoverTooltip();
+            });
           }
         }
 
@@ -857,6 +1084,15 @@
           }
 
           syncModePanels();
+
+          if (layoutToggle && pageShell) {
+            layoutToggle.addEventListener("click", () => {
+              const next = pageShell.getAttribute("data-layout") === "expanded" ? "standard" : "expanded";
+              pageShell.setAttribute("data-layout", next);
+              layoutToggle.textContent = `layout: ${next}`;
+              renderAll();
+            });
+          }
         }
 
         function syncModePanels() {
@@ -1098,7 +1334,7 @@
           const dpr = window.devicePixelRatio || 1;
           const rect = els.vizMount.getBoundingClientRect();
           const cssW = Math.max(200, Math.floor(rect.width));
-          const cssH = Math.max(240, Math.floor(rect.width * 0.62));
+          const cssH = cssW;
 
           canvas.style.width = `${cssW}px`;
           canvas.style.height = `${cssH}px`;
@@ -1228,6 +1464,35 @@
             ctx.beginPath();
             ctx.arc(c.x, c.y, pointRadius, 0, Math.PI * 2);
             ctx.fill();
+          }
+
+          lastHitTest.points = points.map((p) => {
+            const c = worldToCanvas(p.x, p.y);
+            return { n: p.n, sx: c.x, sy: c.y };
+          });
+          lastHitTest.threshold = Math.max(pointRadius + 10, 14);
+          lastHitTest.w = w;
+          lastHitTest.h = h;
+
+          if (mobileTapN !== null) {
+            const still = points.some((pt) => pt.n === mobileTapN);
+            if (!still) {
+              mobileTapN = null;
+              hideTapTooltip();
+            } else if (els.plotTooltipTap && els.vizBox) {
+              const pt = points.find((p) => p.n === mobileTapN);
+              if (pt) {
+                const c = worldToCanvas(pt.x, pt.y);
+                els.plotTooltipTap.textContent = `n = ${mobileTapN}`;
+                els.plotTooltipTap.classList.add("is-visible");
+                els.plotTooltipTap.setAttribute("aria-hidden", "false");
+                const b = els.vizBox.getBoundingClientRect();
+                const crect = canvas.getBoundingClientRect();
+                const lx = c.x + (crect.left - b.left);
+                const ly = c.y + (crect.top - b.top);
+                positionTooltipInBox(els.plotTooltipTap, lx, ly, b.width, b.height);
+              }
+            }
           }
 
           const effList = Array.from(factorResult.effective).sort((a, b) => a - b);
