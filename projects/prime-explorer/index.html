@@ -682,10 +682,20 @@
                 <label for="max-n">max integer N (1…<span id="max-n-cap-label">10000</span>)</label>
                 <div class="stepper" data-stepper>
                   <button type="button" class="stepper-button" data-step="-1" aria-label="decrease N">-</button>
-                  <input id="max-n" class="control-input" type="number" min="1" max="10000" step="1" value="400" inputmode="numeric" />
+                  <input id="max-n" class="control-input" type="number" min="1" max="2000000" step="1" value="400" inputmode="numeric" />
                   <button type="button" class="stepper-button" data-step="1" aria-label="increase N">+</button>
                 </div>
               </div>
+
+              <div class="control mode-hidden" id="render-tier-wrap">
+                <label for="render-tier">render resolution</label>
+                <select id="render-tier" title="Exact draws every point (up to sync limit). Aggregate uses fixed world buckets (large N). Auto picks aggregate when the range is large or dense.">
+                  <option value="auto" selected>auto</option>
+                  <option value="exact">exact points</option>
+                  <option value="aggregate">aggregate (bucketed)</option>
+                </select>
+              </div>
+              <p class="rw-hint mode-hidden" id="render-status" aria-live="polite"></p>
 
               <div class="control" id="point-size-wrap">
                 <label for="point-size">point size</label>
@@ -847,7 +857,13 @@
       const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       let themeMode = "auto";
 
-      const N_MAX = 10000;
+      const N_MAX = 2000000;
+      /** Rule walker stays path-based; cap N for responsiveness (honest limit). */
+      const N_RULE_WALKER_MAX = 20000;
+      /** Above this, exact spiral data is built in a Web Worker (main-thread sieve/points stay bounded). */
+      const N_SYNC_EXACT_MAX = 65536;
+      const AGGREGATE_GRID_SIZE = 320;
+      const POLAR_GUIDE_MAX_N = 120000;
       const FIT_PADDING = 28;
 
       initializeTheme();
@@ -1039,6 +1055,9 @@
           plotTooltipHover: document.getElementById("plot-tooltip-hover"),
           plotTooltipTap: document.getElementById("plot-tooltip-tap"),
           equationSummary: document.getElementById("equation-summary"),
+          renderTier: document.getElementById("render-tier"),
+          renderStatus: document.getElementById("render-status"),
+          renderTierWrap: document.getElementById("render-tier-wrap"),
         };
 
         const pageShell = document.querySelector(".page-shell");
@@ -1065,6 +1084,7 @@
           lastSpiralDrawMs: 0,
           lastRwComputeMs: 0,
           lastRwDrawMs: 0,
+          lastWorkerBuildMs: 0,
           hitBinReuse: 0,
           hitBinRebuild: 0,
           framesExact: 0,
@@ -1072,12 +1092,23 @@
           lastSpiralMode: null,
         };
 
+        let spiralWorker = null;
+        let spiralJobId = 0;
+        /** Latest requested spiral data key (worker + sync); used to ignore stale worker messages. */
+        let spiralWorldAppliedDataKey = "";
+        let spiralWorkerBusy = false;
+        /** Avoid duplicate worker posts for the same dataset while a job is in flight. */
+        let spiralWorkerTargetKey = "";
+        let lastWorkerSurvivor = null;
+        let lastEffectiveRenderLabel = "";
+
         function getPrimeExplorerPerf() {
           const hr = pePerf.hitBinReuse;
           const hb = pePerf.hitBinRebuild;
           return {
             lastSpiralWorldRebuildMs: pePerf.lastSpiralRebuildMs,
             lastSpiralDrawMs: pePerf.lastSpiralDrawMs,
+            lastWorkerBuildMs: pePerf.lastWorkerBuildMs,
             lastRuleWalkerComputeMs: pePerf.lastRwComputeMs,
             lastRuleWalkerDrawMs: pePerf.lastRwDrawMs,
             hitBinReuseCount: hr,
@@ -1159,6 +1190,29 @@
           const rect = canvas.getBoundingClientRect();
           const lx = clientX - rect.left;
           const ly = clientY - rect.top;
+          if (lastHitTest.mode === "aggregate" && spiralWorld.aggregate) {
+            const A = spiralWorld.aggregate;
+            const world = canvasInnerToWorldFromLast(lx - viewPanX, ly - viewPanY);
+            if (!world) return null;
+            const rx = Math.max(A.worldMaxX - A.worldMinX, 1e-12);
+            const ry = Math.max(A.worldMaxY - A.worldMinY, 1e-12);
+            let ix = Math.floor(((world.x - A.worldMinX) / rx) * A.gridW);
+            let iy = Math.floor(((world.y - A.worldMinY) / ry) * A.gridH);
+            ix = clamp(ix, 0, A.gridW - 1);
+            iy = clamp(iy, 0, A.gridH - 1);
+            const idx = iy * A.gridW + ix;
+            const pc = A.primeBins[idx];
+            const npc = A.nonPrimeBins[idx];
+            if (pc === 0 && npc === 0) return null;
+            return {
+              aggregate: true,
+              pc,
+              npc,
+              total: pc + npc,
+              sx: lx,
+              sy: ly,
+            };
+          }
           if (lastHitTest.mode === "merged" && lastHitTest.mergeMap && lastHitTest.mergeBucketPx) {
             const bx = Math.floor(lx / lastHitTest.mergeBucketPx);
             const by = Math.floor(ly / lastHitTest.mergeBucketPx);
@@ -1245,7 +1299,9 @@
             hideHoverTooltip();
             return;
           }
-          if (p.merged) {
+          if (p.aggregate) {
+            el.textContent = `Bucket ~${p.total} (${p.pc} prime, ${p.npc} other)`;
+          } else if (p.merged) {
             el.textContent = `~${p.n} integers (merged)`;
           } else {
             el.textContent = `n = ${p.n}`;
@@ -1269,7 +1325,18 @@
           const el = els.plotTooltipTap;
           const box = els.vizBox;
           if (!el || !box) return;
-          if (p.merged) {
+          if (p.aggregate) {
+            mobileTapN = null;
+            el.textContent = `Bucket ~${p.total} (${p.pc} prime, ${p.npc} other)`;
+            el.classList.add("is-visible");
+            el.setAttribute("aria-hidden", "false");
+            const b = box.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
+            const lx = p.sx + (rect.left - b.left);
+            const ly = p.sy + (rect.top - b.top);
+            positionTooltipInBox(el, lx, ly, b.width, b.height);
+            return;
+          } else if (p.merged) {
             mobileTapN = null;
             el.textContent = `~${p.n} integers (merged)`;
             el.classList.add("is-visible");
@@ -1445,6 +1512,7 @@
             els.rwShowFallback,
             els.rwColorTriggers,
             els.primeStackDepthGroup,
+            els.renderTier,
           ].forEach((el) => {
             if (el) {
               el.addEventListener("input", rerender);
@@ -1493,6 +1561,12 @@
           if (els.ruleWalkerControls) {
             els.ruleWalkerControls.classList.toggle("mode-hidden", !rw);
           }
+          if (els.renderTierWrap) {
+            els.renderTierWrap.classList.toggle("mode-hidden", rw);
+          }
+          if (els.renderStatus) {
+            els.renderStatus.classList.toggle("mode-hidden", rw);
+          }
           if (els.pointSizeWrap) {
             els.pointSizeWrap.classList.toggle("mode-hidden", rw);
           }
@@ -1510,6 +1584,9 @@
               : "Enable “Turn on collision” for fallback turns and related options.";
           }
         }
+
+        /** Sieve arrays larger than this are built in the worker (main thread stays responsive). */
+        const MAIN_THREAD_SIEVE_MAX = 250000;
 
         function sievePrimes(limit) {
           const isPrime = new Array(Math.max(2, limit + 1)).fill(true);
@@ -1530,9 +1607,15 @@
         /** Reuses one Eratosthenes sieve per N (hot paths never trial-divide per n). */
         function getPrimeSieve(N) {
           if (primeSieveArr && primeSieveN === N) return primeSieveArr;
+          if (N > MAIN_THREAD_SIEVE_MAX) return null;
           primeSieveArr = sievePrimes(N);
           primeSieveN = N;
           return primeSieveArr;
+        }
+
+        function setPrimeSieveFromUint8(N, arr) {
+          primeSieveArr = arr instanceof Uint8Array ? arr : new Uint8Array(arr);
+          primeSieveN = N;
         }
 
         function factorEffectiveSignature(factorResult) {
@@ -1555,6 +1638,10 @@
           polarGy: null,
           /** True when prime-stack uses grouped 2D layout (composite-count × occurrence). */
           primeStackGroupedDepth: false,
+          /** "exact" | "aggregate" — effective tier for this dataset. */
+          dataTier: "exact",
+          /** World-space bucket grid when dataTier === "aggregate". */
+          aggregate: null,
         };
 
         let ruleWalkerKey = "";
@@ -1711,6 +1798,55 @@
             if (p < 2) continue;
             gx[n] = primeGx[p];
             gy[n] = primeGy[p] + (n - p) * PRIME_STACK_GROUP_INNER_DY;
+          }
+        }
+
+        /** O(N) full lattice for integers 1…N (same geometry as {@link squareSpiralLattice}). */
+        function fillSquareSpiralLatticeTable(N, gx, gy) {
+          gx[1] = 0;
+          gy[1] = 0;
+          if (N < 2) return;
+          const dx = [1, 0, -1, 0];
+          const dy = [0, 1, 0, -1];
+          let x = 0;
+          let y = 0;
+          let k = 2;
+          let len = 1;
+          let dir = 0;
+          outer: for (;;) {
+            for (let side = 0; side < 2; side++) {
+              for (let s = 0; s < len; s++) {
+                x += dx[dir];
+                y += dy[dir];
+                gx[k] = x;
+                gy[k] = y;
+                if (k === N) break outer;
+                k++;
+              }
+              dir = (dir + 1) % 4;
+            }
+            len++;
+          }
+        }
+
+        /** O(N) prime-stack columns (non-grouped). */
+        function fillPrimeStackColumnsTable(N, isPrimeArr, gx, gy) {
+          gx[1] = 0;
+          gy[1] = 0;
+          if (N < 2) return;
+          const sh = new Int32Array(N + 2);
+          let col = 0;
+          for (let i = 2; i <= N; i++) {
+            if (isPrimeArr[i]) {
+              col++;
+              gx[i] = col;
+              gy[i] = 0;
+              sh[col] = 0;
+            } else {
+              sh[col]++;
+              gx[i] = col;
+              gy[i] = sh[col];
+            }
           }
         }
 
@@ -2145,7 +2281,20 @@
           };
         }
 
-        function spiralWorldCacheKey(N, plotMode, m, a, preset, radialSpacing, cell, visibility, factorResult, useFilter, primeStackGrouped) {
+        function spiralWorldCacheKey(
+          N,
+          plotMode,
+          m,
+          a,
+          preset,
+          radialSpacing,
+          cell,
+          visibility,
+          factorResult,
+          useFilter,
+          primeStackGrouped,
+          dataTierKey
+        ) {
           return [
             N,
             plotMode,
@@ -2158,7 +2307,33 @@
             useFilter,
             factorEffectiveSignature(factorResult),
             plotMode === "prime-stack" ? String(primeStackGrouped ? 1 : 0) : "-",
+            dataTierKey === "ag" ? "ag" : "ex",
           ].join("|");
+        }
+
+        /** User select: auto | exact | aggregate → effective tier + short UI label. */
+        function resolveRenderTier(userSel, N, plotMode) {
+          if (plotMode === "rule-walker") {
+            return { tier: "exact", label: "Exact (rule walker)", dataTierKey: "ex" };
+          }
+          if (userSel === "exact") {
+            return { tier: "exact", label: "Exact", dataTierKey: "ex" };
+          }
+          if (userSel === "aggregate") {
+            return { tier: "aggregate", label: "Aggregate", dataTierKey: "ag" };
+          }
+          if (N > 120000) {
+            return { tier: "aggregate", label: "Auto → aggregate (large N)", dataTierKey: "ag" };
+          }
+          if (N > 45000) {
+            return { tier: "aggregate", label: "Auto → aggregate (dense range)", dataTierKey: "ag" };
+          }
+          return { tier: "exact", label: "Auto → exact", dataTierKey: "ex" };
+        }
+
+        function spiralNeedsWorker(tierResolved, N) {
+          if (tierResolved === "aggregate") return true;
+          return tierResolved === "exact" && N > N_SYNC_EXACT_MAX;
         }
 
         function rebuildSpiralWorld(
@@ -2173,8 +2348,10 @@
           factorResult,
           useFilter,
           isPrimeArr,
-          primeStackGroupedDepth
+          primeStackGroupedDepth,
+          effectiveTierKey
         ) {
+          const dtKey = effectiveTierKey === "ag" ? "ag" : "ex";
           const key = spiralWorldCacheKey(
             N,
             plotMode,
@@ -2186,7 +2363,8 @@
             visibility,
             factorResult,
             useFilter,
-            !!primeStackGroupedDepth
+            !!primeStackGroupedDepth,
+            dtKey
           );
           if (spiralWorldKey === key && spiralWorld.wx && spiralWorld.wx.length >= spiralWorld.count) {
             return { rebuilt: false, ms: 0 };
@@ -2194,10 +2372,23 @@
           const __tSpiralWorldRebuild = performance.now();
           let gxPS = null;
           let gyPS = null;
+          let sqGx = null;
+          let sqGy = null;
+          let psGx = null;
+          let psGy = null;
           if (plotMode === "prime-stack" && primeStackGroupedDepth) {
             gxPS = new Float32Array(N + 1);
             gyPS = new Float32Array(N + 1);
             fillPrimeStackGrouped2DLattice(N, isPrimeArr, gxPS, gyPS);
+          } else if (plotMode === "prime-stack") {
+            psGx = new Float32Array(N + 1);
+            psGy = new Float32Array(N + 1);
+            fillPrimeStackColumnsTable(N, isPrimeArr, psGx, psGy);
+          }
+          if (plotMode === "square") {
+            sqGx = new Float32Array(N + 1);
+            sqGy = new Float32Array(N + 1);
+            fillSquareSpiralLatticeTable(N, sqGx, sqGy);
           }
           let cnt = 0;
           for (let n = 1; n <= N; n++) {
@@ -2220,11 +2411,10 @@
             let gxd = 0;
             let gyd = 0;
             if (plotMode === "square") {
-              const p = squareSpiralLattice(n);
-              wwx = p.x * cell;
-              wwy = p.y * cell;
-              gxd = p.x;
-              gyd = p.y;
+              wwx = sqGx[n] * cell;
+              wwy = sqGy[n] * cell;
+              gxd = sqGx[n];
+              gyd = sqGy[n];
             } else if (plotMode === "prime-stack") {
               if (primeStackGroupedDepth && gxPS && gyPS) {
                 wwx = gxPS[n] * cell;
@@ -2232,11 +2422,10 @@
                 gxd = gxPS[n];
                 gyd = gyPS[n];
               } else {
-                const p = primeStackLattice(n, isPrimeArr);
-                wwx = p.x * cell;
-                wwy = p.y * cell;
-                gxd = p.x;
-                gyd = p.y;
+                wwx = psGx[n] * cell;
+                wwy = psGy[n] * cell;
+                gxd = psGx[n];
+                gyd = psGy[n];
               }
             } else {
               const p = polarXY(n, m, a, preset, radialSpacing);
@@ -2264,7 +2453,7 @@
           let polarGx = null;
           let polarGy = null;
           let polarGuideN = 0;
-          if (plotMode === "polar" && N >= 1) {
+          if (plotMode === "polar" && N >= 1 && N <= POLAR_GUIDE_MAX_N) {
             polarGuideN = N;
             polarGx = new Float32Array(N);
             polarGy = new Float32Array(N);
@@ -2275,6 +2464,7 @@
             }
           }
           spiralWorldKey = key;
+          spiralWorldAppliedDataKey = key;
           spiralWorld.count = cnt;
           spiralWorld.wx = wx;
           spiralWorld.wy = wy;
@@ -2286,7 +2476,145 @@
           spiralWorld.polarGx = polarGx;
           spiralWorld.polarGy = polarGy;
           spiralWorld.primeStackGroupedDepth = plotMode === "prime-stack" && !!primeStackGroupedDepth;
+          spiralWorld.dataTier = "exact";
+          spiralWorld.aggregate = null;
           return { rebuilt: true, ms: performance.now() - __tSpiralWorldRebuild };
+        }
+
+        function drawAggregateWorldGrid(ctx, agg, worldToCanvas, primeColor, mixedBucketColor, compositeFill) {
+          const {
+            gridW,
+            gridH,
+            primeBins,
+            nonPrimeBins,
+            worldMinX,
+            worldMaxX,
+            worldMinY,
+            worldMaxY,
+          } = agg;
+          const rx = Math.max(worldMaxX - worldMinX, 1e-12);
+          const ry = Math.max(worldMaxY - worldMinY, 1e-12);
+          const cw = rx / gridW;
+          const ch = ry / gridH;
+          for (let iy = 0; iy < gridH; iy++) {
+            for (let ix = 0; ix < gridW; ix++) {
+              const idx = iy * gridW + ix;
+              const pc = primeBins[idx];
+              const npc = nonPrimeBins[idx];
+              if (pc === 0 && npc === 0) continue;
+              const wx0 = worldMinX + ix * cw;
+              const wy0 = worldMinY + iy * ch;
+              const wx1 = wx0 + cw;
+              const wy1 = wy0 + ch;
+              const p00 = worldToCanvas(wx0, wy0);
+              const p10 = worldToCanvas(wx1, wy0);
+              const p01 = worldToCanvas(wx0, wy1);
+              const p11 = worldToCanvas(wx1, wy1);
+              const xs = [p00.x, p10.x, p01.x, p11.x];
+              const ys = [p00.y, p10.y, p01.y, p11.y];
+              const xmin = Math.min(xs[0], xs[1], xs[2], xs[3]);
+              const xmax = Math.max(xs[0], xs[1], xs[2], xs[3]);
+              const ymin = Math.min(ys[0], ys[1], ys[2], ys[3]);
+              const ymax = Math.max(ys[0], ys[1], ys[2], ys[3]);
+              let fill;
+              if (pc > 0 && npc === 0) fill = primeColor;
+              else if (pc > 0 && npc > 0) fill = mixedBucketColor;
+              else fill = compositeFill;
+              ctx.fillStyle = fill;
+              ctx.fillRect(xmin, ymin, Math.max(1, xmax - xmin), Math.max(1, ymax - ymin));
+            }
+          }
+        }
+
+        function ensureSpiralWorker() {
+          if (spiralWorker) return spiralWorker;
+          try {
+            spiralWorker = new Worker("prime-explorer-worker.js");
+          } catch (e) {
+            console.warn("Prime Explorer: worker failed", e);
+            return null;
+          }
+          spiralWorker.addEventListener("message", function (ev) {
+            const msg = ev.data || {};
+            if (!msg.ok) {
+              spiralWorkerBusy = false;
+              if (els.renderStatus) els.renderStatus.textContent = "Worker error: " + (msg.error || "unknown");
+              return;
+            }
+            if ((msg.jobId | 0) !== spiralJobId) {
+              return;
+            }
+            const t0 = performance.now();
+            const Ndone = msg.N | 0;
+            lastWorkerSurvivor = msg.survivor >= 0 ? msg.survivor : null;
+            if (msg.isPrime) {
+              setPrimeSieveFromUint8(Ndone, msg.isPrime);
+            }
+            const plotMode = els.plotMode ? els.plotMode.value : "polar";
+            const primeStackGroupedDepth =
+              plotMode === "prime-stack" && els.primeStackDepthGroup && els.primeStackDepthGroup.checked;
+            const appliedKey = msg.clientDataKey || "";
+
+            if (msg.outputMode === "aggregate") {
+              spiralWorld.count = msg.count | 0;
+              spiralWorld.wx = null;
+              spiralWorld.wy = null;
+              spiralWorld.n = null;
+              spiralWorld.kind = null;
+              spiralWorld.gHalfW = msg.gHalfW;
+              spiralWorld.gHalfH = msg.gHalfH;
+              spiralWorld.polarGuideN = 0;
+              spiralWorld.polarGx = null;
+              spiralWorld.polarGy = null;
+              spiralWorld.primeStackGroupedDepth = plotMode === "prime-stack" && primeStackGroupedDepth;
+              spiralWorld.dataTier = "aggregate";
+              spiralWorld.aggregate = {
+                gridW: msg.gridW,
+                gridH: msg.gridH,
+                primeBins: msg.primeBins,
+                nonPrimeBins: msg.nonPrimeBins,
+                worldMinX: msg.worldMinX,
+                worldMaxX: msg.worldMaxX,
+                worldMinY: msg.worldMinY,
+                worldMaxY: msg.worldMaxY,
+              };
+            } else {
+              spiralWorld.count = msg.count | 0;
+              spiralWorld.wx = msg.wx;
+              spiralWorld.wy = msg.wy;
+              spiralWorld.n = msg.n;
+              spiralWorld.kind = msg.kind;
+              spiralWorld.gHalfW = msg.gHalfW;
+              spiralWorld.gHalfH = msg.gHalfH;
+              spiralWorld.polarGuideN = msg.polarGuideN | 0;
+              spiralWorld.polarGx = msg.polarGx;
+              spiralWorld.polarGy = msg.polarGy;
+              spiralWorld.primeStackGroupedDepth = !!msg.primeStackGroupedDepth;
+              spiralWorld.dataTier = "exact";
+              spiralWorld.aggregate = null;
+            }
+            spiralWorldKey = appliedKey;
+            spiralWorldAppliedDataKey = appliedKey;
+            spiralWorkerBusy = false;
+            pePerf.lastWorkerBuildMs = performance.now() - t0;
+            if (els.renderStatus) els.renderStatus.textContent = "";
+            renderAll();
+          });
+          return spiralWorker;
+        }
+
+        function postSpiralWorkerJob(payload) {
+          const w = ensureSpiralWorker();
+          if (!w) {
+            spiralWorkerBusy = false;
+            return false;
+          }
+          spiralJobId++;
+          spiralWorkerBusy = true;
+          payload.jobId = spiralJobId;
+          w.postMessage(payload);
+          if (els.renderStatus) els.renderStatus.textContent = "Computing large range…";
+          return true;
         }
 
         function ruleWalkerConfigSignature(rwCfg) {
@@ -2336,6 +2664,16 @@
           const primeStackGroupedDepth =
             plotMode === "prime-stack" && els.primeStackDepthGroup && els.primeStackDepthGroup.checked;
 
+          const userRenderSel = els.renderTier ? els.renderTier.value : "auto";
+          const tierResolved = resolveRenderTier(userRenderSel, N, plotMode);
+          lastEffectiveRenderLabel = tierResolved.label;
+          if (els.renderStatus) {
+            if (spiralWorkerBusy) els.renderStatus.textContent = "Computing large range…";
+            else els.renderStatus.textContent = "Render: " + tierResolved.label;
+          }
+
+          const nRuleWalker = plotMode === "rule-walker" ? Math.min(N, N_RULE_WALKER_MAX) : N;
+
           const factorResult = parseFactorInput(els.factorInput ? els.factorInput.value : "");
           const useFilter = !factorResult.invalid;
 
@@ -2366,24 +2704,30 @@
             }
           }
 
-          const isPrimeArr = getPrimeSieve(N);
+          let isPrimeArr = getPrimeSieve(plotMode === "rule-walker" ? nRuleWalker : N);
 
           if (!viewOnly && els.survivingCompositeOut) {
-            const survivor = smallestSurvivingComposite(N, factorResult, isPrimeArr);
-            els.survivingCompositeOut.textContent =
-              survivor === null
-                ? "No surviving composite within current range"
-                : String(survivor);
+            if (isPrimeArr) {
+              const survivor = smallestSurvivingComposite(N, factorResult, isPrimeArr);
+              els.survivingCompositeOut.textContent =
+                survivor === null
+                  ? "No surviving composite within current range"
+                  : String(survivor);
+            } else if (lastWorkerSurvivor != null) {
+              els.survivingCompositeOut.textContent = String(lastWorkerSurvivor);
+            } else {
+              els.survivingCompositeOut.textContent = spiralWorkerBusy ? "…" : "—";
+            }
           }
 
           if (plotMode === "rule-walker") {
             const rwCfg = readRuleWalkerConfig();
-            const rwSig = [N, ruleWalkerConfigSignature(rwCfg), factorEffectiveSignature(factorResult)].join("|");
+            const rwSig = [nRuleWalker, ruleWalkerConfigSignature(rwCfg), factorEffectiveSignature(factorResult)].join("|");
             let rw;
             let rwComputeMs = 0;
             if (!viewOnly || ruleWalkerKey !== rwSig || !ruleWalkerCached) {
               const __tRw = performance.now();
-              rw = computeRuleWalker(N, rwCfg, isPrimeArr, factorResult);
+              rw = computeRuleWalker(nRuleWalker, rwCfg, isPrimeArr, factorResult);
               rwComputeMs = performance.now() - __tRw;
               ruleWalkerCached = rw;
               ruleWalkerKey = rwSig;
@@ -2398,7 +2742,11 @@
                 rwCfg.triggerPrimeLookback && rwCfg.primeLookbackX > 0
                   ? ` &nbsp;·&nbsp; <strong>Prime lookback (X=${rwCfg.primeLookbackX}):</strong> turn if any of the previous ${rwCfg.primeLookbackX} integers was prime`
                   : "";
-              els.ruleWalkerReadout.innerHTML = `<strong>Final integer:</strong> ${rw.finalN} &nbsp;·&nbsp; <strong>Early stop:</strong> ${term}${plb}`;
+              const capNote =
+                N > N_RULE_WALKER_MAX
+                  ? ` &nbsp;·&nbsp; <em>N capped at ${N_RULE_WALKER_MAX} for rule walker.</em>`
+                  : "";
+              els.ruleWalkerReadout.innerHTML = `<strong>Final integer:</strong> ${rw.finalN} &nbsp;·&nbsp; <strong>Early stop:</strong> ${term}${plb}${capNote}`;
             }
 
             const rwDrawT0 = performance.now();
@@ -2607,21 +2955,88 @@
             return;
           }
 
-          const spiralRebuild = rebuildSpiralWorld(
-            N,
-            plotMode,
-            m,
-            a,
-            preset,
-            radialSpacing,
-            cell,
-            visibility,
-            factorResult,
-            useFilter,
-            isPrimeArr,
-            primeStackGroupedDepth
-          );
-          pePerf.lastSpiralRebuildMs = spiralRebuild.ms;
+          const desiredSpiralKey =
+            plotMode === "polar" || plotMode === "square" || plotMode === "prime-stack"
+              ? spiralWorldCacheKey(
+                  N,
+                  plotMode,
+                  m,
+                  a,
+                  preset,
+                  radialSpacing,
+                  cell,
+                  visibility,
+                  factorResult,
+                  useFilter,
+                  primeStackGroupedDepth,
+                  tierResolved.dataTierKey
+                )
+              : "";
+
+          let spiralRebuild = { rebuilt: false, ms: 0 };
+          if (plotMode === "polar" || plotMode === "square" || plotMode === "prime-stack") {
+            if (!viewOnly) {
+              const needW = spiralNeedsWorker(tierResolved.tier, N);
+              const fresh = desiredSpiralKey === spiralWorldAppliedDataKey && !spiralWorkerBusy;
+              if (!fresh) {
+                if (needW) {
+                  spiralWorld.count = 0;
+                  spiralWorld.wx = null;
+                  spiralWorld.wy = null;
+                  spiralWorld.n = null;
+                  spiralWorld.kind = null;
+                  spiralWorld.aggregate = null;
+                  spiralWorld.gHalfW = 1e-9;
+                  spiralWorld.gHalfH = 1e-9;
+                  spiralWorld.dataTier = tierResolved.tier === "aggregate" ? "aggregate" : "exact";
+                  if (!(spiralWorkerBusy && spiralWorkerTargetKey === desiredSpiralKey)) {
+                    spiralWorkerTargetKey = desiredSpiralKey;
+                    const factorPrimes = Array.from(factorResult.effective).sort((a, b) => a - b);
+                    postSpiralWorkerJob({
+                      clientDataKey: desiredSpiralKey,
+                      N,
+                      plotMode,
+                      m,
+                      a,
+                      preset,
+                      radialSpacing,
+                      cell,
+                      visibility,
+                      useFilter,
+                      factorPrimes,
+                      primeStackGroupedDepth,
+                      outputMode: tierResolved.tier === "aggregate" ? "aggregate" : "exact",
+                      aggregateGrid: AGGREGATE_GRID_SIZE,
+                      includePolarGuide: N <= POLAR_GUIDE_MAX_N,
+                      polarGuideMaxN: POLAR_GUIDE_MAX_N,
+                    });
+                  }
+                } else {
+                  isPrimeArr = getPrimeSieve(N);
+                  if (isPrimeArr) {
+                    spiralRebuild = rebuildSpiralWorld(
+                      N,
+                      plotMode,
+                      m,
+                      a,
+                      preset,
+                      radialSpacing,
+                      cell,
+                      visibility,
+                      factorResult,
+                      useFilter,
+                      isPrimeArr,
+                      primeStackGroupedDepth,
+                      tierResolved.dataTierKey
+                    );
+                  }
+                }
+              }
+            }
+            if (spiralRebuild.rebuilt) {
+              pePerf.lastSpiralRebuildMs = spiralRebuild.ms;
+            }
+          }
           const spiralDrawT0 = performance.now();
           const Sw = spiralWorld;
           const pointCount = Sw.count;
@@ -2761,7 +3176,12 @@
           ctx.lineTo(v2.x, v2.y);
           ctx.stroke();
 
-          if (plotMode === "prime-stack" && Sw.primeStackGroupedDepth && pointCount > 0) {
+          if (
+            plotMode === "prime-stack" &&
+            Sw.primeStackGroupedDepth &&
+            Sw.dataTier !== "aggregate" &&
+            pointCount > 0
+          ) {
             const axisTick = readCssColor("--viz-axis", "rgba(255,255,255,0.45)");
             const titleCol = readCssColor("--viz-secondary", "#8c5bd6");
             const tickMax = Math.min(64, Math.max(0, Math.ceil(Sw.gHalfW)));
@@ -2781,7 +3201,15 @@
             ctx.restore();
           }
 
-          if (plotMode === "polar" && els.showSpiralGuide && els.showSpiralGuide.checked && N >= 2 && Sw.polarGx && Sw.polarGy) {
+          if (
+            plotMode === "polar" &&
+            Sw.dataTier !== "aggregate" &&
+            els.showSpiralGuide &&
+            els.showSpiralGuide.checked &&
+            N >= 2 &&
+            Sw.polarGx &&
+            Sw.polarGy
+          ) {
             ctx.strokeStyle = spiralGuideColor;
             ctx.lineWidth = 1.25;
             ctx.lineJoin = "round";
@@ -2801,6 +3229,25 @@
           }
 
           const mixedBucketColor = "#eab308";
+          let drewAggregateLayer = false;
+          if (Sw.dataTier === "aggregate" && Sw.aggregate) {
+            drawAggregateWorldGrid(ctx, Sw.aggregate, worldToCanvas, primeColor, mixedBucketColor, compositeFill);
+            lastHitTest.mode = "aggregate";
+            lastHitTest.mergeBucketPx = 0;
+            lastHitTest.mergeMap = null;
+            lastHitTest.exactBins = null;
+            lastHitTest.projectBase = baseWorldToCanvas;
+            lastHitTest.hitCacheKey = "";
+            lastHitTest.points = [];
+            lastHitTest.threshold = 0;
+            lastHitTest.w = w;
+            lastHitTest.h = h;
+            pePerf.lastSpiralDrawMs = performance.now() - spiralDrawT0;
+            pePerf.lastSpiralMode = "aggregate";
+            drewAggregateLayer = true;
+          }
+
+          if (!drewAggregateLayer) {
           const mergeBucketPx = Math.max(4, Math.ceil(pointRadius * 2.2));
           /** Crude screen fill estimate; merged mode was flipping near ~N≈1500 at 0.12 on typical views. */
           const MERGE_FILL_RATIO_THRESHOLD = 0.17;
@@ -2908,7 +3355,20 @@
           } else {
             const binSize = 56;
             const hitBinCacheKey = [
-              spiralWorldCacheKey(N, plotMode, m, a, preset, radialSpacing, cell, visibility, factorResult, useFilter, primeStackGroupedDepth),
+              spiralWorldCacheKey(
+                N,
+                plotMode,
+                m,
+                a,
+                preset,
+                radialSpacing,
+                cell,
+                visibility,
+                factorResult,
+                useFilter,
+                primeStackGroupedDepth,
+                spiralWorld.dataTier === "aggregate" ? "ag" : "ex"
+              ),
               Math.round(innerW),
               Math.round(innerH),
               viewZoom.toFixed(6),
@@ -2949,10 +3409,11 @@
           lastHitTest.w = w;
           lastHitTest.h = h;
           pePerf.lastSpiralDrawMs = performance.now() - spiralDrawT0;
+          }
 
           if (mobileTapN !== null) {
             let pt = null;
-            if (!useMerged) {
+            if (!drewAggregateLayer && !useMerged) {
               for (let pi = 0; pi < pointCount; pi++) {
                 if (Sw.n[pi] === mobileTapN) {
                   pt = { x: Sw.wx[pi], y: Sw.wy[pi] };
@@ -2988,6 +3449,11 @@
             visibility === "primes" ? "show only primes" :
             "show only composites";
 
+          const renderFoot =
+            spiralWorld.dataTier === "aggregate"
+              ? `<br /><strong>Render:</strong> ${tierResolved.label}. Aggregate buckets summarize many integers per cell; hover/tap reports bucket counts only (not individual n).`
+              : `<br /><strong>Render:</strong> ${tierResolved.label}. Exact points preserve per-integer identity for hover/tap.`;
+
           if (!viewOnly) {
             if (plotMode === "polar") {
               const dThetaStr = (2 * Math.PI / m).toFixed(6);
@@ -3003,6 +3469,7 @@
               Cartesian: x_n = r'_n cos(θ_n), y_n = r'_n sin(θ_n).
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
+              ${renderFoot}
             `;
             } else if (plotMode === "prime-stack") {
               if (primeStackGroupedDepth) {
@@ -3010,12 +3477,14 @@
               <strong>Prime stack (grouped).</strong> Horizontal axis: <em>c</em> = number of composites after prime <em>p</em> before the next prime. Vertical axis: occurrence index (0, 1, …) among primes sharing the same <em>c</em>, in order. World: (x, y) = s·(c, index) in lattice units with s = ${cell.toFixed(3)}; composites in each prime’s gap stack slightly above the prime. <code>1</code> shares the origin with <code>2</code> at (0, 0).
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
+              ${renderFoot}
             `;
               } else {
                 els.equationSummary.innerHTML = `
               <strong>Prime stack.</strong> <code>1</code> at the origin; each prime sits on the x-axis in column order (2→(1,0), 3→(2,0), …). Each composite stacks upward in the column of the greatest prime below it. World: (x,y) = s·(g<sub>x</sub>, g<sub>y</sub>) with cell spacing s = ${cell.toFixed(3)} (grid aligned).
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
+              ${renderFoot}
             `;
               }
             } else {
@@ -3024,6 +3493,7 @@
               (x, y)_world = s · (x, y)_lattice.
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
+              ${renderFoot}
             `;
             }
           }
@@ -3035,6 +3505,8 @@
             visibility,
             points: pointCount,
             factor: factorResult,
+            renderTier: spiralWorld.dataTier,
+            renderLabel: lastEffectiveRenderLabel,
           });
           window.mathExplorer.getPerf = getPrimeExplorerPerf;
           window.mathExplorer.resetPerfCounters = resetPrimeExplorerPerfCounters;
