@@ -212,14 +212,16 @@
 
       .page-shell[data-layout="expanded"] .control-stack > .control,
       .page-shell[data-layout="expanded"] .control-stack > #polar-controls,
-      .page-shell[data-layout="expanded"] .control-stack > #square-controls {
+      .page-shell[data-layout="expanded"] .control-stack > #square-controls,
+      .page-shell[data-layout="expanded"] .control-stack > #prime-stack-controls {
         flex: 1 1 160px;
         min-width: min(180px, 100%);
         max-width: 100%;
       }
 
       .page-shell[data-layout="expanded"] #polar-controls,
-      .page-shell[data-layout="expanded"] #square-controls {
+      .page-shell[data-layout="expanded"] #square-controls,
+      .page-shell[data-layout="expanded"] #prime-stack-controls {
         display: grid;
         gap: var(--space-2);
       }
@@ -339,6 +341,58 @@
     .factor-survivor strong {
       font-weight: 400;
       color: var(--text);
+    }
+
+    .rw-rule-section {
+      margin-top: 0.45rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .rw-rule-section:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .rw-group-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .rw-check-line {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      margin: 0.18rem 0;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .rw-check-line input {
+      margin-top: 0.18rem;
+      flex-shrink: 0;
+    }
+
+    .rw-check-line label {
+      cursor: pointer;
+    }
+
+    .rw-hint {
+      margin: 0.25rem 0 0;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .rw-check-line input:disabled + label {
+      opacity: 0.45;
+      cursor: default;
     }
 
     .mode-hidden {
@@ -584,7 +638,7 @@
       <section class="hero" aria-labelledby="project-title">
         <h1 id="project-title">Prime Explorer</h1>
         <p>
-          Plot integers 1…N on a Cartesian canvas using a polar or square spiral. Highlight primes, filter composites by prime factors, and read the active equations live.
+          Plot integers 1…N on a Cartesian canvas using a polar spiral, square spiral, prime stack, or rule walker. Highlight primes, filter composites by prime factors, and read the active equations live.
         </p>
       </section>
 
@@ -598,6 +652,7 @@
                 <select id="plot-mode">
                   <option value="polar">polar spiral</option>
                   <option value="square">square spiral</option>
+                  <option value="prime-stack">prime stack</option>
                   <option value="rule-walker">rule walker</option>
                 </select>
               </div>
@@ -624,10 +679,10 @@
               </div>
 
               <div class="control">
-                <label for="max-n">max integer N (1…<span id="max-n-cap-label">250000</span>)</label>
+                <label for="max-n">max integer N (1…<span id="max-n-cap-label">10000</span>)</label>
                 <div class="stepper" data-stepper>
                   <button type="button" class="stepper-button" data-step="-1" aria-label="decrease N">-</button>
-                  <input id="max-n" class="control-input" type="number" min="1" max="250000" step="1" value="400" inputmode="numeric" />
+                  <input id="max-n" class="control-input" type="number" min="1" max="10000" step="1" value="400" inputmode="numeric" />
                   <button type="button" class="stepper-button" data-step="1" aria-label="increase N">+</button>
                 </div>
               </div>
@@ -635,15 +690,6 @@
               <div class="control" id="point-size-wrap">
                 <label for="point-size">point size</label>
                 <input id="point-size" type="range" min="1" max="8" step="0.5" value="2.5" />
-              </div>
-
-              <div class="control" id="render-strategy-wrap">
-                <label for="render-strategy">render</label>
-                <select id="render-strategy" title="Auto merges overlapping screen buckets when many points">
-                  <option value="auto" selected>auto</option>
-                  <option value="exact">exact</option>
-                  <option value="merged">merged</option>
-                </select>
               </div>
 
               <div class="control">
@@ -699,11 +745,74 @@
                 </div>
               </div>
 
-              <div id="rule-walker-controls" class="control-stack mode-hidden">
-                <div class="control">
-                  <label for="rule-walker-line-width">path line width</label>
-                  <input id="rule-walker-line-width" type="range" min="0.5" max="6" step="0.25" value="1.75" />
+              <div id="prime-stack-controls" class="control-stack mode-hidden">
+                <p class="rw-hint"><strong>Prime stack</strong> uses <strong>max integer N</strong> and <strong>point size</strong> above, and <strong>cell spacing / scale</strong> here (world position = spacing × lattice coordinates; grid matches).</p>
+                <div class="control rw-check-line">
+                  <input id="prime-stack-depth-group" type="checkbox" />
+                  <label for="prime-stack-depth-group">Group equal stack sizes in depth</label>
                 </div>
+              </div>
+
+              <div id="rule-walker-controls" class="control-stack mode-hidden">
+                <div class="rw-rule-section">
+                  <span class="rw-group-label">rule walker</span>
+                  <p class="rw-hint">Uses <strong>max integer N</strong> and <strong>cell spacing / scale</strong> above.</p>
+                  <div class="control">
+                    <label for="rule-walker-line-width">path line width</label>
+                    <input id="rule-walker-line-width" type="range" min="0.5" max="6" step="0.25" value="1.75" />
+                  </div>
+                </div>
+
+                <div class="rw-rule-section">
+                  <span class="rw-group-label">trigger rules</span>
+                  <div class="rw-check-line"><input id="rw-trigger-prime" type="checkbox" checked /><label for="rw-trigger-prime">Turn on prime</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-composite" type="checkbox" /><label for="rw-trigger-composite">Turn on composite</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-factor" type="checkbox" /><label for="rw-trigger-factor">Turn on factor-match</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-semiprime" type="checkbox" /><label for="rw-trigger-semiprime">Turn on semiprime</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-square" type="checkbox" /><label for="rw-trigger-square">Turn on square</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-even" type="checkbox" /><label for="rw-trigger-even">Turn on even</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-odd" type="checkbox" /><label for="rw-trigger-odd">Turn on odd</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-no-factor" type="checkbox" /><label for="rw-trigger-no-factor">Turn on no-factor-match</label></div>
+                  <div class="rw-check-line"><input id="rw-trigger-prime-lookback" type="checkbox" /><label for="rw-trigger-prime-lookback">Turn if prime occurred within last X</label></div>
+                  <div class="control rw-prime-lookback-control">
+                    <label for="rw-prime-lookback-x">Prime lookback X</label>
+                    <input id="rw-prime-lookback-x" type="number" min="0" max="500" step="1" value="5" />
+                  </div>
+                  <p class="rw-hint">Multiple matches → one turn (v1). No active filter primes ⇒ no-factor-match is true for every n. Prime lookback: integers max(1, n−X)…n−1 only (X clamped 0–500; X≤0 or checkbox off ⇒ no turn from this rule).</p>
+                </div>
+
+                <div class="rw-rule-section">
+                  <span class="rw-group-label">turn resolution</span>
+                  <div class="rw-check-line"><input id="rw-turn-prime-switch" type="checkbox" /><label for="rw-turn-prime-switch">Switch turn direction on prime trigger</label></div>
+                  <div class="rw-check-line"><input id="rw-turn-alternate" type="checkbox" /><label for="rw-turn-alternate">Alternate turn direction after each trigger</label></div>
+                  <p class="rw-hint">Order: apply trigger turn → prime-trigger switch (if any) → alternation (if any).</p>
+                </div>
+
+                <div class="rw-rule-section">
+                  <span class="rw-group-label">collision policy</span>
+                  <div class="rw-check-line"><input id="rw-policy-revisit" type="checkbox" checked /><label for="rw-policy-revisit">Block revisiting visited points</label></div>
+                  <div class="rw-check-line"><input id="rw-policy-cross" type="checkbox" checked /><label for="rw-policy-cross">Block segment crossing</label></div>
+                </div>
+
+                <div class="rw-rule-section">
+                  <span class="rw-group-label">collision recovery</span>
+                  <div class="rw-check-line"><input id="rw-collision-turn" type="checkbox" checked /><label for="rw-collision-turn">Turn on collision</label></div>
+                  <div class="rw-check-line"><input id="rw-collision-switch" type="checkbox" checked /><label for="rw-collision-switch">Switch turn direction on collision</label></div>
+                  <div class="rw-check-line"><input id="rw-collision-persist" type="checkbox" checked /><label for="rw-collision-persist">Persist switched turn direction</label></div>
+                  <div class="rw-check-line"><input id="rw-collision-opposite" type="checkbox" /><label for="rw-collision-opposite">Try opposite turn if first fallback fails</label></div>
+                  <div class="rw-check-line"><input id="rw-collision-terminate" type="checkbox" checked /><label for="rw-collision-terminate">Terminate if fallback also collides</label></div>
+                  <p class="rw-hint" id="rw-collision-hint"></p>
+                </div>
+
+                <div class="rw-rule-section">
+                  <span class="rw-group-label">path display</span>
+                  <div class="rw-check-line"><input id="rw-show-start" type="checkbox" /><label for="rw-show-start">Show start marker</label></div>
+                  <div class="rw-check-line"><input id="rw-show-end" type="checkbox" /><label for="rw-show-end">Show end marker</label></div>
+                  <div class="rw-check-line"><input id="rw-highlight-prime-turns" type="checkbox" /><label for="rw-highlight-prime-turns">Highlight prime-turn events</label></div>
+                  <div class="rw-check-line"><input id="rw-show-fallback" type="checkbox" /><label for="rw-show-fallback">Show collision fallback markers</label></div>
+                  <div class="rw-check-line"><input id="rw-color-triggers" type="checkbox" /><label for="rw-color-triggers">Color path by trigger source</label></div>
+                </div>
+
                 <p class="factor-survivor" id="rule-walker-readout" aria-live="polite"></p>
               </div>
             </div>
@@ -738,10 +847,8 @@
       const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       let themeMode = "auto";
 
-      const N_MAX = 250000;
+      const N_MAX = 10000;
       const FIT_PADDING = 28;
-      const POINT_CHUNK_SIZE = 8192;
-      const AUTO_MERGE_POINT_THRESHOLD = 10000;
 
       initializeTheme();
       initializeHeaderLinks();
@@ -865,7 +972,7 @@
             link.removeAttribute("aria-current");
           }
         });
-      }
+      } 
 
       function normalizeRoot(value) {
         if (!value || value === ".") return "./";
@@ -889,6 +996,8 @@
           showGrid: document.getElementById("show-grid"),
           polarControls: document.getElementById("polar-controls"),
           squareControls: document.getElementById("square-controls"),
+          primeStackControls: document.getElementById("prime-stack-controls"),
+          primeStackDepthGroup: document.getElementById("prime-stack-depth-group"),
           polarM: document.getElementById("polar-m"),
           deriveMFromFilter: document.getElementById("derive-m-from-filter"),
           polarRadialSpacing: document.getElementById("polar-radial-spacing"),
@@ -897,16 +1006,39 @@
           showSpiralGuide: document.getElementById("show-spiral-guide"),
           cellSpacing: document.getElementById("cell-spacing"),
           pointSizeWrap: document.getElementById("point-size-wrap"),
-          renderStrategyWrap: document.getElementById("render-strategy-wrap"),
           ruleWalkerControls: document.getElementById("rule-walker-controls"),
           ruleWalkerLineWidth: document.getElementById("rule-walker-line-width"),
           ruleWalkerReadout: document.getElementById("rule-walker-readout"),
+          rwTriggerPrime: document.getElementById("rw-trigger-prime"),
+          rwTriggerComposite: document.getElementById("rw-trigger-composite"),
+          rwTriggerFactor: document.getElementById("rw-trigger-factor"),
+          rwTriggerSemiprime: document.getElementById("rw-trigger-semiprime"),
+          rwTriggerSquare: document.getElementById("rw-trigger-square"),
+          rwTriggerEven: document.getElementById("rw-trigger-even"),
+          rwTriggerOdd: document.getElementById("rw-trigger-odd"),
+          rwTriggerNoFactor: document.getElementById("rw-trigger-no-factor"),
+          rwTriggerPrimeLookback: document.getElementById("rw-trigger-prime-lookback"),
+          rwPrimeLookbackX: document.getElementById("rw-prime-lookback-x"),
+          rwTurnPrimeSwitch: document.getElementById("rw-turn-prime-switch"),
+          rwTurnAlternate: document.getElementById("rw-turn-alternate"),
+          rwPolicyRevisit: document.getElementById("rw-policy-revisit"),
+          rwPolicyCross: document.getElementById("rw-policy-cross"),
+          rwCollisionTurn: document.getElementById("rw-collision-turn"),
+          rwCollisionSwitch: document.getElementById("rw-collision-switch"),
+          rwCollisionPersist: document.getElementById("rw-collision-persist"),
+          rwCollisionOpposite: document.getElementById("rw-collision-opposite"),
+          rwCollisionTerminate: document.getElementById("rw-collision-terminate"),
+          rwCollisionHint: document.getElementById("rw-collision-hint"),
+          rwShowStart: document.getElementById("rw-show-start"),
+          rwShowEnd: document.getElementById("rw-show-end"),
+          rwHighlightPrimeTurns: document.getElementById("rw-highlight-prime-turns"),
+          rwShowFallback: document.getElementById("rw-show-fallback"),
+          rwColorTriggers: document.getElementById("rw-color-triggers"),
           vizMount: document.getElementById("viz-mount"),
           vizBox: document.querySelector(".visualization-box"),
           plotTooltipHover: document.getElementById("plot-tooltip-hover"),
           plotTooltipTap: document.getElementById("plot-tooltip-tap"),
           equationSummary: document.getElementById("equation-summary"),
-          renderStrategy: document.getElementById("render-strategy"),
         };
 
         const pageShell = document.querySelector(".page-shell");
@@ -916,9 +1048,53 @@
         const ZOOM_MAX = 64;
         const M_DERIVED_FALLBACK = 12;
         let viewZoom = 1;
+        let viewPanX = 0;
+        let viewPanY = 0;
+        /** Set by wheel before render; applied using base world→canvas after new zoom. */
+        let pendingCursorPan = null;
+        /** Last frame’s base mapping (no pan), for wheel inverse before zoom change. */
+        let viewLast = { ready: false };
+        let panDrag = null;
 
         let renderGeneration = 0;
-        let lastHitTest = { points: [], threshold: 16, w: 0, h: 0 };
+        let lastHitTest = { mode: "exact", points: [], threshold: 16, w: 0, h: 0, hitCacheKey: "" };
+
+        /** Lightweight counters/timers for debugging (see window.mathExplorer.getPerf). */
+        const pePerf = {
+          lastSpiralRebuildMs: 0,
+          lastSpiralDrawMs: 0,
+          lastRwComputeMs: 0,
+          lastRwDrawMs: 0,
+          hitBinReuse: 0,
+          hitBinRebuild: 0,
+          framesExact: 0,
+          framesMerged: 0,
+          lastSpiralMode: null,
+        };
+
+        function getPrimeExplorerPerf() {
+          const hr = pePerf.hitBinReuse;
+          const hb = pePerf.hitBinRebuild;
+          return {
+            lastSpiralWorldRebuildMs: pePerf.lastSpiralRebuildMs,
+            lastSpiralDrawMs: pePerf.lastSpiralDrawMs,
+            lastRuleWalkerComputeMs: pePerf.lastRwComputeMs,
+            lastRuleWalkerDrawMs: pePerf.lastRwDrawMs,
+            hitBinReuseCount: hr,
+            hitBinRebuildCount: hb,
+            hitBinReuseRate: hr + hb > 0 ? hr / (hr + hb) : 0,
+            framesSpiralExact: pePerf.framesExact,
+            framesSpiralMerged: pePerf.framesMerged,
+            lastSpiralRenderMode: pePerf.lastSpiralMode,
+          };
+        }
+
+        function resetPrimeExplorerPerfCounters() {
+          pePerf.hitBinReuse = 0;
+          pePerf.hitBinRebuild = 0;
+          pePerf.framesExact = 0;
+          pePerf.framesMerged = 0;
+        }
         let mobileTapN = null;
         let multiTouchGesture = false;
         let pinchStartDist = 0;
@@ -966,18 +1142,93 @@
           el.style.top = `${top}px`;
         }
 
+        function canvasInnerToWorldFromLast(ix, iy) {
+          const v = viewLast;
+          if (!v || !v.ready) return null;
+          if (v.type === "polar") {
+            return { x: (ix - v.cx) / v.scale, y: -(iy - v.cy) / v.scale };
+          }
+          return {
+            x: ((ix - v.cx) * v.cell) / v.latticeS,
+            y: (-(iy - v.cy) * v.cell) / v.latticeS,
+          };
+        }
+
         function nearestHitPoint(clientX, clientY) {
-          if (!canvas || !lastHitTest.points.length) return null;
+          if (!canvas) return null;
           const rect = canvas.getBoundingClientRect();
           const lx = clientX - rect.left;
           const ly = clientY - rect.top;
+          if (lastHitTest.mode === "merged" && lastHitTest.mergeMap && lastHitTest.mergeBucketPx) {
+            const bx = Math.floor(lx / lastHitTest.mergeBucketPx);
+            const by = Math.floor(ly / lastHitTest.mergeBucketPx);
+            const b = lastHitTest.mergeMap.get(bx + "," + by);
+            if (!b) return null;
+            const total = b.pc + b.npc;
+            if (total === 1 && b.pis && b.pis.length === 1 && b.singletonN != null) {
+              return {
+                merged: false,
+                n: b.singletonN,
+                sx: b.singletonSx,
+                sy: b.singletonSy,
+              };
+            }
+            return {
+              merged: true,
+              sx: b.cx,
+              sy: b.cy,
+              n: total,
+              primePart: b.pc,
+              nonPrimePart: b.npc,
+            };
+          }
+          if (lastHitTest.mode === "exact" && lastHitTest.projectBase && lastHitTest.exactBins && spiralWorld.wx) {
+            const th = lastHitTest.threshold;
+            const bins = lastHitTest.exactBins;
+            const bs = lastHitTest.binSize || 56;
+            const projFn = lastHitTest.projectBase;
+            const wx = spiralWorld.wx;
+            const wy = spiralWorld.wy;
+            const nArr = spiralWorld.n;
+            const mbx = lx - viewPanX;
+            const mby = ly - viewPanY;
+            const bx = Math.floor(mbx / bs);
+            const by = Math.floor(mby / bs);
+            let best = null;
+            let bestD = Infinity;
+            for (let ox = -1; ox <= 1; ox++) {
+              for (let oy = -1; oy <= 1; oy++) {
+                const list = bins.get(bx + ox + "," + (by + oy));
+                if (!list) continue;
+                for (let li = 0; li < list.length; li++) {
+                  const pi = list[li];
+                  const bc = projFn(wx[pi], wy[pi]);
+                  const dx = mbx - bc.x;
+                  const dy = mby - bc.y;
+                  const d = Math.hypot(dx, dy);
+                  if (d <= th && d < bestD) {
+                    bestD = d;
+                    best = {
+                      n: nArr[pi],
+                      sx: bc.x + viewPanX,
+                      sy: bc.y + viewPanY,
+                    };
+                  }
+                }
+              }
+            }
+            return best;
+          }
+          if (!lastHitTest.points || !lastHitTest.points.length) return null;
+          const th = lastHitTest.threshold;
           let best = null;
           let bestD = Infinity;
-          for (const p of lastHitTest.points) {
+          for (let i = 0; i < lastHitTest.points.length; i++) {
+            const p = lastHitTest.points[i];
             const dx = lx - p.sx;
             const dy = ly - p.sy;
             const d = Math.hypot(dx, dy);
-            if (d <= lastHitTest.threshold && d < bestD) {
+            if (d <= th && d < bestD) {
               bestD = d;
               best = p;
             }
@@ -994,7 +1245,11 @@
             hideHoverTooltip();
             return;
           }
-          el.textContent = `n = ${p.n}`;
+          if (p.merged) {
+            el.textContent = `~${p.n} integers (merged)`;
+          } else {
+            el.textContent = `n = ${p.n}`;
+          }
           el.classList.add("is-visible");
           el.setAttribute("aria-hidden", "false");
           const b = box.getBoundingClientRect();
@@ -1011,10 +1266,22 @@
             hideTapTooltip();
             return;
           }
-          mobileTapN = p.n;
           const el = els.plotTooltipTap;
           const box = els.vizBox;
           if (!el || !box) return;
+          if (p.merged) {
+            mobileTapN = null;
+            el.textContent = `~${p.n} integers (merged)`;
+            el.classList.add("is-visible");
+            el.setAttribute("aria-hidden", "false");
+            const b = box.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
+            const lx = p.sx + (rect.left - b.left);
+            const ly = p.sy + (rect.top - b.top);
+            positionTooltipInBox(el, lx, ly, b.width, b.height);
+            return;
+          }
+          mobileTapN = p.n;
           el.textContent = `n = ${p.n}`;
           el.classList.add("is-visible");
           el.setAttribute("aria-hidden", "false");
@@ -1034,16 +1301,54 @@
             els.vizMount.innerHTML = "";
             els.vizMount.appendChild(canvas);
             ctx = canvas.getContext("2d");
+            function onPanDragMove(e) {
+              if (!panDrag) return;
+              viewPanX = panDrag.origPanX + (e.clientX - panDrag.startClientX);
+              viewPanY = panDrag.origPanY + (e.clientY - panDrag.startClientY);
+              scheduleViewRedraw();
+            }
+            function onPanDragEnd() {
+              if (!panDrag) return;
+              document.removeEventListener("mousemove", onPanDragMove);
+              document.removeEventListener("mouseup", onPanDragEnd);
+              panDrag = null;
+            }
+
             canvas.addEventListener(
               "wheel",
               (e) => {
                 e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const my = e.clientY - rect.top;
                 const factor = Math.exp(-e.deltaY * 0.0015);
-                viewZoom = clamp(viewZoom * factor, ZOOM_MIN, ZOOM_MAX);
-                void renderAll();
+                const newZoom = clamp(viewZoom * factor, ZOOM_MIN, ZOOM_MAX);
+                if (newZoom === viewZoom) return;
+                const ix = mx - viewPanX;
+                const iy = my - viewPanY;
+                const world = canvasInnerToWorldFromLast(ix, iy);
+                viewZoom = newZoom;
+                if (world) {
+                  pendingCursorPan = { mx, my, worldX: world.x, worldY: world.y };
+                }
+                scheduleViewRedraw();
               },
               { passive: false }
             );
+
+            canvas.addEventListener("mousedown", (e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
+              hideHoverTooltip();
+              panDrag = {
+                startClientX: e.clientX,
+                startClientY: e.clientY,
+                origPanX: viewPanX,
+                origPanY: viewPanY,
+              };
+              document.addEventListener("mousemove", onPanDragMove);
+              document.addEventListener("mouseup", onPanDragEnd);
+            });
 
             canvas.addEventListener("touchstart", (e) => {
               if (e.touches.length >= 2) {
@@ -1061,7 +1366,7 @@
                   const d = touchDistance(e.touches[0], e.touches[1]);
                   const ratio = d / pinchStartDist;
                   viewZoom = clamp(pinchStartZoom * ratio, ZOOM_MIN, ZOOM_MAX);
-                  void renderAll();
+                  scheduleViewRedraw();
                 }
               },
               { passive: false }
@@ -1079,11 +1384,12 @@
             }, { passive: true });
 
             canvas.addEventListener("mousemove", (e) => {
+              if (panDrag) return;
               updateHoverTooltip(e.clientX, e.clientY);
             });
 
             canvas.addEventListener("mouseleave", () => {
-              hideHoverTooltip();
+              if (!panDrag) hideHoverTooltip();
             });
           }
         }
@@ -1098,9 +1404,7 @@
         }
 
         function bind() {
-          const rerender = () => {
-            void renderAll();
-          };
+          const rerender = () => renderAll();
           [
             els.plotMode,
             els.visibilityMode,
@@ -1112,11 +1416,35 @@
             els.deriveMFromFilter,
             els.polarRadialSpacing,
             els.polarA,
-            els.renderStrategy,
             els.radiusPreset,
             els.showSpiralGuide,
             els.cellSpacing,
             els.ruleWalkerLineWidth,
+            els.rwTriggerPrime,
+            els.rwTriggerComposite,
+            els.rwTriggerFactor,
+            els.rwTriggerSemiprime,
+            els.rwTriggerSquare,
+            els.rwTriggerEven,
+            els.rwTriggerOdd,
+            els.rwTriggerNoFactor,
+            els.rwTriggerPrimeLookback,
+            els.rwPrimeLookbackX,
+            els.rwTurnPrimeSwitch,
+            els.rwTurnAlternate,
+            els.rwPolicyRevisit,
+            els.rwPolicyCross,
+            els.rwCollisionTurn,
+            els.rwCollisionSwitch,
+            els.rwCollisionPersist,
+            els.rwCollisionOpposite,
+            els.rwCollisionTerminate,
+            els.rwShowStart,
+            els.rwShowEnd,
+            els.rwHighlightPrimeTurns,
+            els.rwShowFallback,
+            els.rwColorTriggers,
+            els.primeStackDepthGroup,
           ].forEach((el) => {
             if (el) {
               el.addEventListener("input", rerender);
@@ -1127,8 +1455,12 @@
           if (els.plotMode) {
             els.plotMode.addEventListener("change", () => {
               syncModePanels();
-              void renderAll();
+              renderAll();
             });
+          }
+
+          if (els.rwCollisionTurn) {
+            els.rwCollisionTurn.addEventListener("change", () => syncRuleWalkerCollisionUI());
           }
 
           syncModePanels();
@@ -1138,7 +1470,7 @@
               const next = pageShell.getAttribute("data-layout") === "expanded" ? "standard" : "expanded";
               pageShell.setAttribute("data-layout", next);
               layoutToggle.textContent = `layout: ${next}`;
-              void renderAll();
+              renderAll();
             });
           }
         }
@@ -1147,12 +1479,16 @@
           const mode = els.plotMode ? els.plotMode.value : "polar";
           const polar = mode === "polar";
           const square = mode === "square";
+          const primeStack = mode === "prime-stack";
           const rw = mode === "rule-walker";
           if (els.polarControls) {
             els.polarControls.classList.toggle("mode-hidden", !polar);
           }
           if (els.squareControls) {
-            els.squareControls.classList.toggle("mode-hidden", !square && !rw);
+            els.squareControls.classList.toggle("mode-hidden", !square && !rw && !primeStack);
+          }
+          if (els.primeStackControls) {
+            els.primeStackControls.classList.toggle("mode-hidden", !primeStack);
           }
           if (els.ruleWalkerControls) {
             els.ruleWalkerControls.classList.toggle("mode-hidden", !rw);
@@ -1160,8 +1496,18 @@
           if (els.pointSizeWrap) {
             els.pointSizeWrap.classList.toggle("mode-hidden", rw);
           }
-          if (els.renderStrategyWrap) {
-            els.renderStrategyWrap.classList.toggle("mode-hidden", rw);
+          syncRuleWalkerCollisionUI();
+        }
+
+        function syncRuleWalkerCollisionUI() {
+          const masterOn = els.rwCollisionTurn && els.rwCollisionTurn.checked;
+          [els.rwCollisionSwitch, els.rwCollisionPersist, els.rwCollisionOpposite, els.rwCollisionTerminate].forEach((el) => {
+            if (el) el.disabled = !masterOn;
+          });
+          if (els.rwCollisionHint) {
+            els.rwCollisionHint.textContent = masterOn
+              ? ""
+              : "Enable “Turn on collision” for fallback turns and related options.";
           }
         }
 
@@ -1177,6 +1523,51 @@
             }
           }
           return isPrime;
+        }
+
+        let primeSieveN = 0;
+        let primeSieveArr = null;
+        /** Reuses one Eratosthenes sieve per N (hot paths never trial-divide per n). */
+        function getPrimeSieve(N) {
+          if (primeSieveArr && primeSieveN === N) return primeSieveArr;
+          primeSieveArr = sievePrimes(N);
+          primeSieveN = N;
+          return primeSieveArr;
+        }
+
+        function factorEffectiveSignature(factorResult) {
+          if (!factorResult || factorResult.invalid) return "x";
+          const a = Array.from(factorResult.effective).sort((x, y) => x - y);
+          return a.join(",");
+        }
+
+        let spiralWorldKey = "";
+        const spiralWorld = {
+          count: 0,
+          wx: null,
+          wy: null,
+          n: null,
+          kind: null,
+          gHalfW: 0,
+          gHalfH: 0,
+          polarGuideN: 0,
+          polarGx: null,
+          polarGy: null,
+          /** True when prime-stack uses grouped 2D layout (composite-count × occurrence). */
+          primeStackGroupedDepth: false,
+        };
+
+        let ruleWalkerKey = "";
+        let ruleWalkerCached = null;
+
+        let viewRedrawRaf = false;
+        function scheduleViewRedraw() {
+          if (viewRedrawRaf) return;
+          viewRedrawRaf = true;
+          requestAnimationFrame(function onViewRaf() {
+            viewRedrawRaf = false;
+            renderAll({ viewOnly: true });
+          });
         }
 
         function classify(n, isPrimeArr) {
@@ -1247,6 +1638,80 @@
             if (n % d === 0) return false;
           }
           return true;
+        }
+
+        /**
+         * Prime stack: 1→(0,0); kth prime p_k→(k,0); composites stack above the column of the greatest prime &lt; n.
+         * World coords: (s·gx, s·gy) with cell spacing s.
+         */
+        function primeStackLattice(n, isPrimeArr) {
+          if (n <= 1) return { x: 0, y: 0 };
+          const primeToCol = {};
+          const stackHeight = {};
+          let primeIdx = 0;
+          for (let i = 2; i <= n; i++) {
+            if (isPrimeArr[i]) {
+              primeIdx++;
+              primeToCol[i] = primeIdx;
+              stackHeight[primeIdx] = 0;
+              if (i === n) return { x: primeIdx, y: 0 };
+            } else {
+              let p = i - 1;
+              while (p >= 2 && !isPrimeArr[p]) p--;
+              const col = primeToCol[p];
+              stackHeight[col]++;
+              if (i === n) return { x: col, y: stackHeight[col] };
+            }
+          }
+          return { x: 0, y: 0 };
+        }
+
+        function nextPrimeStrictlyAfter(p, N, isPrimeArr) {
+          for (let i = p + 1; i <= N; i++) {
+            if (isPrimeArr[i]) return i;
+          }
+          return N + 1;
+        }
+
+        /** Count of composites strictly between prime p and the next prime (c in the grouped-2D spec). */
+        function compositeCountBeforeNextPrime(p, N, isPrimeArr) {
+          const np = nextPrimeStrictlyAfter(p, N, isPrimeArr);
+          return Math.max(0, np - p - 1);
+        }
+
+        /**
+         * Grouped 2D (checkbox on): x = c(p), y = occurrence among primes with that c; 1 and 2 at (0,0).
+         * Composites after p use a small vertical offset in lattice units so they remain visible with primes.
+         */
+        const PRIME_STACK_GROUP_INNER_DY = 0.22;
+
+        function fillPrimeStackGrouped2DLattice(N, isPrimeArr, gx, gy) {
+          gx.fill(0);
+          gy.fill(0);
+          gx[1] = 0;
+          gy[1] = 0;
+          if (N < 2) return;
+          const occByC = Object.create(null);
+          const primeGx = new Float32Array(N + 1);
+          const primeGy = new Float32Array(N + 1);
+          for (let p = 2; p <= N; p++) {
+            if (!isPrimeArr[p]) continue;
+            const c = compositeCountBeforeNextPrime(p, N, isPrimeArr);
+            const yslot = occByC[c] | 0;
+            occByC[c] = yslot + 1;
+            primeGx[p] = c;
+            primeGy[p] = yslot;
+            gx[p] = c;
+            gy[p] = yslot;
+          }
+          for (let n = 2; n <= N; n++) {
+            if (isPrimeArr[n]) continue;
+            let p = n - 1;
+            while (p >= 2 && !isPrimeArr[p]) p--;
+            if (p < 2) continue;
+            gx[n] = primeGx[p];
+            gy[n] = primeGy[p] + (n - p) * PRIME_STACK_GROUP_INNER_DY;
+          }
         }
 
         /** Classic square spiral: 1→(0,0), 2→(1,0), 3→(1,1), 4→(0,1), 5→(-1,1), 6→(-1,0), … */
@@ -1347,79 +1812,6 @@
           return null;
         }
 
-        /**
-         * Screen-space buckets: merged mark = red (primes only), yellow (mixed), grey (no primes).
-         * Exact path: per-point prime red / composite grey 50% alpha. Hit-test only for exact singles.
-         */
-        function drawPointsAdaptive(ctx, points, worldToCanvas, pointRadius, primeColor, compositeFill, strategy) {
-          const mergeYellow = "#facc15";
-          const mergeGrey = "#9ca3af";
-          const useMergeBuckets =
-            strategy === "merged" ||
-            (strategy === "auto" && points.length > AUTO_MERGE_POINT_THRESHOLD);
-
-          if (strategy === "exact" || !useMergeBuckets) {
-            const hit = [];
-            for (let i = 0; i < points.length; i++) {
-              const p = points[i];
-              const c = worldToCanvas(p.x, p.y);
-              ctx.fillStyle = p.kind === "prime" ? primeColor : compositeFill;
-              ctx.beginPath();
-              ctx.arc(c.x, c.y, pointRadius, 0, Math.PI * 2);
-              ctx.fill();
-              hit.push({ n: p.n, sx: c.x, sy: c.y });
-            }
-            return hit;
-          }
-
-          const bucketPx = Math.max(4, Math.ceil(pointRadius * 2 + 2));
-          const buckets = new Map();
-          for (let i = 0; i < points.length; i++) {
-            const p = points[i];
-            const c = worldToCanvas(p.x, p.y);
-            const bx = Math.floor(c.x / bucketPx);
-            const by = Math.floor(c.y / bucketPx);
-            const key = bx + "," + by;
-            let b = buckets.get(key);
-            if (!b) {
-              b = { primeCount: 0, nonPrimeCount: 0, sxSum: 0, sySum: 0, cnt: 0, first: null };
-              buckets.set(key, b);
-            }
-            b.cnt++;
-            b.sxSum += c.x;
-            b.sySum += c.y;
-            if (p.kind === "prime") b.primeCount++;
-            else b.nonPrimeCount++;
-            if (!b.first) b.first = { p, sx: c.x, sy: c.y };
-          }
-
-          const hit = [];
-          for (const b of buckets.values()) {
-            if (b.cnt === 1) {
-              const fp = b.first;
-              ctx.fillStyle = fp.p.kind === "prime" ? primeColor : compositeFill;
-              ctx.beginPath();
-              ctx.arc(fp.sx, fp.sy, pointRadius, 0, Math.PI * 2);
-              ctx.fill();
-              hit.push({ n: fp.p.n, sx: fp.sx, sy: fp.sy });
-            } else {
-              const cx = b.sxSum / b.cnt;
-              const cy = b.sySum / b.cnt;
-              let fill;
-              if (b.primeCount > 0 && b.nonPrimeCount === 0) fill = primeColor;
-              else if (b.primeCount > 0 && b.nonPrimeCount > 0) fill = mergeYellow;
-              else fill = mergeGrey;
-              ctx.fillStyle = fill;
-              const r = Math.min(pointRadius * 1.6, bucketPx * 0.45, 12);
-              ctx.beginPath();
-              ctx.arc(cx, cy, r, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
-          return hit;
-        }
-
-        /** Rule walker: E=0,N=1,W=2,S=3 matching square spiral dx/dy; +y is north. */
         function ruleWalkerTurn(h, preferRight) {
           return preferRight ? (h + 3) % 4 : (h + 1) % 4;
         }
@@ -1430,117 +1822,178 @@
           return { dx: dx[h], dy: dy[h] };
         }
 
-        /**
-         * Candidate step is invalid if the next lattice point was already visited.
-         * Steps are unit cardinals only, so forbidding vertex revisits is equivalent to forbidding segment crossings or overlaps for this path (any intersection of axis-aligned unit segments on Z² occurs at a lattice point).
-         */
-        function ruleWalkerMoveValid(nx, ny, visited) {
-          return !visited.has(nx + "," + ny);
+        function primeFactorCountWithMultiplicity(n) {
+          if (n < 2) return 0;
+          let c = 0;
+          let x = n;
+          for (let p = 2; p * p <= x; p++) {
+            while (x % p === 0) {
+              c++;
+              x = Math.floor(x / p);
+            }
+          }
+          if (x > 1) c++;
+          return c;
         }
 
-        /**
-         * Prime at k: turn before step to k+1. On blocked move: switch preference, turn from same pre-step heading, retry; if still blocked, terminate.
-         * Returns lattice vertices for integers 1..finalN; world coords use multiply by cell elsewhere.
-         */
-        function computeRuleWalker(N, isPrimeArr) {
-          const path = [{ x: 0, y: 0 }];
-          const visited = new Set(["0,0"]);
-          let h = 0;
-          let preferRight = true;
-          let terminatedEarly = false;
+        function isSemiprimeInt(n) {
+          return primeFactorCountWithMultiplicity(n) === 2;
+        }
 
-          if (N <= 1) {
-            return {
-              path,
-              finalN: 1,
-              terminatedEarly: false,
-              stepsAttempted: 0,
-            };
+        function isSquareInt(n) {
+          if (n < 1) return false;
+          const r = Math.floor(Math.sqrt(n));
+          return r * r === n;
+        }
+
+        function evalNoFactorMatchTrigger(n, factorResult) {
+          if (!factorResult || factorResult.invalid) return true;
+          if (!factorResult.effective || factorResult.effective.size === 0) return true;
+          for (const p of factorResult.effective) {
+            if (p && n % p === 0) return false;
           }
+          return true;
+        }
 
-          for (let k = 1; k < N; k++) {
-            let stepHeading = h;
-            if (isPrimeArr[k]) {
-              stepHeading = ruleWalkerTurn(h, preferRight);
+        function segmentImproperOverlap(ax, ay, bx, by, cx, cy, dx, dy, excludeTouchAt) {
+          const abH = ay === by;
+          const cdH = cy === dy;
+          if (abH && cdH && ay === cy) {
+            const a1 = Math.min(ax, bx);
+            const a2 = Math.max(ax, bx);
+            const c1 = Math.min(cx, dx);
+            const c2 = Math.max(cx, dx);
+            const lo = Math.max(a1, c1);
+            const hi = Math.min(a2, c2);
+            if (lo < hi) return true;
+            if (lo === hi) {
+              if (excludeTouchAt && lo === excludeTouchAt.x && ay === excludeTouchAt.y) return false;
+              return a2 > a1 && c2 > c1 && (lo > a1 || lo > c1);
             }
-            const pos = path[path.length - 1];
-            const d1 = ruleWalkerDir(stepHeading);
-            const n1x = pos.x + d1.dx;
-            const n1y = pos.y + d1.dy;
-            let ok = ruleWalkerMoveValid(n1x, n1y, visited);
+            return false;
+          }
+          if (!abH && !cdH && ax === bx && cx === dx) {
+            if (ax !== cx) return false;
+            const a1 = Math.min(ay, by);
+            const a2 = Math.max(ay, by);
+            const c1 = Math.min(cy, dy);
+            const c2 = Math.max(cy, dy);
+            const lo = Math.max(a1, c1);
+            const hi = Math.min(a2, c2);
+            if (lo < hi) return true;
+            if (lo === hi) {
+              if (excludeTouchAt && lo === excludeTouchAt.y && ax === excludeTouchAt.x) return false;
+              return a2 > a1 && c2 > c1 && (lo > a1 || lo > c1);
+            }
+            return false;
+          }
+          if (abH === cdH) return false;
+          if (abH) {
+            const xi = cx;
+            const yi = ay;
+            const abmin = Math.min(ax, bx);
+            const abmax = Math.max(ax, bx);
+            const cdmin = Math.min(cy, dy);
+            const cdmax = Math.max(cy, dy);
+            if (xi <= abmin || xi >= abmax || yi <= cdmin || yi >= cdmax) return false;
+            if (excludeTouchAt && xi === excludeTouchAt.x && yi === excludeTouchAt.y) return false;
+            return true;
+          }
+          const xi = ax;
+          const yi = cy;
+          const abmin = Math.min(ay, by);
+          const abmax = Math.max(ay, by);
+          const cdmin = Math.min(cx, dx);
+          const cdmax = Math.max(cx, dx);
+          if (yi <= abmin || yi >= abmax || xi <= cdmin || xi >= cdmax) return false;
+          if (excludeTouchAt && xi === excludeTouchAt.x && yi === excludeTouchAt.y) return false;
+          return true;
+        }
 
-            if (!ok) {
-              preferRight = !preferRight;
-              stepHeading = ruleWalkerTurn(stepHeading, preferRight);
-              const d2 = ruleWalkerDir(stepHeading);
-              const n2x = pos.x + d2.dx;
-              const n2y = pos.y + d2.dy;
-              ok = ruleWalkerMoveValid(n2x, n2y, visited);
-              if (!ok) {
-                terminatedEarly = true;
+        function ruleWalkerCandidateValid(px, py, nx, ny, visited, segments, cfg) {
+          if (!cfg.blockRevisit && !cfg.blockSegmentCross) return true;
+          const nk = nx + "," + ny;
+          if (cfg.blockRevisit && visited.has(nk)) return false;
+          if (!cfg.blockSegmentCross) return true;
+          for (let i = 0; i < segments.length; i++) {
+            const s = segments[i];
+            const touch = i === segments.length - 1 ? { x: px, y: py } : null;
+            if (segmentImproperOverlap(px, py, nx, ny, s.x1, s.y1, s.x2, s.y2, touch)) return false;
+          }
+          return true;
+        }
+
+        function evalPrimeLookbackTrigger(n, x, isPrimeArr) {
+          if (x <= 0 || n <= 1) return false;
+          const lo = Math.max(1, n - x);
+          const hi = n - 1;
+          if (hi < lo) return false;
+          for (let k = lo; k <= hi; k++) {
+            if (isPrimeArr[k]) return true;
+          }
+          return false;
+        }
+
+        function evalRuleWalkerTriggers(n, cfg, isPrimeArr, factorResult) {
+          const kinds = new Set();
+          if (cfg.triggerPrime && isPrimeArr[n]) kinds.add("prime");
+          if (cfg.triggerPrimeLookback && cfg.primeLookbackX > 0 && evalPrimeLookbackTrigger(n, cfg.primeLookbackX, isPrimeArr)) {
+            kinds.add("primeLookback");
+          }
+          if (cfg.triggerComposite && classify(n, isPrimeArr) === "composite") kinds.add("composite");
+          if (cfg.triggerFactorMatch && factorResult && !factorResult.invalid && factorResult.effective && factorResult.effective.size) {
+            for (const p of factorResult.effective) {
+              if (p && n % p === 0) {
+                kinds.add("factor");
                 break;
               }
             }
-
-            const np = path[path.length - 1];
-            const d = ruleWalkerDir(stepHeading);
-            const nx = np.x + d.dx;
-            const ny = np.y + d.dy;
-            visited.add(nx + "," + ny);
-            path.push({ x: nx, y: ny });
-            h = stepHeading;
           }
+          if (cfg.triggerSemiprime && isSemiprimeInt(n)) kinds.add("semiprime");
+          if (cfg.triggerSquare && isSquareInt(n)) kinds.add("square");
+          if (cfg.triggerEven && n % 2 === 0) kinds.add("even");
+          if (cfg.triggerOdd && n % 2 === 1) kinds.add("odd");
+          if (cfg.triggerNoFactor && evalNoFactorMatchTrigger(n, factorResult)) kinds.add("noFactor");
+          return { turn: kinds.size > 0, kinds };
+        }
 
+        function pickTriggerPaintKey(kinds) {
+          const order = ["prime", "primeLookback", "semiprime", "factor", "composite", "square", "even", "odd", "noFactor"];
+          for (let i = 0; i < order.length; i++) {
+            if (kinds.has(order[i])) return order[i];
+          }
+          return "none";
+        }
+
+        function readRuleWalkerConfig() {
           return {
-            path,
-            finalN: path.length,
-            terminatedEarly,
-            stepsAttempted: path.length - 1,
+            triggerPrime: els.rwTriggerPrime ? els.rwTriggerPrime.checked : true,
+            triggerComposite: els.rwTriggerComposite ? els.rwTriggerComposite.checked : false,
+            triggerFactorMatch: els.rwTriggerFactor ? els.rwTriggerFactor.checked : false,
+            triggerSemiprime: els.rwTriggerSemiprime ? els.rwTriggerSemiprime.checked : false,
+            triggerSquare: els.rwTriggerSquare ? els.rwTriggerSquare.checked : false,
+            triggerEven: els.rwTriggerEven ? els.rwTriggerEven.checked : false,
+            triggerOdd: els.rwTriggerOdd ? els.rwTriggerOdd.checked : false,
+            triggerNoFactor: els.rwTriggerNoFactor ? els.rwTriggerNoFactor.checked : false,
+            triggerPrimeLookback: els.rwTriggerPrimeLookback ? els.rwTriggerPrimeLookback.checked : false,
+            primeLookbackX: clamp(Math.floor(Number(els.rwPrimeLookbackX && els.rwPrimeLookbackX.value) || 0), 0, 500),
+            switchOnPrimeTrigger: els.rwTurnPrimeSwitch ? els.rwTurnPrimeSwitch.checked : false,
+            alternateAfterTrigger: els.rwTurnAlternate ? els.rwTurnAlternate.checked : false,
+            blockRevisit: els.rwPolicyRevisit ? els.rwPolicyRevisit.checked : true,
+            blockSegmentCross: els.rwPolicyCross ? els.rwPolicyCross.checked : true,
+            collisionTurn: els.rwCollisionTurn ? els.rwCollisionTurn.checked : true,
+            collisionSwitch: els.rwCollisionSwitch ? els.rwCollisionSwitch.checked : true,
+            collisionPersist: els.rwCollisionPersist ? els.rwCollisionPersist.checked : true,
+            collisionOpposite: els.rwCollisionOpposite ? els.rwCollisionOpposite.checked : false,
+            terminateOnDoubleCollision: els.rwCollisionTerminate ? els.rwCollisionTerminate.checked : true,
+            showStart: els.rwShowStart ? els.rwShowStart.checked : false,
+            showEnd: els.rwShowEnd ? els.rwShowEnd.checked : false,
+            highlightPrimeTurns: els.rwHighlightPrimeTurns ? els.rwHighlightPrimeTurns.checked : false,
+            showFallbackMarkers: els.rwShowFallback ? els.rwShowFallback.checked : false,
+            colorByTrigger: els.rwColorTriggers ? els.rwColorTriggers.checked : false,
           };
         }
 
-        async function buildVisiblePointsChunked(
-          N,
-          isPrimeArr,
-          plotMode,
-          cell,
-          m,
-          a,
-          preset,
-          radialSpacing,
-          visibility,
-          factorResult,
-          useFilter,
-          token
-        ) {
-          const points = [];
-          for (let start = 1; start <= N; start += POINT_CHUNK_SIZE) {
-            if (token !== renderGeneration) return null;
-            const end = Math.min(N, start + POINT_CHUNK_SIZE - 1);
-            for (let n = start; n <= end; n++) {
-              const kind = classify(n, isPrimeArr);
-              if (!shouldShowInteger(n, kind, visibility, factorResult, useFilter)) continue;
-              let wx;
-              let wy;
-              if (plotMode === "square") {
-                const p = squareSpiralLattice(n);
-                wx = p.x * cell;
-                wy = p.y * cell;
-                points.push({ n, kind, x: wx, y: wy, gx: p.x, gy: p.y });
-                continue;
-              } else {
-                const p = polarXY(n, m, a, preset, radialSpacing);
-                wx = p.x;
-                wy = p.y;
-              }
-              points.push({ n, kind, x: wx, y: wy });
-            }
-            await new Promise((r) => requestAnimationFrame(r));
-          }
-          return points;
-        }
-
-        /** Pixels per integer lattice step; cell scales world spacing without cancelling against auto-fit (extent uses gx, not gx·cell). */
         function latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom) {
           const gw = Math.max(gHalfW, 0.5);
           const gh = Math.max(gHalfH, 0.5);
@@ -1550,11 +2003,11 @@
         function drawLatticeAlignedGrid(ctx, gridColor, gHalfW, gHalfH, cell, pad, worldToCanvas) {
           ctx.strokeStyle = gridColor;
           ctx.lineWidth = 1;
-          const p = pad == null ? 2 : pad;
-          const gx0 = -gHalfW - p;
-          const gx1 = gHalfW + p;
-          const gy0 = -gHalfH - p;
-          const gy1 = gHalfH + p;
+          const margin = pad == null ? 2 : pad;
+          const gx0 = -gHalfW - margin;
+          const gx1 = gHalfW + margin;
+          const gy0 = -gHalfH - margin;
+          const gy1 = gHalfH + margin;
           for (let gx = gx0; gx <= gx1; gx++) {
             const wx = gx * cell;
             const p1 = worldToCanvas(wx, gy0 * cell);
@@ -1575,10 +2028,296 @@
           }
         }
 
-        async function renderAll() {
+        function computeRuleWalker(N, cfg, isPrimeArr, factorResult) {
+          const path = [{ x: 0, y: 0 }];
+          const visited = new Set(["0,0"]);
+          const segments = [];
+          const primeTurnHighlights = [];
+          const fallbackCommittedVertices = [];
+          const segmentPaintKeys = [];
+          let h = 0;
+          let preferRight = false;
+          let currentN = 1;
+          let terminatedEarly = false;
+
+          if (N <= 1) {
+            return {
+              path,
+              finalN: 1,
+              terminatedEarly: false,
+              segments,
+              primeTurnHighlights,
+              fallbackCommittedVertices,
+              segmentPaintKeys,
+            };
+          }
+
+          while (currentN < N) {
+            const n = currentN;
+            const pos = path[path.length - 1];
+
+            const trig = evalRuleWalkerTriggers(n, cfg, isPrimeArr, factorResult);
+            let stepHeading = h;
+            if (trig.turn) {
+              stepHeading = ruleWalkerTurn(h, preferRight);
+              if (cfg.switchOnPrimeTrigger && trig.kinds.has("prime")) {
+                preferRight = !preferRight;
+              }
+              if (cfg.alternateAfterTrigger) {
+                preferRight = !preferRight;
+              }
+            }
+
+            if (cfg.highlightPrimeTurns && trig.kinds.has("prime") && trig.turn) {
+              primeTurnHighlights.push({ x: pos.x, y: pos.y });
+            }
+
+            const paintKey = trig.turn ? pickTriggerPaintKey(trig.kinds) : "none";
+
+            let nx = pos.x + ruleWalkerDir(stepHeading).dx;
+            let ny = pos.y + ruleWalkerDir(stepHeading).dy;
+            let exitHeading = stepHeading;
+            let ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
+            let usedFallback = false;
+
+            if (!ok) {
+              if (!cfg.collisionTurn) {
+                terminatedEarly = true;
+                break;
+              }
+              const prefBefore = preferRight;
+              let prefForFallback = preferRight;
+              if (cfg.collisionSwitch) {
+                prefForFallback = !preferRight;
+                if (cfg.collisionPersist) {
+                  preferRight = prefForFallback;
+                }
+              }
+              const headingFB = ruleWalkerTurn(stepHeading, prefForFallback);
+              nx = pos.x + ruleWalkerDir(headingFB).dx;
+              ny = pos.y + ruleWalkerDir(headingFB).dy;
+              exitHeading = headingFB;
+              ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
+              if (cfg.collisionSwitch && !cfg.collisionPersist) {
+                preferRight = prefBefore;
+              }
+              if (ok) {
+                usedFallback = true;
+              } else if (cfg.collisionOpposite) {
+                const headingOpp = ruleWalkerTurn(stepHeading, !prefForFallback);
+                nx = pos.x + ruleWalkerDir(headingOpp).dx;
+                ny = pos.y + ruleWalkerDir(headingOpp).dy;
+                exitHeading = headingOpp;
+                ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
+                if (ok) {
+                  usedFallback = true;
+                }
+              }
+
+              if (!ok) {
+                if (cfg.collisionPersist && cfg.collisionSwitch) {
+                  preferRight = prefBefore;
+                }
+                terminatedEarly = true;
+                break;
+              }
+            }
+
+            segments.push({ x1: pos.x, y1: pos.y, x2: nx, y2: ny });
+            visited.add(nx + "," + ny);
+            path.push({ x: nx, y: ny });
+            segmentPaintKeys.push(paintKey);
+            if (usedFallback) {
+              fallbackCommittedVertices.push({ x: nx, y: ny });
+            }
+            h = exitHeading;
+            currentN++;
+          }
+
+          return {
+            path,
+            finalN: path.length,
+            terminatedEarly,
+            segments,
+            primeTurnHighlights,
+            fallbackCommittedVertices,
+            segmentPaintKeys,
+          };
+        }
+
+        function spiralWorldCacheKey(N, plotMode, m, a, preset, radialSpacing, cell, visibility, factorResult, useFilter, primeStackGrouped) {
+          return [
+            N,
+            plotMode,
+            m,
+            a,
+            preset,
+            radialSpacing,
+            cell,
+            visibility,
+            useFilter,
+            factorEffectiveSignature(factorResult),
+            plotMode === "prime-stack" ? String(primeStackGrouped ? 1 : 0) : "-",
+          ].join("|");
+        }
+
+        function rebuildSpiralWorld(
+          N,
+          plotMode,
+          m,
+          a,
+          preset,
+          radialSpacing,
+          cell,
+          visibility,
+          factorResult,
+          useFilter,
+          isPrimeArr,
+          primeStackGroupedDepth
+        ) {
+          const key = spiralWorldCacheKey(
+            N,
+            plotMode,
+            m,
+            a,
+            preset,
+            radialSpacing,
+            cell,
+            visibility,
+            factorResult,
+            useFilter,
+            !!primeStackGroupedDepth
+          );
+          if (spiralWorldKey === key && spiralWorld.wx && spiralWorld.wx.length >= spiralWorld.count) {
+            return { rebuilt: false, ms: 0 };
+          }
+          const __tSpiralWorldRebuild = performance.now();
+          let gxPS = null;
+          let gyPS = null;
+          if (plotMode === "prime-stack" && primeStackGroupedDepth) {
+            gxPS = new Float32Array(N + 1);
+            gyPS = new Float32Array(N + 1);
+            fillPrimeStackGrouped2DLattice(N, isPrimeArr, gxPS, gyPS);
+          }
+          let cnt = 0;
+          for (let n = 1; n <= N; n++) {
+            const kind = classify(n, isPrimeArr);
+            if (!shouldShowInteger(n, kind, visibility, factorResult, useFilter)) continue;
+            cnt++;
+          }
+          const wx = new Float32Array(cnt);
+          const wy = new Float32Array(cnt);
+          const nArr = new Uint32Array(cnt);
+          const kindArr = new Uint8Array(cnt);
+          let gi = 0;
+          let gHalfW = 1e-9;
+          let gHalfH = 1e-9;
+          for (let n = 1; n <= N; n++) {
+            const kind = classify(n, isPrimeArr);
+            if (!shouldShowInteger(n, kind, visibility, factorResult, useFilter)) continue;
+            let wwx;
+            let wwy;
+            let gxd = 0;
+            let gyd = 0;
+            if (plotMode === "square") {
+              const p = squareSpiralLattice(n);
+              wwx = p.x * cell;
+              wwy = p.y * cell;
+              gxd = p.x;
+              gyd = p.y;
+            } else if (plotMode === "prime-stack") {
+              if (primeStackGroupedDepth && gxPS && gyPS) {
+                wwx = gxPS[n] * cell;
+                wwy = gyPS[n] * cell;
+                gxd = gxPS[n];
+                gyd = gyPS[n];
+              } else {
+                const p = primeStackLattice(n, isPrimeArr);
+                wwx = p.x * cell;
+                wwy = p.y * cell;
+                gxd = p.x;
+                gyd = p.y;
+              }
+            } else {
+              const p = polarXY(n, m, a, preset, radialSpacing);
+              wwx = p.x;
+              wwy = p.y;
+            }
+            wx[gi] = wwx;
+            wy[gi] = wwy;
+            nArr[gi] = n;
+            if (kind === "prime") kindArr[gi] = 1;
+            else if (kind === "composite") kindArr[gi] = 0;
+            else kindArr[gi] = 2;
+            if (plotMode === "square" || plotMode === "prime-stack") {
+              gHalfW = Math.max(gHalfW, Math.abs(gxd));
+              gHalfH = Math.max(gHalfH, Math.abs(gyd));
+            }
+            gi++;
+          }
+          if (plotMode === "polar") {
+            for (let i = 0; i < cnt; i++) {
+              gHalfW = Math.max(gHalfW, Math.abs(wx[i]));
+              gHalfH = Math.max(gHalfH, Math.abs(wy[i]));
+            }
+          }
+          let polarGx = null;
+          let polarGy = null;
+          let polarGuideN = 0;
+          if (plotMode === "polar" && N >= 1) {
+            polarGuideN = N;
+            polarGx = new Float32Array(N);
+            polarGy = new Float32Array(N);
+            for (let n = 1; n <= N; n++) {
+              const p = polarXY(n, m, a, preset, radialSpacing);
+              polarGx[n - 1] = p.x;
+              polarGy[n - 1] = p.y;
+            }
+          }
+          spiralWorldKey = key;
+          spiralWorld.count = cnt;
+          spiralWorld.wx = wx;
+          spiralWorld.wy = wy;
+          spiralWorld.n = nArr;
+          spiralWorld.kind = kindArr;
+          spiralWorld.gHalfW = gHalfW;
+          spiralWorld.gHalfH = gHalfH;
+          spiralWorld.polarGuideN = polarGuideN;
+          spiralWorld.polarGx = polarGx;
+          spiralWorld.polarGy = polarGy;
+          spiralWorld.primeStackGroupedDepth = plotMode === "prime-stack" && !!primeStackGroupedDepth;
+          return { rebuilt: true, ms: performance.now() - __tSpiralWorldRebuild };
+        }
+
+        function ruleWalkerConfigSignature(rwCfg) {
+          return [
+            rwCfg.triggerPrime,
+            rwCfg.triggerComposite,
+            rwCfg.triggerFactorMatch,
+            rwCfg.triggerSemiprime,
+            rwCfg.triggerSquare,
+            rwCfg.triggerEven,
+            rwCfg.triggerOdd,
+            rwCfg.triggerNoFactor,
+            rwCfg.triggerPrimeLookback,
+            rwCfg.primeLookbackX,
+            rwCfg.switchOnPrimeTrigger,
+            rwCfg.alternateAfterTrigger,
+            rwCfg.blockRevisit,
+            rwCfg.blockSegmentCross,
+            rwCfg.collisionTurn,
+            rwCfg.collisionSwitch,
+            rwCfg.collisionPersist,
+            rwCfg.collisionOpposite,
+            rwCfg.terminateOnDoubleCollision,
+          ].join("|");
+        }
+
+        function renderAll(opts) {
           ensureCanvas();
           if (!canvas || !ctx || !els.equationSummary) return;
 
+          const viewOnly = !!(opts && opts.viewOnly);
           const myGen = ++renderGeneration;
 
           const N = clamp(Math.floor(Number(els.maxN && els.maxN.value) || 1), 1, N_MAX);
@@ -1588,13 +2327,14 @@
 
           const plotMode = els.plotMode ? els.plotMode.value : "polar";
           const visibility = els.visibilityMode ? els.visibilityMode.value : "all";
-          const strategy = els.renderStrategy ? els.renderStrategy.value : "auto";
           const pointRadius = clamp(Number(els.pointSize && els.pointSize.value) || 2, 0.5, 20);
           const showGrid = els.showGrid && els.showGrid.checked;
           const a = clamp(Number(els.polarA && els.polarA.value) || 0.1, 0.01, 100);
           const preset = els.radiusPreset ? els.radiusPreset.value : "sqrt";
           const cell = clamp(Number(els.cellSpacing && els.cellSpacing.value) || 1, 0.05, 50);
           const radialSpacing = clamp(Number(els.polarRadialSpacing && els.polarRadialSpacing.value) || 1, 0.2, 3);
+          const primeStackGroupedDepth =
+            plotMode === "prime-stack" && els.primeStackDepthGroup && els.primeStackDepthGroup.checked;
 
           const factorResult = parseFactorInput(els.factorInput ? els.factorInput.value : "");
           const useFilter = !factorResult.invalid;
@@ -1612,7 +2352,7 @@
             els.polarM.value = String(m);
           }
 
-          if (els.factorStatus) {
+          if (!viewOnly && els.factorStatus) {
             els.factorStatus.dataset.state = factorResult.invalid ? "invalid" : factorResult.state;
             if (factorResult.invalid) {
               els.factorStatus.textContent = "invalid";
@@ -1626,9 +2366,9 @@
             }
           }
 
-          const isPrimeArr = sievePrimes(N);
+          const isPrimeArr = getPrimeSieve(N);
 
-          if (els.survivingCompositeOut) {
+          if (!viewOnly && els.survivingCompositeOut) {
             const survivor = smallestSurvivingComposite(N, factorResult, isPrimeArr);
             els.survivingCompositeOut.textContent =
               survivor === null
@@ -1637,64 +2377,86 @@
           }
 
           if (plotMode === "rule-walker") {
-            const rw = computeRuleWalker(N, isPrimeArr);
+            const rwCfg = readRuleWalkerConfig();
+            const rwSig = [N, ruleWalkerConfigSignature(rwCfg), factorEffectiveSignature(factorResult)].join("|");
+            let rw;
+            let rwComputeMs = 0;
+            if (!viewOnly || ruleWalkerKey !== rwSig || !ruleWalkerCached) {
+              const __tRw = performance.now();
+              rw = computeRuleWalker(N, rwCfg, isPrimeArr, factorResult);
+              rwComputeMs = performance.now() - __tRw;
+              ruleWalkerCached = rw;
+              ruleWalkerKey = rwSig;
+            } else {
+              rw = ruleWalkerCached;
+            }
+            pePerf.lastRwComputeMs = rwComputeMs;
             const lineW = clamp(Number(els.ruleWalkerLineWidth && els.ruleWalkerLineWidth.value) || 1.75, 0.5, 6);
-            if (els.ruleWalkerReadout) {
+            if (!viewOnly && els.ruleWalkerReadout) {
               const term = rw.terminatedEarly ? "yes (blocked)" : "no";
-              els.ruleWalkerReadout.innerHTML = `<strong>Final integer:</strong> ${rw.finalN} &nbsp;·&nbsp; <strong>Early stop:</strong> ${term}`;
+              const plb =
+                rwCfg.triggerPrimeLookback && rwCfg.primeLookbackX > 0
+                  ? ` &nbsp;·&nbsp; <strong>Prime lookback (X=${rwCfg.primeLookbackX}):</strong> turn if any of the previous ${rwCfg.primeLookbackX} integers was prime`
+                  : "";
+              els.ruleWalkerReadout.innerHTML = `<strong>Final integer:</strong> ${rw.finalN} &nbsp;·&nbsp; <strong>Early stop:</strong> ${term}${plb}`;
             }
 
+            const rwDrawT0 = performance.now();
             const dpr = window.devicePixelRatio || 1;
             const rect = els.vizMount.getBoundingClientRect();
             const cssW = Math.max(200, Math.floor(rect.width));
             const cssH = cssW;
-
             canvas.style.width = `${cssW}px`;
             canvas.style.height = `${cssH}px`;
             canvas.width = Math.floor(cssW * dpr);
             canvas.height = Math.floor(cssH * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
             const w = cssW;
             const h = cssH;
-
             const pathStroke = readCssColor("--spiral-guide", "rgba(95, 143, 232, 0.85)");
             const bg = readCssColor("--viz-bg", "#1f1f1f");
             const gridColor = readCssColor("--viz-grid", "rgba(255,255,255,0.08)");
             const axisColor = readCssColor("--viz-axis", "rgba(255,255,255,0.24)");
             const endptColor = readCssColor("--prime-color", "#f44336");
+            const secondaryStroke = readCssColor("--viz-secondary", "#8c5bd6");
+            const hiRing = readCssColor("--accent", "#86e1ff");
 
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, w, h);
-
             const innerW = Math.max(1, w - FIT_PADDING * 2);
             const innerH = Math.max(1, h - FIT_PADDING * 2);
             const ccx = w / 2;
             const ccy = h / 2;
-
             let gHalfW = 1e-9;
             let gHalfH = 1e-9;
             for (let i = 0; i < rw.path.length; i++) {
-              const gx = rw.path[i].x;
-              const gy = rw.path[i].y;
-              gHalfW = Math.max(gHalfW, Math.abs(gx));
-              gHalfH = Math.max(gHalfH, Math.abs(gy));
+              gHalfW = Math.max(gHalfW, Math.abs(rw.path[i].x));
+              gHalfH = Math.max(gHalfH, Math.abs(rw.path[i].y));
             }
             const latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
             const worldHalfW = gHalfW * cell;
             const worldHalfH = gHalfH * cell;
-
-            function worldToCanvas(wx, wy) {
+            function baseWorldToCanvasRw(wx, wy) {
               return {
                 x: ccx + (wx / cell) * latticeS,
                 y: ccy - (wy / cell) * latticeS,
               };
             }
-
+            if (pendingCursorPan) {
+              const pc = pendingCursorPan;
+              const p0 = baseWorldToCanvasRw(pc.worldX, pc.worldY);
+              viewPanX = pc.mx - p0.x;
+              viewPanY = pc.my - p0.y;
+              pendingCursorPan = null;
+            }
+            function worldToCanvas(wx, wy) {
+              const p = baseWorldToCanvasRw(wx, wy);
+              return { x: p.x + viewPanX, y: p.y + viewPanY };
+            }
+            viewLast = { type: "lattice", cx: ccx, cy: ccy, cell, latticeS, ready: true };
             if (showGrid) {
               drawLatticeAlignedGrid(ctx, gridColor, gHalfW, gHalfH, cell, 2, worldToCanvas);
             }
-
             ctx.strokeStyle = axisColor;
             ctx.lineWidth = 1.25;
             const o1 = worldToCanvas(-worldHalfW, 0);
@@ -1710,31 +2472,69 @@
             ctx.lineTo(v2.x, v2.y);
             ctx.stroke();
 
+            function paintForKey(key) {
+              if (!rwCfg.colorByTrigger || key === "none") return pathStroke;
+              if (key === "prime") return endptColor;
+              if (key === "primeLookback") return "#ec4899";
+              if (key === "semiprime") return secondaryStroke;
+              if (key === "factor") return "#fbbf24";
+              if (key === "composite") return readCssColor("--neutral-point", "#9ca3af");
+              if (key === "square") return "#34d399";
+              if (key === "even") return "#93c5fd";
+              if (key === "odd") return "#c4b5fd";
+              if (key === "noFactor") return "#fb923c";
+              return pathStroke;
+            }
+
             if (rw.path.length >= 2) {
-              ctx.strokeStyle = pathStroke;
-              ctx.lineWidth = lineW;
               ctx.lineJoin = "round";
               ctx.lineCap = "round";
-              ctx.beginPath();
-              for (let i = 0; i < rw.path.length; i++) {
-                const wx = rw.path[i].x * cell;
-                const wy = rw.path[i].y * cell;
-                const c = worldToCanvas(wx, wy);
-                if (i === 0) ctx.moveTo(c.x, c.y);
-                else ctx.lineTo(c.x, c.y);
+              ctx.lineWidth = lineW;
+              if (rwCfg.colorByTrigger && rw.segmentPaintKeys && rw.segmentPaintKeys.length === rw.path.length - 1) {
+                for (let si = 0; si < rw.path.length - 1; si++) {
+                  ctx.strokeStyle = paintForKey(rw.segmentPaintKeys[si]);
+                  ctx.beginPath();
+                  const a = worldToCanvas(rw.path[si].x * cell, rw.path[si].y * cell);
+                  const b = worldToCanvas(rw.path[si + 1].x * cell, rw.path[si + 1].y * cell);
+                  ctx.moveTo(a.x, a.y);
+                  ctx.lineTo(b.x, b.y);
+                  ctx.stroke();
+                }
+              } else {
+                ctx.strokeStyle = pathStroke;
+                ctx.beginPath();
+                for (let i = 0; i < rw.path.length; i++) {
+                  const wx = rw.path[i].x * cell;
+                  const wy = rw.path[i].y * cell;
+                  const c = worldToCanvas(wx, wy);
+                  if (i === 0) ctx.moveTo(c.x, c.y);
+                  else ctx.lineTo(c.x, c.y);
+                }
+                ctx.stroke();
               }
-              ctx.stroke();
+            }
+
+            if (rwCfg.highlightPrimeTurns && rw.primeTurnHighlights && rw.primeTurnHighlights.length) {
+              for (let hi = 0; hi < rw.primeTurnHighlights.length; hi++) {
+                const hp = rw.primeTurnHighlights[hi];
+                const hc = worldToCanvas(hp.x * cell, hp.y * cell);
+                ctx.strokeStyle = hiRing;
+                ctx.lineWidth = Math.max(1.25, lineW * 0.45);
+                ctx.beginPath();
+                ctx.arc(hc.x, hc.y, Math.max(3, lineW * 0.85), 0, Math.PI * 2);
+                ctx.stroke();
+              }
             }
 
             const rDot = Math.max(2.5, lineW * 0.85);
-            if (rw.path.length >= 1) {
+            if (rwCfg.showStart && rw.path.length >= 1) {
               const s0 = worldToCanvas(rw.path[0].x * cell, rw.path[0].y * cell);
               ctx.fillStyle = axisColor;
               ctx.beginPath();
               ctx.arc(s0.x, s0.y, rDot * 0.65, 0, Math.PI * 2);
               ctx.fill();
             }
-            if (rw.path.length >= 2) {
+            if (rwCfg.showEnd && rw.path.length >= 2) {
               const pe = rw.path[rw.path.length - 1];
               const se = worldToCanvas(pe.x * cell, pe.y * cell);
               ctx.fillStyle = endptColor;
@@ -1742,12 +2542,31 @@
               ctx.arc(se.x, se.y, rDot, 0, Math.PI * 2);
               ctx.fill();
             }
+            if (rwCfg.showFallbackMarkers && rw.fallbackCommittedVertices && rw.fallbackCommittedVertices.length) {
+              ctx.fillStyle = "#fbbf24";
+              for (let fi = 0; fi < rw.fallbackCommittedVertices.length; fi++) {
+                const fp = rw.fallbackCommittedVertices[fi];
+                const fc = worldToCanvas(fp.x * cell, fp.y * cell);
+                ctx.beginPath();
+                ctx.moveTo(fc.x, fc.y - 4);
+                ctx.lineTo(fc.x + 3.5, fc.y + 3.5);
+                ctx.lineTo(fc.x - 3.5, fc.y + 3.5);
+                ctx.closePath();
+                ctx.fill();
+              }
+            }
 
+            lastHitTest.mode = "none";
+            lastHitTest.mergeMap = null;
+            lastHitTest.mergeBucketPx = 0;
+            lastHitTest.exactBins = null;
+            lastHitTest.projectBase = null;
+            lastHitTest.hitCacheKey = "";
             lastHitTest.points = [];
             lastHitTest.threshold = 0;
             lastHitTest.w = w;
             lastHitTest.h = h;
-
+            pePerf.lastRwDrawMs = performance.now() - rwDrawT0;
             if (mobileTapN !== null) {
               mobileTapN = null;
               hideTapTooltip();
@@ -1762,49 +2581,50 @@
 
             if (myGen !== renderGeneration) return;
 
-            els.equationSummary.innerHTML = `
-              <strong>Rule walker.</strong> Integer 1 is at lattice (0, 0); each step advances the integer by 1 along a unit cardinal edge (east / north / west / south; +y is north).
-              Initial heading: <strong>east</strong>; initial turn preference: <strong>right</strong> (clockwise 90°).
-              While stepping from k to k+1: if k is prime, turn once using the current preference <em>before</em> the step.
-              A move is invalid if the next vertex was already visited or the new unit segment would cross or overlap an existing segment (other than the legal shared corner with the previous step).
-              If the first candidate move is invalid: <strong>switch</strong> turn preference (persists), turn again from the same pre-step heading using the new preference, and retry once.
-              If that fallback is still invalid, the walk <strong>terminates</strong> (no forced crossing).
+            const plbEq =
+              rwCfg.triggerPrimeLookback && rwCfg.primeLookbackX > 0
+                ? ` <em>Prime lookback X=${rwCfg.primeLookbackX}:</em> turn if any integer in max(1, n−${rwCfg.primeLookbackX})…n−1 is prime (current n excluded).`
+                : "";
+            if (!viewOnly) {
+              els.equationSummary.innerHTML = `
+              <strong>Rule walker.</strong> Composable grid walk: <em>trigger rules</em> (single combined turn per integer in v1), <em>turn resolution</em>, <em>collision policy</em> (revisit / segment crossing), <em>collision recovery</em> (bounded fallback + optional opposite turn), and <em>display</em> toggles.
+              Start at (0,0) for n=1, heading east, preference left.${plbEq} Invalid syntax or empty filter ⇒ “no-factor-match” matches every n.
               <br />
-              World coordinates: (x, y) = s · (lattice x, lattice y) with cell spacing s = ${cell.toFixed(3)}. Max integer cap: N = ${N}.
-              <br />
-              <strong>Note:</strong> visibility mode applies to spiral point plots; this mode always builds the walk over 1…N until termination. ${filterNote}
+              World (x,y) = s·(lattice) with s = ${cell.toFixed(3)}; cap N = ${N}. ${filterNote}
             `;
+            }
 
             window.mathExplorer = window.mathExplorer || {};
             window.mathExplorer.getSnapshot = () => ({
               N,
               plotMode,
-              ruleWalker: {
-                finalN: rw.finalN,
-                terminatedEarly: rw.terminatedEarly,
-                vertices: rw.path.length,
-              },
+              ruleWalker: { finalN: rw.finalN, terminatedEarly: rw.terminatedEarly, rules: rwCfg },
               factor: factorResult,
             });
+            window.mathExplorer.getPerf = getPrimeExplorerPerf;
+            window.mathExplorer.resetPerfCounters = resetPrimeExplorerPerfCounters;
             window.mathExplorer.rerender = renderAll;
             return;
           }
 
-          const points = await buildVisiblePointsChunked(
+          const spiralRebuild = rebuildSpiralWorld(
             N,
-            isPrimeArr,
             plotMode,
-            cell,
             m,
             a,
             preset,
             radialSpacing,
+            cell,
             visibility,
             factorResult,
             useFilter,
-            myGen
+            isPrimeArr,
+            primeStackGroupedDepth
           );
-          if (points === null || myGen !== renderGeneration) return;
+          pePerf.lastSpiralRebuildMs = spiralRebuild.ms;
+          const spiralDrawT0 = performance.now();
+          const Sw = spiralWorld;
+          const pointCount = Sw.count;
 
           const dpr = window.devicePixelRatio || 1;
           const rect = els.vizMount.getBoundingClientRect();
@@ -1842,36 +2662,58 @@
           let gHalfH = 0;
 
           let worldToCanvas;
+          /** Pre-pan canvas mapping; invariant under viewPan so hit bins stay valid while panning. */
+          let baseWorldToCanvas = null;
           if (plotMode === "polar") {
             const rTildeMax = Math.max(polarRtilde(N, preset), 1e-9);
             worldHalfW = a * rTildeMax * radialSpacing;
             worldHalfH = a * rTildeMax * radialSpacing;
             const baseScale = Math.min(innerW / (2 * rTildeMax), innerH / (2 * rTildeMax));
             scale = baseScale * viewZoom;
-            worldToCanvas = function worldToCanvasPolar(x, y) {
+            function baseWorldToCanvasPolar(x, y) {
               return {
                 x: cx + x * scale,
                 y: cy - y * scale,
               };
-            };
-          } else {
-            gHalfW = 1e-9;
-            gHalfH = 1e-9;
-            for (const p of points) {
-              const gx = p.gx !== undefined && p.gy !== undefined ? p.gx : p.x / cell;
-              const gy = p.gx !== undefined && p.gy !== undefined ? p.gy : p.y / cell;
-              gHalfW = Math.max(gHalfW, Math.abs(gx));
-              gHalfH = Math.max(gHalfH, Math.abs(gy));
             }
+            baseWorldToCanvas = baseWorldToCanvasPolar;
+            if (pendingCursorPan) {
+              const pc = pendingCursorPan;
+              const p0 = baseWorldToCanvasPolar(pc.worldX, pc.worldY);
+              viewPanX = pc.mx - p0.x;
+              viewPanY = pc.my - p0.y;
+              pendingCursorPan = null;
+            }
+            worldToCanvas = function worldToCanvasPolarPan(x, y) {
+              const p = baseWorldToCanvasPolar(x, y);
+              return { x: p.x + viewPanX, y: p.y + viewPanY };
+            };
+            viewLast = { type: "polar", cx, cy, scale, ready: true };
+          } else if (plotMode === "square" || plotMode === "prime-stack") {
+            gHalfW = Math.max(1e-9, Sw.gHalfW);
+            gHalfH = Math.max(1e-9, Sw.gHalfH);
             const latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
             worldHalfW = gHalfW * cell;
             worldHalfH = gHalfH * cell;
-            worldToCanvas = function worldToCanvasSquare(wx, wy) {
+            function baseWorldToCanvasSq(wx, wy) {
               return {
                 x: cx + (wx / cell) * latticeS,
                 y: cy - (wy / cell) * latticeS,
               };
+            }
+            baseWorldToCanvas = baseWorldToCanvasSq;
+            if (pendingCursorPan) {
+              const pc = pendingCursorPan;
+              const p0 = baseWorldToCanvasSq(pc.worldX, pc.worldY);
+              viewPanX = pc.mx - p0.x;
+              viewPanY = pc.my - p0.y;
+              pendingCursorPan = null;
+            }
+            worldToCanvas = function worldToCanvasSqPan(wx, wy) {
+              const p = baseWorldToCanvasSq(wx, wy);
+              return { x: p.x + viewPanX, y: p.y + viewPanY };
             };
+            viewLast = { type: "lattice", cx, cy, cell, latticeS, ready: true };
           }
 
           if (showGrid) {
@@ -1919,60 +2761,218 @@
           ctx.lineTo(v2.x, v2.y);
           ctx.stroke();
 
-          if (plotMode === "polar" && els.showSpiralGuide && els.showSpiralGuide.checked && N >= 2) {
+          if (plotMode === "prime-stack" && Sw.primeStackGroupedDepth && pointCount > 0) {
+            const axisTick = readCssColor("--viz-axis", "rgba(255,255,255,0.45)");
+            const titleCol = readCssColor("--viz-secondary", "#8c5bd6");
+            const tickMax = Math.min(64, Math.max(0, Math.ceil(Sw.gHalfW)));
+            ctx.save();
+            ctx.font = "11px system-ui, Segoe UI, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillStyle = axisTick;
+            for (let k = 0; k <= tickMax; k++) {
+              const pt = worldToCanvas(k * cell, 0);
+              ctx.fillText(String(k), pt.x, pt.y + 6);
+            }
+            ctx.font = "12px system-ui, Segoe UI, sans-serif";
+            ctx.fillStyle = titleCol;
+            ctx.textBaseline = "bottom";
+            ctx.fillText("composites before next prime", cx, h - FIT_PADDING + 2);
+            ctx.restore();
+          }
+
+          if (plotMode === "polar" && els.showSpiralGuide && els.showSpiralGuide.checked && N >= 2 && Sw.polarGx && Sw.polarGy) {
             ctx.strokeStyle = spiralGuideColor;
             ctx.lineWidth = 1.25;
             ctx.lineJoin = "round";
             ctx.lineCap = "round";
             ctx.beginPath();
-            const yieldEvery = 20000;
-            for (let n = 1; n <= N; n++) {
-              if (myGen !== renderGeneration) return;
-              const q = polarXY(n, m, a, preset, radialSpacing);
-              const c = worldToCanvas(q.x, q.y);
-              if (n === 1) ctx.moveTo(c.x, c.y);
-              else ctx.lineTo(c.x, c.y);
-              if (n % yieldEvery === 0 && n < N) {
-                await new Promise((r) => requestAnimationFrame(r));
+            let started = false;
+            for (let ni = 0; ni < N; ni++) {
+              const c = worldToCanvas(Sw.polarGx[ni], Sw.polarGy[ni]);
+              if (!started) {
+                ctx.moveTo(c.x, c.y);
+                started = true;
+              } else {
+                ctx.lineTo(c.x, c.y);
               }
             }
-            if (myGen !== renderGeneration) return;
             ctx.stroke();
           }
 
-          const hitPoints = drawPointsAdaptive(
-            ctx,
-            points,
-            worldToCanvas,
-            pointRadius,
-            primeColor,
-            compositeFill,
-            strategy
-          );
+          const mixedBucketColor = "#eab308";
+          const mergeBucketPx = Math.max(4, Math.ceil(pointRadius * 2.2));
+          /** Crude screen fill estimate; merged mode was flipping near ~N≈1500 at 0.12 on typical views. */
+          const MERGE_FILL_RATIO_THRESHOLD = 0.17;
+          const pxArea = innerW * innerH + 1;
+          const mergeFillRatio =
+            pointCount > 0 ? (pointCount * 4 * pointRadius * pointRadius) / pxArea : 0;
+          let useMerged = false;
+          if (plotMode === "polar") {
+            useMerged =
+              pointCount > 0 &&
+              (pointCount > 8000 ||
+                mergeFillRatio > MERGE_FILL_RATIO_THRESHOLD ||
+                scale < 2.6 * pointRadius);
+          } else {
+            const latticeSVis = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            useMerged =
+              pointCount > 0 &&
+              (pointCount > 8000 ||
+                mergeFillRatio > MERGE_FILL_RATIO_THRESHOLD ||
+                latticeSVis < 2.6 * pointRadius);
+          }
 
-          lastHitTest.points = hitPoints;
-          lastHitTest.threshold = Math.max(pointRadius + 10, 14);
+          let psGroupedDrawOrder = null;
+          if (plotMode === "prime-stack" && Sw.primeStackGroupedDepth && !useMerged && pointCount > 0) {
+            psGroupedDrawOrder = new Uint32Array(pointCount);
+            for (let di = 0; di < pointCount; di++) psGroupedDrawOrder[di] = di;
+            psGroupedDrawOrder.sort((ia, ib) => {
+              const wyD = Sw.wy[ia] - Sw.wy[ib];
+              if (wyD !== 0) return wyD;
+              return Sw.wx[ia] - Sw.wx[ib];
+            });
+          }
+
+          const mergeMap = new Map();
+          if (useMerged && pointCount > 0) {
+            for (let pi = 0; pi < pointCount; pi++) {
+              const c = worldToCanvas(Sw.wx[pi], Sw.wy[pi]);
+              const bx = Math.floor(c.x / mergeBucketPx);
+              const by = Math.floor(c.y / mergeBucketPx);
+              const bkey = bx + "," + by;
+              let b = mergeMap.get(bkey);
+              if (!b) {
+                b = {
+                  pc: 0,
+                  npc: 0,
+                  cx: (bx + 0.5) * mergeBucketPx,
+                  cy: (by + 0.5) * mergeBucketPx,
+                  pis: [],
+                };
+                mergeMap.set(bkey, b);
+              }
+              b.pis.push(pi);
+              if (Sw.kind[pi] === 1) b.pc++;
+              else b.npc++;
+            }
+            ctx.save();
+            for (const b of mergeMap.values()) {
+              if (b.pis.length === 1) {
+                const pi = b.pis[0];
+                const c = worldToCanvas(Sw.wx[pi], Sw.wy[pi]);
+                b.singletonN = Sw.n[pi];
+                b.singletonSx = c.x;
+                b.singletonSy = c.y;
+                const rDraw = pointRadius;
+                const fill = Sw.kind[pi] === 1 ? primeColor : compositeFill;
+                ctx.fillStyle = fill;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, rDraw, 0, Math.PI * 2);
+                ctx.fill();
+              } else {
+                let fill;
+                if (b.pc > 0 && b.npc === 0) fill = primeColor;
+                else if (b.pc > 0 && b.npc > 0) fill = mixedBucketColor;
+                else fill = compositeFill;
+                ctx.fillStyle = fill;
+                ctx.fillRect(b.cx - mergeBucketPx * 0.45, b.cy - mergeBucketPx * 0.45, mergeBucketPx * 0.9, mergeBucketPx * 0.9);
+              }
+            }
+            ctx.restore();
+          } else {
+            for (let oi = 0; oi < pointCount; oi++) {
+              const pi = psGroupedDrawOrder ? psGroupedDrawOrder[oi] : oi;
+              const c = worldToCanvas(Sw.wx[pi], Sw.wy[pi]);
+              const rDraw = pointRadius;
+              const fill = Sw.kind[pi] === 1 ? primeColor : compositeFill;
+              ctx.fillStyle = fill;
+              ctx.beginPath();
+              ctx.arc(c.x, c.y, rDraw, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          lastHitTest.mode = useMerged ? "merged" : "exact";
+          lastHitTest.mergeBucketPx = mergeBucketPx;
+          lastHitTest.mergeMap = mergeMap;
+
+          if (useMerged) {
+            lastHitTest.exactBins = null;
+            lastHitTest.projectBase = null;
+            lastHitTest.hitCacheKey = "";
+            lastHitTest.points = [];
+            lastHitTest.threshold = 0;
+            pePerf.framesMerged++;
+            pePerf.lastSpiralMode = "merged";
+          } else {
+            const binSize = 56;
+            const hitBinCacheKey = [
+              spiralWorldCacheKey(N, plotMode, m, a, preset, radialSpacing, cell, visibility, factorResult, useFilter, primeStackGroupedDepth),
+              Math.round(innerW),
+              Math.round(innerH),
+              viewZoom.toFixed(6),
+              pointRadius.toFixed(3),
+              String(binSize),
+            ].join("|");
+
+            const canReuseHitBins =
+              viewOnly &&
+              lastHitTest.exactBins &&
+              lastHitTest.projectBase &&
+              lastHitTest.hitCacheKey === hitBinCacheKey;
+
+            if (canReuseHitBins) {
+              pePerf.hitBinReuse++;
+              lastHitTest.threshold = Math.max(pointRadius + 10, 14);
+            } else {
+              pePerf.hitBinRebuild++;
+              const binMap = new Map();
+              for (let pi = 0; pi < pointCount; pi++) {
+                const bc = baseWorldToCanvas(Sw.wx[pi], Sw.wy[pi]);
+                const bx = Math.floor(bc.x / binSize);
+                const by = Math.floor(bc.y / binSize);
+                const bk = bx + "," + by;
+                if (!binMap.has(bk)) binMap.set(bk, []);
+                binMap.get(bk).push(pi);
+              }
+              lastHitTest.points = [];
+              lastHitTest.exactBins = binMap;
+              lastHitTest.binSize = binSize;
+              lastHitTest.projectBase = baseWorldToCanvas;
+              lastHitTest.threshold = Math.max(pointRadius + 10, 14);
+              lastHitTest.hitCacheKey = hitBinCacheKey;
+            }
+            pePerf.framesExact++;
+            pePerf.lastSpiralMode = "exact";
+          }
           lastHitTest.w = w;
           lastHitTest.h = h;
+          pePerf.lastSpiralDrawMs = performance.now() - spiralDrawT0;
 
           if (mobileTapN !== null) {
-            const still = points.some((pt) => pt.n === mobileTapN);
-            if (!still) {
+            let pt = null;
+            if (!useMerged) {
+              for (let pi = 0; pi < pointCount; pi++) {
+                if (Sw.n[pi] === mobileTapN) {
+                  pt = { x: Sw.wx[pi], y: Sw.wy[pi] };
+                  break;
+                }
+              }
+            }
+            if (!pt) {
               mobileTapN = null;
               hideTapTooltip();
             } else if (els.plotTooltipTap && els.vizBox) {
-              const pt = points.find((p) => p.n === mobileTapN);
-              if (pt) {
-                const c = worldToCanvas(pt.x, pt.y);
-                els.plotTooltipTap.textContent = `n = ${mobileTapN}`;
-                els.plotTooltipTap.classList.add("is-visible");
-                els.plotTooltipTap.setAttribute("aria-hidden", "false");
-                const b = els.vizBox.getBoundingClientRect();
-                const crect = canvas.getBoundingClientRect();
-                const lx = c.x + (crect.left - b.left);
-                const ly = c.y + (crect.top - b.top);
-                positionTooltipInBox(els.plotTooltipTap, lx, ly, b.width, b.height);
-              }
+              const c = worldToCanvas(pt.x, pt.y);
+              els.plotTooltipTap.textContent = `n = ${mobileTapN}`;
+              els.plotTooltipTap.classList.add("is-visible");
+              els.plotTooltipTap.setAttribute("aria-hidden", "false");
+              const b = els.vizBox.getBoundingClientRect();
+              const crect = canvas.getBoundingClientRect();
+              const lx = c.x + (crect.left - b.left);
+              const ly = c.y + (crect.top - b.top);
+              positionTooltipInBox(els.plotTooltipTap, lx, ly, b.width, b.height);
             }
           }
 
@@ -1988,22 +2988,13 @@
             visibility === "primes" ? "show only primes" :
             "show only composites";
 
-          if (myGen !== renderGeneration) return;
-
-          const renderNote = `<strong>Render:</strong> ${strategy} — ${
-            strategy === "exact"
-              ? "individual points only"
-              : strategy === "merged"
-                ? "screen-space buckets (red = primes only, yellow = mixed, grey = no primes)"
-                : `auto: individual points when ≤ ${AUTO_MERGE_POINT_THRESHOLD} visible; otherwise buckets`
-          }.`;
-
-          if (plotMode === "polar") {
-            const dThetaStr = (2 * Math.PI / m).toFixed(6);
-            const mLine = deriveMActive
-              ? `m = ${m} (derived from product of valid filter primes, clamped to [1, 360]; fallback ${M_DERIVED_FALLBACK} if none).`
-              : `m = ${m} (manual).`;
-            els.equationSummary.innerHTML = `
+          if (!viewOnly) {
+            if (plotMode === "polar") {
+              const dThetaStr = (2 * Math.PI / m).toFixed(6);
+              const mLine = deriveMActive
+                ? `m = ${m} (derived from product of valid filter primes, clamped to [1, 360]; fallback ${M_DERIVED_FALLBACK} if none).`
+                : `m = ${m} (manual).`;
+              els.equationSummary.innerHTML = `
               <strong>Polar spiral.</strong> Δθ = 2π / m ≈ ${dThetaStr} rad; θ_n = n · Δθ.
               ${mLine}
               Base radius from preset: <code>${radiusLabel(preset)}</code> with a = ${a.toFixed(4)}.
@@ -2012,18 +3003,29 @@
               Cartesian: x_n = r'_n cos(θ_n), y_n = r'_n sin(θ_n).
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
-              <br />
-              ${renderNote}
             `;
-          } else {
-            els.equationSummary.innerHTML = `
+            } else if (plotMode === "prime-stack") {
+              if (primeStackGroupedDepth) {
+                els.equationSummary.innerHTML = `
+              <strong>Prime stack (grouped).</strong> Horizontal axis: <em>c</em> = number of composites after prime <em>p</em> before the next prime. Vertical axis: occurrence index (0, 1, …) among primes sharing the same <em>c</em>, in order. World: (x, y) = s·(c, index) in lattice units with s = ${cell.toFixed(3)}; composites in each prime’s gap stack slightly above the prime. <code>1</code> shares the origin with <code>2</code> at (0, 0).
+              <br />
+              <strong>Display:</strong> ${visLabel}. ${filterNote}.
+            `;
+              } else {
+                els.equationSummary.innerHTML = `
+              <strong>Prime stack.</strong> <code>1</code> at the origin; each prime sits on the x-axis in column order (2→(1,0), 3→(2,0), …). Each composite stacks upward in the column of the greatest prime below it. World: (x,y) = s·(g<sub>x</sub>, g<sub>y</sub>) with cell spacing s = ${cell.toFixed(3)} (grid aligned).
+              <br />
+              <strong>Display:</strong> ${visLabel}. ${filterNote}.
+            `;
+              }
+            } else {
+              els.equationSummary.innerHTML = `
               <strong>Square spiral.</strong> Integer n maps to lattice steps from the center; world position scales by cell spacing s = ${cell.toFixed(3)}:
               (x, y)_world = s · (x, y)_lattice.
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
-              <br />
-              ${renderNote}
             `;
+            }
           }
 
           window.mathExplorer = window.mathExplorer || {};
@@ -2031,10 +3033,11 @@
             N,
             plotMode,
             visibility,
-            renderStrategy: strategy,
-            points: points.length,
+            points: pointCount,
             factor: factorResult,
           });
+          window.mathExplorer.getPerf = getPrimeExplorerPerf;
+          window.mathExplorer.resetPerfCounters = resetPrimeExplorerPerfCounters;
           window.mathExplorer.rerender = renderAll;
         }
 
@@ -2051,14 +3054,12 @@
         }
 
         bind();
-        void renderAll();
+        renderAll();
 
         let resizeTimer = null;
         window.addEventListener("resize", () => {
           if (resizeTimer) clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(() => {
-            void renderAll();
-          }, 80);
+          resizeTimer = setTimeout(() => renderAll({ viewOnly: true }), 80);
         });
       }
     })();
