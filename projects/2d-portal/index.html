@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D Portal View Math Explorer</title>
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 960px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255,255,255,0.10);
+      --line-strong: rgba(255,255,255,0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255,255,255,0.14);
+      --viz-grid: rgba(255,255,255,0.08);
+      --viz-axis: rgba(255,255,255,0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+    }
+
+    :root[data-theme="light"] {
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0,0,0,0.08);
+      --line-strong: rgba(0,0,0,0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0,0,0,0.10);
+      --viz-grid: rgba(0,0,0,0.05);
+      --viz-axis: rgba(0,0,0,0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      overflow: hidden;
+    }
+
+    .ta-site-header,
+    .ta-site-header * {
+      box-sizing: border-box;
+    }
+
+    .ta-site-header {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      text-align: center;
+    }
+
+    button {
+      min-height: 28px;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    .ta-site-project-shell {
+      min-height: calc(100vh - var(--ta-site-header-height));
+      display: grid;
+      place-items: center;
+    }
+
+    canvas.ta-site-portal-canvas {
+      width: min(100vw, 1320px);
+      height: auto;
+      max-height: calc(100vh - var(--ta-site-header-height));
+      background: var(--viz-bg);
+      border: 1px solid var(--viz-frame);
+      display: block;
+    }
+
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .ta-site-project-shell {
+        min-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+
+      canvas.ta-site-portal-canvas {
+        max-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="ta-site-header" aria-label="Site header">
+    <div class="ta-site-nav">
+      <a class="ta-site-brand" href="../">Tyeler Ahern</a>
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" href="../">Home</a>
+        <a class="ta-site-link" href="../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="ta-site-project-shell">
+    <canvas class="ta-site-portal-canvas" id="simCanvas" width="1320" height="820" aria-label="Portal math simulation"></canvas>
+  </main>
+
+  <script>
+    (() => {
+      const rootElement = document.documentElement;
+      const themeToggle = document.querySelector("#theme-toggle");
+      const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+      let themeMode = "auto";
+
+      initializeTheme();
+
+      function initializeTheme() {
+        themeMode = "auto";
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+
+        if (themeToggle) {
+          themeToggle.addEventListener("click", cycleThemeMode);
+        }
+
+        if (mediaQuery) {
+          const handleChange = () => {
+            if (themeMode === "auto") {
+              applyTheme("auto");
+              updateThemeToggleLabel();
+            }
+          };
+
+          if (typeof mediaQuery.addEventListener === "function") {
+            mediaQuery.addEventListener("change", handleChange);
+          } else if (typeof mediaQuery.addListener === "function") {
+            mediaQuery.addListener(handleChange);
+          }
+        }
+      }
+
+      function applyTheme(mode) {
+        rootElement.setAttribute("data-theme", resolveTheme(mode));
+      }
+
+      function cycleThemeMode() {
+        if (themeMode === "auto") {
+          themeMode = resolveTheme("auto") === "dark" ? "light" : "dark";
+        } else if (themeMode === "light") {
+          themeMode = "dark";
+        } else {
+          themeMode = "auto";
+        }
+
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+      }
+
+      function updateThemeToggleLabel() {
+        if (!themeToggle) return;
+        themeToggle.textContent = `theme: ${themeMode}`;
+      }
+
+      function resolveTheme(mode) {
+        if (mode === "auto") {
+          return mediaQuery && mediaQuery.matches ? "dark" : "light";
+        }
+        return mode;
+      }
+    })();
+
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const playerMatrixEl = document.getElementById('playerMatrix') ?? null;
+    const ghostMatrixEl = document.getElementById('ghostMatrix') ?? null;
+    const linkMatrixEl = document.getElementById('linkMatrix') ?? null;
+
+    const world = { x: 70, y: 70, w: 1180, h: 660 };
+    const mouse = { x: canvas.width * 0.7, y: canvas.height * 0.45 };
+    const keys = new Set();
+
+    const player = {
+      x: 260,
+      y: 400,
+      angle: 0,
+      radius: 11,
+      speed: 220,
+      lastX: 260,
+      lastY: 400,
+      latchedMoveDir: null,
+      latchedKeys: new Set(),
+    };
+
+    const viewConfig = {
+      fov: Math.PI / 4.5,
+      rayCount: 49,
+      portalEpsilon: 1e-6,
+      mathExtent: 4000,
+    };
+
+    const portalA = makePortal(430, 250, Math.PI / 2, 100, 'A');
+    const portalB = makePortal(980, 470, 0, 100, 'B');
+    let lastActivePortalLabel = null;
+
+    const interaction = {
+      grabbedPortal: null,
+      dragOffset: { x: 0, y: 0 },
+      portalGrabRadius: 24,
+      rotationStep: Math.PI / 48,
+    };
+
+    function makePortal(x, y, angle, length, label) {
+      return { x, y, angle, length, label };
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function normalizeAngle(a) {
+      while (a <= -Math.PI) a += Math.PI * 2;
+      while (a > Math.PI) a -= Math.PI * 2;
+      return a;
+    }
+
+    function vec(x, y) { return { x, y }; }
+    function add(a, b) { return { x: a.x + b.x, y: a.y + b.y }; }
+    function sub(a, b) { return { x: a.x - b.x, y: a.y - b.y }; }
+    function mul(v, s) { return { x: v.x * s, y: v.y * s }; }
+    function dot(a, b) { return a.x * b.x + a.y * b.y; }
+    function cross2(a, b) { return a.x * b.y - a.y * b.x; }
+    function len(v) { return Math.hypot(v.x, v.y); }
+    function norm(v) {
+      const l = len(v) || 1;
+      return { x: v.x / l, y: v.y / l };
+    }
+
+    function rotate(v, a) {
+      const c = Math.cos(a);
+      const s = Math.sin(a);
+      return { x: v.x * c - v.y * s, y: v.x * s + v.y * c };
+    }
+
+    function portalBasis(portal) {
+      const tangent = { x: Math.cos(portal.angle), y: Math.sin(portal.angle) };
+      const normal = { x: -Math.sin(portal.angle), y: Math.cos(portal.angle) };
+      return { tangent, normal };
+    }
+
+    function poseMatrix(x, y, angle) {
+      const c = Math.cos(angle);
+      const s = Math.sin(angle);
+      return [
+        [c, -s, 0, x],
+        [s,  c, 0, y],
+        [0,  0, 1, 0],
+      ];
+    }
+
+    function portalFrameMatrix(portal) {
+      const b = portalBasis(portal);
+      return [
+        [b.tangent.x, b.normal.x, 0, portal.x],
+        [b.tangent.y, b.normal.y, 0, portal.y],
+        [0, 0, 1, 0],
+      ];
+    }
+
+    function inverseSE2To3x4(m) {
+      const r00 = m[0][0], tx = m[0][3];
+      const r10 = m[1][0], ty = m[1][3];
+      const r01 = m[0][1], r11 = m[1][1];
+      return [
+        [r00, r10, 0, -(r00 * tx + r10 * ty)],
+        [r01, r11, 0, -(r01 * tx + r11 * ty)],
+        [0, 0, 1, 0],
+      ];
+    }
+
+    function multiply3x4(a, b) {
+      const out = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ];
+
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          out[r][c] = a[r][0] * b[0][c] + a[r][1] * b[1][c] + a[r][2] * b[2][c];
+        }
+        out[r][3] = a[r][0] * b[0][3] + a[r][1] * b[1][3] + a[r][2] * b[2][3] + a[r][3];
+      }
+      return out;
+    }
+
+    function apply3x4ToPoint(m, p) {
+      return {
+        x: m[0][0] * p.x + m[0][1] * p.y + m[0][3],
+        y: m[1][0] * p.x + m[1][1] * p.y + m[1][3],
+      };
+    }
+
+    function angleFromMatrix(m) {
+      return Math.atan2(m[1][0], m[0][0]);
+    }
+
+    function buildPortalLink(fromPortal, toPortal) {
+      const from = portalFrameMatrix(fromPortal);
+      const to = portalFrameMatrix(toPortal);
+      const fromInv = inverseSE2To3x4(from);
+      const flip = [
+        [-1, 0, 0, 0],
+        [0, -1, 0, 0],
+        [0, 0, 1, 0],
+      ];
+      return multiply3x4(multiply3x4(to, flip), fromInv);
+    }
+
+    function transformPoseThroughPortal(x, y, angle, fromPortal, toPortal) {
+      const pose = poseMatrix(x, y, angle);
+      const link = buildPortalLink(fromPortal, toPortal);
+      const out = multiply3x4(link, pose);
+      return {
+        matrix: out,
+        link,
+        x: out[0][3],
+        y: out[1][3],
+        angle: angleFromMatrix(out),
+      };
+    }
+
+    function portalEndpoints(portal) {
+      const dir = { x: Math.cos(portal.angle), y: Math.sin(portal.angle) };
+      const half = mul(dir, portal.length * 0.5);
+      return {
+        a: { x: portal.x - half.x, y: portal.y - half.y },
+        b: { x: portal.x + half.x, y: portal.y + half.y },
+      };
+    }
+
+    function raySegmentIntersection(origin, dir, a, b) {
+      const v1 = sub(origin, a);
+      const v2 = sub(b, a);
+      const denom = cross2(dir, v2);
+      if (Math.abs(denom) < 1e-8) return null;
+      const t = cross2(v2, v1) / denom;
+      const u = cross2(dir, v1) / denom;
+      if (t >= 0 && u >= 0 && u <= 1) {
+        return { t, u, point: add(origin, mul(dir, t)) };
+      }
+      return null;
+    }
+
+    function segmentIntersection(p1, p2, q1, q2) {
+      const r = sub(p2, p1);
+      const s = sub(q2, q1);
+      const denom = cross2(r, s);
+      if (Math.abs(denom) < 1e-8) return null;
+      const qp = sub(q1, p1);
+      const t = cross2(qp, s) / denom;
+      const u = cross2(qp, r) / denom;
+      if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+        return { t, u, point: add(p1, mul(r, t)) };
+      }
+      return null;
+    }
+
+    function rayVsBounds(origin, dir) {
+      const segments = [
+        [vec(world.x, world.y), vec(world.x + world.w, world.y)],
+        [vec(world.x + world.w, world.y), vec(world.x + world.w, world.y + world.h)],
+        [vec(world.x + world.w, world.y + world.h), vec(world.x, world.y + world.h)],
+        [vec(world.x, world.y + world.h), vec(world.x, world.y)],
+      ];
+
+      let best = null;
+      for (const [a, b] of segments) {
+        const hit = raySegmentIntersection(origin, dir, a, b);
+        if (hit && (!best || hit.t < best.t)) best = hit;
+      }
+      return best;
+    }
+
+    function rayToMathExtent(origin, dir) {
+      return add(origin, mul(norm(dir), viewConfig.mathExtent));
+    }
+
+    function signedDistanceToPortalPlane(point, portal) {
+      const basis = portalBasis(portal);
+      return dot(sub(point, vec(portal.x, portal.y)), basis.normal);
+    }
+
+    function getRawInputVector() {
+      let dx = 0;
+      let dy = 0;
+      if (keys.has('w')) dy -= 1;
+      if (keys.has('s')) dy += 1;
+      if (keys.has('a')) dx -= 1;
+      if (keys.has('d')) dx += 1;
+      return { x: dx, y: dy };
+    }
+
+    function getHeldMovementKeys() {
+      const held = new Set();
+      if (keys.has('w')) held.add('w');
+      if (keys.has('a')) held.add('a');
+      if (keys.has('s')) held.add('s');
+      if (keys.has('d')) held.add('d');
+      return held;
+    }
+
+    function isLatchStillActive(entity) {
+      if (!entity.latchedMoveDir || !entity.latchedKeys || entity.latchedKeys.size === 0) return false;
+      for (const key of entity.latchedKeys) {
+        if (keys.has(key)) return true;
+      }
+      return false;
+    }
+
+    function applyRotationOnly(m, v) {
+      return {
+        x: m[0][0] * v.x + m[0][1] * v.y,
+        y: m[1][0] * v.x + m[1][1] * v.y,
+      };
+    }
+
+    function checkTeleport(entity, fromPortal, toPortal) {
+      const prev = vec(entity.lastX, entity.lastY);
+      const curr = vec(entity.x, entity.y);
+      const ends = portalEndpoints(fromPortal);
+      const hit = segmentIntersection(prev, curr, ends.a, ends.b);
+      if (!hit) return false;
+
+      const d0 = signedDistanceToPortalPlane(prev, fromPortal);
+      const d1 = signedDistanceToPortalPlane(curr, fromPortal);
+      if (!(d0 > 0 && d1 <= 0)) return false;
+
+      const heldMovement = getRawInputVector();
+      const heldKeys = getHeldMovementKeys();
+      const hadHeldMovement = heldMovement.x !== 0 || heldMovement.y !== 0;
+
+      const mapped = transformPoseThroughPortal(entity.x, entity.y, entity.angle, fromPortal, toPortal);
+      const facing = { x: Math.cos(mapped.angle), y: Math.sin(mapped.angle) };
+      const pushOut = mul(facing, entity.radius * 1.6);
+      entity.x = mapped.x + pushOut.x;
+      entity.y = mapped.y + pushOut.y;
+      entity.angle = mapped.angle;
+      entity.lastX = entity.x;
+      entity.lastY = entity.y;
+
+      if (hadHeldMovement) {
+        entity.latchedMoveDir = norm(applyRotationOnly(mapped.link, norm(heldMovement)));
+        entity.latchedKeys = heldKeys;
+      } else {
+        entity.latchedMoveDir = null;
+        entity.latchedKeys = new Set();
+      }
+
+      return true;
+    }
+
+    function getConeRayAngles(baseAngle) {
+      const angles = [];
+      for (let i = 0; i < viewConfig.rayCount; i++) {
+        const t = viewConfig.rayCount === 1 ? 0.5 : i / (viewConfig.rayCount - 1);
+        angles.push(baseAngle - viewConfig.fov / 2 + t * viewConfig.fov);
+      }
+      return angles;
+    }
+
+    function isPointInsideCone(point, origin, baseAngle) {
+      const toPoint = sub(point, origin);
+      const distance = len(toPoint);
+      if (distance <= viewConfig.portalEpsilon) return false;
+      const pointAngle = Math.atan2(toPoint.y, toPoint.x);
+      const delta = normalizeAngle(pointAngle - baseAngle);
+      return Math.abs(delta) <= viewConfig.fov / 2 + 1e-5;
+    }
+
+    function intersectRayWithPortalSegment(origin, rayAngle, portal) {
+      const ends = portalEndpoints(portal);
+      const dir = { x: Math.cos(rayAngle), y: Math.sin(rayAngle) };
+      const hit = raySegmentIntersection(origin, dir, ends.a, ends.b);
+      if (!hit) return null;
+      return {
+        point: hit.point,
+        segmentU: hit.u,
+        rayT: hit.t,
+      };
+    }
+
+    function samplePortalInterval(origin, baseAngle, portal) {
+      const sideDistance = signedDistanceToPortalPlane(origin, portal);
+      if (sideDistance <= viewConfig.portalEpsilon) return null;
+      const ends = portalEndpoints(portal);
+      const leftAngle = baseAngle - viewConfig.fov / 2;
+      const rightAngle = baseAngle + viewConfig.fov / 2;
+      const candidates = [];
+
+      const pushCandidate = (u, point) => {
+        if (!Number.isFinite(u)) return;
+        const clampedU = clamp(u, 0, 1);
+        const clampedPoint = point || add(ends.a, mul(sub(ends.b, ends.a), clampedU));
+        candidates.push({ u: clampedU, point: clampedPoint });
+      };
+
+      pushCandidate(0, ends.a);
+      pushCandidate(1, ends.b);
+
+      const leftHit = intersectRayWithPortalSegment(origin, leftAngle, portal);
+      const rightHit = intersectRayWithPortalSegment(origin, rightAngle, portal);
+      if (leftHit) pushCandidate(leftHit.segmentU, leftHit.point);
+      if (rightHit) pushCandidate(rightHit.segmentU, rightHit.point);
+
+      const visible = candidates
+        .filter(candidate => isPointInsideCone(candidate.point, origin, baseAngle))
+        .sort((a, b) => a.u - b.u);
+
+      if (visible.length < 2) return null;
+
+      const entryA = visible[0].point;
+      const entryB = visible[visible.length - 1].point;
+      const dirA = norm(sub(entryA, origin));
+      const dirB = norm(sub(entryB, origin));
+      const farPointA = rayToMathExtent(origin, dirA);
+      const farPointB = rayToMathExtent(origin, dirB);
+
+      return {
+        portal,
+        minEntryT: Math.min(len(sub(entryA, origin)), len(sub(entryB, origin))),
+        entryA,
+        entryB,
+        farA: farPointA,
+        farB: farPointB,
+      };
+    }
+
+    function getPortalCenterAngle(origin, portal) {
+      return Math.atan2(portal.y - origin.y, portal.x - origin.x);
+    }
+
+    function getCenterRayPortalHit(origin, baseAngle, portal) {
+      const ends = portalEndpoints(portal);
+      const dir = { x: Math.cos(baseAngle), y: Math.sin(baseAngle) };
+      return raySegmentIntersection(origin, dir, ends.a, ends.b);
+    }
+
+    function angleDistance(a, b) {
+      return Math.abs(normalizeAngle(a - b));
+    }
+
+    function distanceToPortal(point, portal) {
+      return Math.hypot(point.x - portal.x, point.y - portal.y);
+    }
+
+    function getPortalAtPoint(point) {
+      const candidates = [portalA, portalB]
+        .map(portal => ({ portal, distance: distanceToPortal(point, portal) }))
+        .filter(item => item.distance <= interaction.portalGrabRadius)
+        .sort((a, b) => a.distance - b.distance);
+      return candidates.length > 0 ? candidates[0].portal : null;
+    }
+
+    function clampPortalToWorld(portal) {
+      portal.x = clamp(portal.x, world.x + 12, world.x + world.w - 12);
+      portal.y = clamp(portal.y, world.y + 12, world.y + world.h - 12);
+    }
+
+    function buildPortalCandidate(fromPortal, toPortal, entryInterval, origin, baseAngle) {
+      return {
+        fromPortal,
+        toPortal,
+        entryInterval,
+        centerHit: getCenterRayPortalHit(origin, baseAngle, fromPortal),
+        centerAngleDelta: angleDistance(baseAngle, getPortalCenterAngle(origin, fromPortal)),
+      };
+    }
+
+    function getActivePortalView() {
+      const origin = vec(player.x, player.y);
+      const intervalA = samplePortalInterval(origin, player.angle, portalA);
+      const intervalB = samplePortalInterval(origin, player.angle, portalB);
+
+      const candidates = [];
+      if (intervalA) candidates.push(buildPortalCandidate(portalA, portalB, intervalA, origin, player.angle));
+      if (intervalB) candidates.push(buildPortalCandidate(portalB, portalA, intervalB, origin, player.angle));
+      if (candidates.length === 0) {
+        lastActivePortalLabel = null;
+        return null;
+      }
+
+      const centerHitCandidates = candidates
+        .filter(candidate => candidate.centerHit)
+        .sort((a, b) => a.centerHit.t - b.centerHit.t);
+      if (centerHitCandidates.length > 0) {
+        const selected = centerHitCandidates[0];
+        lastActivePortalLabel = selected.fromPortal.label;
+        return {
+          fromPortal: selected.fromPortal,
+          toPortal: selected.toPortal,
+          entryInterval: selected.entryInterval,
+        };
+      }
+
+      if (lastActivePortalLabel) {
+        const persisted = candidates.find(candidate => candidate.fromPortal.label === lastActivePortalLabel);
+        if (persisted) {
+          return {
+            fromPortal: persisted.fromPortal,
+            toPortal: persisted.toPortal,
+            entryInterval: persisted.entryInterval,
+          };
+        }
+      }
+
+      candidates.sort((a, b) => {
+        if (Math.abs(a.centerAngleDelta - b.centerAngleDelta) > 1e-6) {
+          return a.centerAngleDelta - b.centerAngleDelta;
+        }
+        return a.entryInterval.minEntryT - b.entryInterval.minEntryT;
+      });
+
+      const selected = candidates[0];
+      lastActivePortalLabel = selected.fromPortal.label;
+      return {
+        fromPortal: selected.fromPortal,
+        toPortal: selected.toPortal,
+        entryInterval: selected.entryInterval,
+      };
+    }
+
+    function mapPointThroughPortal(point, fromPortal, toPortal) {
+      return apply3x4ToPoint(buildPortalLink(fromPortal, toPortal), point);
+    }
+
+    function buildPortalViewData(ghostPose, portalView) {
+      if (!portalView) return null;
+      const { fromPortal, toPortal, entryInterval } = portalView;
+      const ghostOrigin = vec(ghostPose.x, ghostPose.y);
+      const mappedA = mapPointThroughPortal(entryInterval.entryA, fromPortal, toPortal);
+      const mappedB = mapPointThroughPortal(entryInterval.entryB, fromPortal, toPortal);
+      const dirA = norm(sub(mappedA, ghostOrigin));
+      const dirB = norm(sub(mappedB, ghostOrigin));
+      const farPointA = rayToMathExtent(ghostOrigin, dirA);
+      const farPointB = rayToMathExtent(ghostOrigin, dirB);
+
+      return {
+        entryCutoutPolygon: [
+          entryInterval.entryA,
+          entryInterval.entryB,
+          entryInterval.farB,
+          entryInterval.farA,
+        ],
+        linkedPolygon: [
+          mappedA,
+          mappedB,
+          farPointB,
+          farPointA,
+        ],
+      };
+    }
+
+    function formatMatrix(m) {
+      return m
+        .map(row => '|' + row.map(v => String(Math.abs(v) < 1e-10 ? 0 : +v.toFixed(4)).padStart(9, ' ')).join(' ') + ' |')
+        .join('\n');
+    }
+
+    function updateMatrixReadouts(ghostPose) {
+      if (!playerMatrixEl || !ghostMatrixEl || !linkMatrixEl) return;
+      const playerPose = poseMatrix(player.x, player.y, player.angle);
+      playerMatrixEl.textContent = formatMatrix(playerPose);
+      ghostMatrixEl.textContent = formatMatrix(ghostPose.matrix);
+      linkMatrixEl.textContent = formatMatrix(ghostPose.link);
+    }
+
+    function update(dt) {
+      player.lastX = player.x;
+      player.lastY = player.y;
+
+      let move = null;
+      if (isLatchStillActive(player)) {
+        move = player.latchedMoveDir;
+      } else {
+        player.latchedMoveDir = null;
+        player.latchedKeys = new Set();
+        const rawInput = getRawInputVector();
+        if (rawInput.x !== 0 || rawInput.y !== 0) move = norm(rawInput);
+      }
+
+      if (move) {
+        player.x += move.x * player.speed * dt;
+        player.y += move.y * player.speed * dt;
+      }
+
+      player.x = clamp(player.x, world.x + player.radius, world.x + world.w - player.radius);
+      player.y = clamp(player.y, world.y + player.radius, world.y + world.h - player.radius);
+      player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+
+      checkTeleport(player, portalA, portalB) || checkTeleport(player, portalB, portalA);
+    }
+
+    function drawGrid() {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(world.x, world.y, world.w, world.h);
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let x = world.x; x <= world.x + world.w; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, world.y);
+        ctx.lineTo(x, world.y + world.h);
+        ctx.stroke();
+      }
+      for (let y = world.y; y <= world.y + world.h; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(world.x, y);
+        ctx.lineTo(world.x + world.w, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawWorldFrame() {
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(world.x, world.y, world.w, world.h);
+    }
+
+    function drawPortal(portal, color) {
+      const ends = portalEndpoints(portal);
+      const basis = portalBasis(portal);
+      const isGrabbed = interaction.grabbedPortal === portal;
+      ctx.save();
+      if (isGrabbed) {
+        ctx.beginPath();
+        ctx.arc(portal.x, portal.y, interaction.portalGrabRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.stroke();
+      }
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = color;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ends.a.x, ends.a.y);
+      ctx.lineTo(ends.b.x, ends.b.y);
+      ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.beginPath();
+      ctx.moveTo(portal.x, portal.y);
+      ctx.lineTo(portal.x + basis.normal.x * 26, portal.y + basis.normal.y * 26);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = 'bold 15px Inter, sans-serif';
+      ctx.fillText(portal.label, portal.x + 10, portal.y - 10);
+      ctx.restore();
+    }
+
+    function drawDot(x, y, radius, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.stroke();
+    }
+
+    function drawDirectionArrow(x, y, angle, length, color) {
+      const tip = { x: x + Math.cos(angle) * length, y: y + Math.sin(angle) * length };
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(tip.x, tip.y);
+      ctx.stroke();
+      const wingA = rotate({ x: -10, y: 0 }, angle + Math.PI / 7);
+      const wingB = rotate({ x: -10, y: 0 }, angle - Math.PI / 7);
+      ctx.beginPath();
+      ctx.moveTo(tip.x, tip.y);
+      ctx.lineTo(tip.x + wingA.x, tip.y + wingA.y);
+      ctx.moveTo(tip.x, tip.y);
+      ctx.lineTo(tip.x + wingB.x, tip.y + wingB.y);
+      ctx.stroke();
+    }
+
+    function rgba(hex, a) {
+      const h = hex.replace('#', '');
+      const bigint = parseInt(h, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
+    function drawViewCone(origin, angle, color, alpha = 0.12) {
+      const points = [vec(origin.x, origin.y)];
+      for (const rayAngle of getConeRayAngles(angle)) {
+        const dir = { x: Math.cos(rayAngle), y: Math.sin(rayAngle) };
+        const hit = rayVsBounds(origin, dir);
+        if (hit) points.push(hit.point);
+      }
+      if (points.length < 3) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.closePath();
+      ctx.fillStyle = color.replace('1)', alpha + ')');
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawConeEdges(origin, angle, color, lineWidth = 1.6) {
+      const leftAngle = angle - viewConfig.fov / 2;
+      const rightAngle = angle + viewConfig.fov / 2;
+      const leftDir = { x: Math.cos(leftAngle), y: Math.sin(leftAngle) };
+      const rightDir = { x: Math.cos(rightAngle), y: Math.sin(rightAngle) };
+      const leftHit = rayVsBounds(origin, leftDir);
+      const rightHit = rayVsBounds(origin, rightDir);
+      if (leftHit) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.beginPath();
+        ctx.moveTo(origin.x, origin.y);
+        ctx.lineTo(leftHit.point.x, leftHit.point.y);
+        ctx.stroke();
+      }
+      if (rightHit) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.beginPath();
+        ctx.moveTo(origin.x, origin.y);
+        ctx.lineTo(rightHit.point.x, rightHit.point.y);
+        ctx.stroke();
+      }
+    }
+
+    function drawPolygon(points, fillStyle, strokeStyle = null, lineWidth = 1.5) {
+      if (!points || points.length < 3) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+      ctx.closePath();
+      if (fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+      }
+      if (strokeStyle) {
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = strokeStyle;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function clipPolygonToRect(points, rect) {
+      if (!points || points.length < 3) return [];
+
+      const edges = [
+        {
+          inside: (p) => p.x >= rect.x,
+          intersect: (a, b) => {
+            const dx = b.x - a.x;
+            if (Math.abs(dx) < 1e-9) return { x: rect.x, y: a.y };
+            const t = (rect.x - a.x) / dx;
+            return { x: rect.x, y: a.y + (b.y - a.y) * t };
+          },
+        },
+        {
+          inside: (p) => p.x <= rect.x + rect.w,
+          intersect: (a, b) => {
+            const dx = b.x - a.x;
+            if (Math.abs(dx) < 1e-9) return { x: rect.x + rect.w, y: a.y };
+            const t = ((rect.x + rect.w) - a.x) / dx;
+            return { x: rect.x + rect.w, y: a.y + (b.y - a.y) * t };
+          },
+        },
+        {
+          inside: (p) => p.y >= rect.y,
+          intersect: (a, b) => {
+            const dy = b.y - a.y;
+            if (Math.abs(dy) < 1e-9) return { x: a.x, y: rect.y };
+            const t = (rect.y - a.y) / dy;
+            return { x: a.x + (b.x - a.x) * t, y: rect.y };
+          },
+        },
+        {
+          inside: (p) => p.y <= rect.y + rect.h,
+          intersect: (a, b) => {
+            const dy = b.y - a.y;
+            if (Math.abs(dy) < 1e-9) return { x: a.x, y: rect.y + rect.h };
+            const t = ((rect.y + rect.h) - a.y) / dy;
+            return { x: a.x + (b.x - a.x) * t, y: rect.y + rect.h };
+          },
+        },
+      ];
+
+      let output = points.slice();
+      for (const edge of edges) {
+        const input = output.slice();
+        output = [];
+        if (input.length === 0) break;
+
+        for (let i = 0; i < input.length; i++) {
+          const current = input[i];
+          const previous = input[(i + input.length - 1) % input.length];
+          const currentInside = edge.inside(current);
+          const previousInside = edge.inside(previous);
+
+          if (currentInside) {
+            if (!previousInside) {
+              output.push(edge.intersect(previous, current));
+            }
+            output.push(current);
+          } else if (previousInside) {
+            output.push(edge.intersect(previous, current));
+          }
+        }
+      }
+
+      return output;
+    }
+
+    function drawPortalView(portalViewData) {
+      if (!portalViewData) return;
+      const clippedCutout = clipPolygonToRect(portalViewData.entryCutoutPolygon, world);
+      const clippedLinked = clipPolygonToRect(portalViewData.linkedPolygon, world);
+      drawPolygon(clippedCutout, 'rgba(12, 15, 21, 0.58)', 'rgba(255,255,255,0.06)', 1.2);
+      drawPolygon(clippedLinked, 'rgba(106, 168, 255, 0.40)', 'rgba(106, 168, 255, 0.88)', 1.8);
+    }
+
+    function runSelfChecks() {
+      const id = [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+      ];
+      const p = apply3x4ToPoint(id, { x: 3, y: 4 });
+      console.assert(Math.abs(p.x - 3) < 1e-9 && Math.abs(p.y - 4) < 1e-9, 'Identity transform failed');
+
+      const portalView = getActivePortalView();
+      console.assert(portalView === null || (portalView.fromPortal && portalView.toPortal && portalView.entryInterval), 'Portal view shape invalid');
+
+      lastActivePortalLabel = null;
+      player.angle = 0;
+      const stableView = getActivePortalView();
+      console.assert(stableView === null || stableView.fromPortal.label === 'A', 'Centered look should prefer portal A in this setup');
+
+      const pose = transformPoseThroughPortal(player.x, player.y, player.angle, portalA, portalB);
+      console.assert(Number.isFinite(pose.x) && Number.isFinite(pose.y) && Number.isFinite(pose.angle), 'Portal pose transform invalid');
+
+      const testOrigin = vec(260, 400);
+      const centeredInterval = samplePortalInterval(testOrigin, 0, makePortal(520, 400, Math.PI / 2, 100, 'T'));
+      console.assert(centeredInterval !== null, 'Centered portal interval should exist');
+      if (centeredInterval) {
+        console.assert(centeredInterval.entryA.y < centeredInterval.entryB.y, 'Centered interval ordering should be stable');
+      }
+
+      const offscreenInterval = samplePortalInterval(testOrigin, Math.PI, makePortal(520, 400, Math.PI / 2, 100, 'T2'));
+      console.assert(offscreenInterval === null, 'Portal behind the player should not produce an interval');
+
+      const backsideInterval = samplePortalInterval(vec(620, 400), Math.PI, makePortal(520, 400, Math.PI / 2, 100, 'T3'));
+      console.assert(backsideInterval === null, 'Backside portal view should not produce an interval');
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
+      drawWorldFrame();
+      drawPortal(portalA, '#f7c948');
+      drawPortal(portalB, '#9b87f5');
+
+      const portalView = getActivePortalView();
+      const ghostPose = portalView
+        ? transformPoseThroughPortal(player.x, player.y, player.angle, portalView.fromPortal, portalView.toPortal)
+        : transformPoseThroughPortal(player.x, player.y, player.angle, portalA, portalB);
+      const portalViewData = buildPortalViewData(ghostPose, portalView);
+
+      drawViewCone(vec(player.x, player.y), player.angle, rgba('#ff5f6d', 1));
+      drawPortalView(portalViewData);
+      drawViewCone(vec(ghostPose.x, ghostPose.y), ghostPose.angle, rgba('#6aa8ff', 1), 0.035);
+      drawConeEdges(vec(player.x, player.y), player.angle, 'rgba(255, 95, 109, 0.55)', 1.8);
+      drawConeEdges(vec(ghostPose.x, ghostPose.y), ghostPose.angle, 'rgba(106, 168, 255, 0.30)', 1.4);
+      drawDot(ghostPose.x, ghostPose.y, player.radius, '#6aa8ff');
+      drawDirectionArrow(ghostPose.x, ghostPose.y, ghostPose.angle, 30, 'rgba(106,168,255,0.95)');
+      drawDot(player.x, player.y, player.radius, '#ff5f6d');
+      drawDirectionArrow(player.x, player.y, player.angle, 34, 'rgba(255,95,109,0.95)');
+      updateMatrixReadouts(ghostPose);
+    }
+
+    function getCanvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / canvas.clientWidth;
+      const scaleY = canvas.height / canvas.clientHeight;
+      return {
+        x: (event.clientX - rect.left - canvas.clientLeft) * scaleX,
+        y: (event.clientY - rect.top - canvas.clientTop) * scaleY,
+      };
+    }
+
+    canvas.addEventListener('mousemove', (event) => {
+      const point = getCanvasPoint(event);
+      mouse.x = point.x;
+      mouse.y = point.y;
+
+      if (interaction.grabbedPortal) {
+        interaction.grabbedPortal.x = point.x - interaction.dragOffset.x;
+        interaction.grabbedPortal.y = point.y - interaction.dragOffset.y;
+        clampPortalToWorld(interaction.grabbedPortal);
+      }
+    });
+
+    canvas.addEventListener('mousedown', (event) => {
+      const point = getCanvasPoint(event);
+      const portal = getPortalAtPoint(point);
+      if (!portal) return;
+      interaction.grabbedPortal = portal;
+      interaction.dragOffset.x = point.x - portal.x;
+      interaction.dragOffset.y = point.y - portal.y;
+    });
+
+    window.addEventListener('mouseup', () => {
+      interaction.grabbedPortal = null;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      interaction.grabbedPortal = null;
+    });
+
+    canvas.addEventListener('wheel', (event) => {
+      if (!interaction.grabbedPortal) return;
+      event.preventDefault();
+      const direction = event.deltaY > 0 ? 1 : -1;
+      interaction.grabbedPortal.angle = normalizeAngle(
+        interaction.grabbedPortal.angle + direction * interaction.rotationStep
+      );
+    }, { passive: false });
+
+    window.addEventListener('keydown', (event) => {
+      const key = event.key.toLowerCase();
+      if (['w', 'a', 's', 'd'].includes(key)) {
+        keys.add(key);
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    window.addEventListener('keyup', (event) => {
+      keys.delete(event.key.toLowerCase());
+    });
+
+    let lastTime = performance.now();
+    function frame(now) {
+      const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+      lastTime = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(frame);
+    }
+
+    runSelfChecks();
+    draw();
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
