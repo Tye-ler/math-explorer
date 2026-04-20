@@ -1,0 +1,4303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tyeler's Invertible Matrix Explorer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.44/dist/katex.min.css" crossorigin="anonymous">
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 1120px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255,255,255,0.10);
+      --line-strong: rgba(255,255,255,0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255,255,255,0.14);
+      --viz-grid: rgba(255,255,255,0.08);
+      --viz-axis: rgba(255,255,255,0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+
+      --panel: #242424;
+      --panel-strong: #2a2a2a;
+      --border: var(--line);
+      --border-strong: var(--line-strong);
+      --shadow: 0 1px 0 rgba(255,255,255,0.04), 0 12px 32px rgba(0,0,0,0.35);
+      --shadow-soft: 0 1px 0 rgba(255,255,255,0.03), 0 6px 18px rgba(0,0,0,0.22);
+      --canvas-bg: var(--viz-bg);
+      --input-bg: #1a1a1a;
+      --chip: rgba(255,255,255,0.06);
+      --accent-soft: rgba(134, 225, 255, 0.14);
+      --accent-2: #e8b84a;
+      --focus: #e8c84a;
+      --good: #5dcf9a;
+      --good-soft: rgba(93, 207, 154, 0.16);
+      --bad: #f0856a;
+      --bad-soft: rgba(240, 133, 106, 0.14);
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0,0,0,0.08);
+      --line-strong: rgba(0,0,0,0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0,0,0,0.10);
+      --viz-grid: rgba(0,0,0,0.05);
+      --viz-axis: rgba(0,0,0,0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+
+      --panel: #f0f0ec;
+      --panel-strong: #fafaf8;
+      --border: var(--line);
+      --border-strong: var(--line-strong);
+      --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 10px 28px rgba(0,0,0,0.06);
+      --shadow-soft: 0 1px 0 rgba(0,0,0,0.03), 0 4px 14px rgba(0,0,0,0.04);
+      --canvas-bg: var(--viz-bg);
+      --input-bg: #ffffff;
+      --chip: rgba(0,0,0,0.05);
+      --accent-soft: rgba(74, 123, 209, 0.14);
+      --accent-2: #b8860b;
+      --focus: #c9a010;
+      --good: #1a8f5c;
+      --good-soft: rgba(26, 143, 92, 0.12);
+      --bad: #c45c3a;
+      --bad-soft: rgba(196, 92, 58, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .ta-site-header,
+    .ta-site-header * {
+      box-sizing: border-box;
+    }
+
+    .ta-site-header {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    .matrix-input:focus-visible,
+    .panel-toggle:focus-visible,
+    button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: min(100% - 2rem, 1500px);
+      margin: 0 auto;
+      padding: var(--space-4) 18px calc(var(--space-4) + 10px);
+      min-height: calc(100vh - var(--ta-site-header-height));
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+    .hero-copy { max-width: 920px; }
+    .eyebrow {
+      margin: 0 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      letter-spacing: 0.01em;
+    }
+    h1 {
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+      font-size: clamp(1.65rem, 3.2vw, 2.65rem);
+      line-height: 1.05;
+      margin-bottom: 10px;
+      font-weight: 400;
+    }
+    h2, h3 {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 600;
+    }
+    .hero-copy p {
+      margin: 0;
+      max-width: 880px;
+      color: var(--muted);
+      line-height: 1.62;
+      font-size: 1rem;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 7.5rem;
+      text-align: center;
+      font-family: inherit;
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 460px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      transform: translateY(8px);
+      animation: rise 420ms ease forwards;
+    }
+    .panel:nth-child(2) { animation-delay: 50ms; }
+    .panel:nth-child(3) { animation-delay: 100ms; }
+    .panel:nth-child(4) { animation-delay: 150ms; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .panel.focused {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), var(--shadow-soft);
+    }
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 22px 12px;
+    }
+    .panel-header h2 { font-size: 1.45rem; margin-bottom: 6px; }
+    .panel-header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.94rem;
+    }
+    .panel-toggle {
+      display: none;
+      min-width: 40px;
+      min-height: 40px;
+      padding: 0;
+      border-radius: 4px;
+      border: 1px solid var(--line-strong);
+      background: transparent;
+      color: var(--control-text);
+      font-size: 1.1rem;
+    }
+    .panel-toggle:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+    .panel-body {
+      flex: 1;
+      padding: 0 22px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .toolbar, .preset-row, .legend-row, .inline-metrics, .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button, .chip {
+      border-radius: 4px;
+      border: 1px solid var(--line-strong);
+      background: none;
+      color: var(--control-text);
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      min-height: 28px;
+      padding: 6px 14px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+    button:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+    button.primary {
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    button.primary:hover {
+      color: var(--control-text-hover);
+      border-color: var(--control-text-hover);
+    }
+    button.secondary {
+      border-color: var(--line-strong);
+      background: transparent;
+    }
+    button.preset.active, button.dimension-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    .dimension-switch {
+      align-self: flex-start;
+      padding: 3px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--chip);
+      box-shadow: none;
+    }
+    .dimension-btn {
+      min-width: 68px;
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+    button:disabled,
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: var(--line);
+      color: var(--muted);
+    }
+    button:disabled:hover,
+    button[disabled]:hover {
+      border-color: var(--line);
+      color: var(--muted);
+    }
+    .matrix-wrap {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .matrix-label-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      padding-top: 8px;
+    }
+    .matrix-label {
+      font-size: 1.6rem;
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    }
+    .matrix-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      max-width: 110px;
+    }
+    .matrix-grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(var(--matrix-columns, 3), minmax(70px, 1fr));
+      gap: 10px;
+      padding: 18px;
+      border-radius: 10px;
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      box-shadow: none;
+      isolation: isolate;
+    }
+    .matrix-grid::before, .matrix-grid::after {
+      content: "";
+      position: absolute;
+      top: 12px;
+      bottom: 12px;
+      width: 10px;
+      border: 1px solid var(--border-strong);
+      opacity: 0.95;
+      pointer-events: none;
+    }
+    .matrix-grid::before {
+      left: 6px;
+      border-right: 0;
+      border-radius: 8px 0 0 8px;
+    }
+    .matrix-grid::after {
+      right: 6px;
+      border-left: 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .matrix-input {
+      width: 100%;
+      padding: 12px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--line-strong);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .matrix-input:hover {
+      border-color: var(--control-text-hover);
+    }
+    .matrix-input:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    .matrix-input.col-0 { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--viz-primary) 22%, transparent); }
+    .matrix-input.col-1 { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--viz-secondary) 22%, transparent); }
+    .matrix-input.col-2 { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--focus) 28%, transparent); }
+    .metric-card, .info-card, .matrix-card, .spotlight, .term-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: none;
+    }
+    .metric-card {
+      padding: 14px 16px;
+      min-width: 160px;
+    }
+    .metric-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+      border: 1px solid transparent;
+    }
+    .verdict.good {
+      background: var(--good-soft);
+      color: var(--good);
+      border-color: color-mix(in srgb, var(--good) 35%, transparent);
+    }
+    .verdict.bad {
+      background: var(--bad-soft);
+      color: var(--bad);
+      border-color: color-mix(in srgb, var(--bad) 35%, transparent);
+    }
+    .theorem-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+    .theorem-item {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel-strong);
+      line-height: 1.45;
+      font-size: 0.93rem;
+      min-height: 72px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .theorem-item.ok {
+      border-color: color-mix(in srgb, var(--good) 28%, var(--border));
+      background: var(--good-soft);
+    }
+    .theorem-item.fail {
+      border-color: color-mix(in srgb, var(--bad) 28%, var(--border));
+      background: var(--bad-soft);
+    }
+    .status-icon {
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 900;
+      background: var(--chip);
+      margin-top: 2px;
+    }
+    .transform-panel { gap: 14px; }
+    .stage {
+      position: relative;
+      flex: 0 0 auto;
+      height: 330px;
+      min-height: 330px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--viz-frame);
+      background: var(--canvas-bg);
+      box-shadow: none;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .stage canvas {
+      position: absolute;
+      inset: 0;
+    }
+    #transformCanvas, #cofactorCanvas {
+      touch-action: none;
+    }
+    .canvas-labels {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .det-gauge {
+      position: absolute;
+      left: 10px;
+      top: 12px;
+      bottom: 12px;
+      width: 86px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .det-gauge-value, .det-gauge-top, .det-gauge-bottom {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--menu-bg);
+      color: var(--text);
+      font-size: 0.66rem;
+      line-height: 1.25;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 700;
+      white-space: normal;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .det-gauge-meta {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.58rem;
+      line-height: 1.25;
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      font-weight: 400;
+      opacity: 0.86;
+    }
+    .det-gauge-scale {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .det-gauge-track {
+      position: relative;
+      flex: 1;
+      width: 5px;
+      min-height: 110px;
+      border-radius: 999px;
+      background: var(--viz-grid);
+      box-shadow: inset 0 0 0 1px var(--viz-frame);
+      overflow: visible;
+    }
+    .det-gauge-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--good) 55%, transparent), var(--good));
+      transition: height 90ms linear, background 120ms linear;
+    }
+    .det-gauge-marker {
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      width: 14px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--viz-highlight);
+      box-shadow: 0 0 0 1px var(--viz-frame);
+      transform: translate(-50%, 50%);
+      transition: bottom 90ms linear, background 120ms linear;
+    }
+    .det-gauge[data-sign="negative"] .det-gauge-fill {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 55%, transparent), var(--bad));
+    }
+    .det-gauge[data-sign="negative"] .det-gauge-marker {
+      background: color-mix(in srgb, var(--bad) 35%, var(--viz-highlight));
+    }
+    .det-gauge[data-sign="zero"] .det-gauge-fill {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--focus) 45%, transparent), var(--focus));
+    }
+    .det-gauge[data-sign="zero"] .det-gauge-marker {
+      background: color-mix(in srgb, var(--focus) 40%, var(--viz-highlight));
+    }
+    .vector-label, .point-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: var(--menu-bg);
+      color: var(--text);
+      font-size: 0.78rem;
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      white-space: nowrap;
+      box-shadow: none;
+      border: 1px solid var(--border);
+    }
+    .vector-label.col-0 { background: color-mix(in srgb, var(--viz-primary) 22%, var(--menu-bg)); }
+    .vector-label.col-1 { background: color-mix(in srgb, var(--viz-secondary) 22%, var(--menu-bg)); }
+    .vector-label.col-2 { background: color-mix(in srgb, var(--focus) 22%, var(--menu-bg)); }
+    .legend-row { justify-content: space-between; }
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .zoom-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--chip);
+      box-shadow: none;
+    }
+    .zoom-label {
+      flex: 0 0 auto;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .zoom-slider {
+      flex: 1 1 auto;
+      min-width: 140px;
+      margin: 0;
+      accent-color: var(--accent);
+      appearance: none;
+      -webkit-appearance: none;
+      height: 16px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .zoom-slider::-webkit-slider-runnable-track {
+      height: 1px;
+      background: var(--line-strong);
+    }
+    .zoom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 4px;
+      height: 14px;
+      margin-top: -6.5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+    .zoom-slider::-moz-range-track {
+      height: 1px;
+      background: var(--line-strong);
+      border: 0;
+    }
+    .zoom-slider::-moz-range-thumb {
+      width: 4px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+    .zoom-slider:hover::-webkit-slider-runnable-track,
+    .zoom-slider:focus-visible::-webkit-slider-runnable-track,
+    .zoom-slider:hover::-moz-range-track,
+    .zoom-slider:focus-visible::-moz-range-track {
+      background: var(--control-text-hover);
+    }
+    .zoom-slider:hover::-webkit-slider-thumb,
+    .zoom-slider:focus-visible::-webkit-slider-thumb,
+    .zoom-slider:hover::-moz-range-thumb,
+    .zoom-slider:focus-visible::-moz-range-thumb {
+      border-color: var(--control-text-hover);
+      background: var(--control-text-hover);
+    }
+    .zoom-slider:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .zoom-value {
+      min-width: 50px;
+      text-align: right;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .swatch {
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+    .status-bar, .spotlight {
+      padding: 14px 16px;
+      line-height: 1.55;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .status-bar strong, .spotlight strong { color: var(--text); }
+    .spotlight.hidden { display: none; }
+    .cofactor-layout {
+      display: grid;
+      grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .cf-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .cf-cell {
+      width: 100%;
+      min-height: 74px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: border-color 150ms ease, background-color 150ms ease;
+      background: var(--panel-strong);
+      user-select: none;
+    }
+    .cf-cell:hover { border-color: var(--line-strong); }
+    .cf-cell.active {
+      border-width: 1px;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+    .cf-cell.plus .sign { color: var(--good); }
+    .cf-cell.minus .sign { color: var(--bad); }
+    .cf-cell.plus.active {
+      border-color: color-mix(in srgb, var(--good) 45%, var(--border));
+      background: var(--good-soft);
+    }
+    .cf-cell.minus.active {
+      border-color: color-mix(in srgb, var(--bad) 45%, var(--border));
+      background: var(--bad-soft);
+    }
+    .sign {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .lbl {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .cofactor-stage {
+      height: 240px;
+      min-height: 240px;
+    }
+    .cofactor-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+    .info-card, .matrix-card { padding: 14px 16px; }
+    .card-title {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .matrix-display {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--chip);
+      border: 1px solid var(--border);
+    }
+    .matrix-display.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .matrix-cell {
+      padding: 10px 8px;
+      border-radius: 12px;
+      text-align: center;
+      background: var(--chip);
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      font-size: 0.92rem;
+      line-height: 1.2;
+      border: 1px solid transparent;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .matrix-cell.highlight {
+      border-color: color-mix(in srgb, var(--focus) 50%, var(--border));
+      background: color-mix(in srgb, var(--focus) 14%, var(--panel-strong));
+      color: var(--text);
+      box-shadow: none;
+    }
+    .matrix-cell.det-hit {
+      background: var(--accent-soft);
+      border-color: var(--border-strong);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+    .matrix-cell.zero-hit {
+      background: color-mix(in srgb, var(--muted) 12%, var(--panel-strong));
+      border-color: var(--border-strong);
+    }
+    .formula {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .math-inline { display: inline; }
+    .math-display { display: block; max-width: 100%; }
+    .math-display + .math-display { margin-top: 8px; }
+    .formula .katex-display,
+    .math-display .katex-display {
+      margin: 0.35rem 0;
+      text-align: left;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 2px;
+    }
+    .formula .katex,
+    .status-bar .katex,
+    .spotlight .katex,
+    .hint .katex,
+    .dot-product-row .katex {
+      font-size: 1em;
+      color: inherit;
+    }
+    .formula .katex-display > .katex,
+    .math-display .katex-display > .katex {
+      text-align: left;
+    }
+    .dot-product-list {
+      display: grid;
+      gap: 10px;
+    }
+    .dot-product-row {
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--chip);
+      line-height: 1.55;
+      color: var(--muted);
+      font-size: 0.91rem;
+    }
+    .dot-product-row strong { color: var(--text); }
+    .dot-product-row.match {
+      background: var(--accent-soft);
+      border-color: var(--border-strong);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+    .dot-product-row.zero {
+      background: color-mix(in srgb, var(--muted) 12%, var(--panel-strong));
+      border-color: var(--border-strong);
+    }
+    .matrix-pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .matrix-trio {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .glossary-panel .panel-body {
+      overflow: auto;
+      max-height: min(72vh, 880px);
+      padding-bottom: 10px;
+    }
+    .term-grid { display: grid; gap: 12px; }
+    .term-card {
+      padding: 14px 16px;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+      cursor: pointer;
+    }
+    .term-card:hover {
+      border-color: var(--line-strong);
+    }
+    .term-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+    .term-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+    .term-header h3 { font-size: 1.08rem; }
+    .term-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.56;
+      font-size: 0.92rem;
+    }
+    .term-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .term-tag {
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+    .pulse, .input-pulse { animation: pulse 1.45s ease; }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 22%, transparent); }
+      25% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 12%, transparent); }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+    .input-pulse { animation: inputPulse 1.25s ease; }
+    @keyframes inputPulse {
+      0% { border-color: color-mix(in srgb, var(--accent) 25%, var(--border)); }
+      30% {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+      }
+      100% {
+        border-color: var(--border);
+        box-shadow: none;
+      }
+    }
+    .fallback-note {
+      position: absolute;
+      inset: 16px auto auto 16px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--menu-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      pointer-events: none;
+    }
+    .mono { font-family: "Consolas", "SFMono-Regular", monospace; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel {
+        animation: none;
+        transform: none;
+      }
+      .pulse,
+      .input-pulse {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 1120px) {
+      .app-grid, .cofactor-layout, .matrix-pair { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; }
+      .hero-actions { justify-content: flex-start; }
+    }
+    @media (max-width: 900px) {
+      .app-grid { grid-template-columns: 1fr; }
+      .panel { min-height: 0; }
+      .panel-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .panel.collapsed .panel-body { display: none; }
+      .matrix-wrap { grid-template-columns: 1fr; }
+      .matrix-label-block {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .matrix-note {
+        max-width: none;
+        text-align: left;
+      }
+    }
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+      .shell {
+        padding-inline: 12px;
+        min-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+      .panel-header, .panel-body { padding-inline: 16px; }
+      .matrix-grid {
+        grid-template-columns: repeat(var(--matrix-columns, 3), minmax(0, 1fr));
+        padding: 16px 14px;
+      }
+      .matrix-input { padding: 12px 8px; }
+      .det-gauge {
+        left: 8px;
+        top: 8px;
+        bottom: 8px;
+        width: 76px;
+      }
+      .det-gauge-value, .det-gauge-top, .det-gauge-bottom {
+        font-size: 0.6rem;
+        padding: 3px 6px;
+      }
+      .det-gauge-track { min-height: 96px; }
+      .stage { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="ta-site-header" aria-label="Site header">
+    <div class="ta-site-nav">
+      <a class="ta-site-brand" href="../">Tyeler Ahern</a>
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" href="../">Home</a>
+        <a class="ta-site-link" href="../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Visual Matrices for the Geometric Mind</p>
+        <h1>Tyeler's Invertible Matrix Explorer</h1>
+        <p>Edit one matrix and see how its determinant, rank, image, cofactors, adjugate, inverse A<sup>-1</sup>, and transformed basis geometry all follow from the same linear transformation.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="themeToggle" class="secondary theme-toggle" type="button" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+      </div>
+    </header>
+
+    <main class="app-grid">
+      <section class="panel" id="panel-input">
+        <div class="panel-header">
+          <div>
+            <h2>Matrix Input and Verdict</h2>
+            <p>This is the source of truth. Edit any entry and the determinant, rank, theorem conditions, animation, cofactors, adjugate, and inverse A<sup>-1</sup> all update immediately.</p>
+          </div>
+          <button class="panel-toggle" type="button" data-target="panel-input">-</button>
+        </div>
+        <div class="panel-body">
+          <div class="toolbar dimension-switch" id="dimensionSwitch" role="radiogroup" aria-label="Matrix dimension">
+            <button type="button" class="secondary dimension-btn" data-dimension="2" role="radio" aria-checked="false">2&times;2</button>
+            <button type="button" class="secondary dimension-btn" data-dimension="3" role="radio" aria-checked="true">3&times;3</button>
+          </div>
+          <div class="preset-row">
+            <button class="preset secondary" type="button" data-preset="identity">Identity</button>
+            <button class="preset secondary" type="button" data-preset="rotation">Rotation</button>
+            <button class="preset secondary" type="button" data-preset="shear">Shear</button>
+            <button class="preset secondary" type="button" data-preset="singular">Singular</button>
+          </div>
+
+          <div class="matrix-wrap">
+            <div class="matrix-label-block">
+              <div class="matrix-label mono">A =</div>
+              <div class="matrix-note">Columns show where the basis vectors land.</div>
+            </div>
+            <div class="matrix-grid" id="matrixGrid"></div>
+          </div>
+
+          <div class="inline-metrics">
+            <div class="metric-card" id="detCard">
+              <span class="metric-label">det(A)</span>
+              <div class="metric-value mono" id="detValue">8</div>
+            </div>
+            <div class="metric-card" id="rankCard">
+              <span class="metric-label">rank(A)</span>
+              <div class="metric-value mono" id="rankValue">3</div>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Image Dimension</span>
+              <div class="metric-value" id="imageDimText">three-dimensional</div>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <div class="verdict good" id="verdictBadge">Invertible</div>
+            <button class="primary" type="button" id="showSpaceButton">Show what this does to space &rarr;</button>
+          </div>
+
+          <div class="spotlight" id="verdictSummary">
+            <strong>This matrix is invertible.</strong> Because det(A) &ne; 0, the transformation has full rank, is one-to-one and onto, and has an inverse A<sup>-1</sup>.
+          </div>
+
+          <div class="theorem-list" id="theoremList"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-transform">
+        <div class="panel-header">
+          <div>
+            <h2>Transformation Animation</h2>
+            <p>The unit shape morphs under the matrix. If the determinant is zero, the transformation is singular and the image has lower dimension, so you can see why no inverse exists.</p>
+          </div>
+          <button class="panel-toggle" type="button" data-target="panel-transform">-</button>
+        </div>
+        <div class="panel-body transform-panel">
+          <div class="legend-row">
+            <div class="legend" id="transformLegend">
+              <span class="legend-item"><span class="swatch" style="background:var(--good);"></span>column 1 = A e<sub>1</sub></span>
+              <span class="legend-item"><span class="swatch" style="background:var(--viz-secondary);"></span>column 2 = A e<sub>2</sub></span>
+              <span class="legend-item"><span class="swatch" style="background:var(--focus);"></span>column 3 = A e<sub>3</sub></span>
+            </div>
+            <div class="hint" id="transformHint">Drag to rotate. Use the button in Panel 1 for a one-shot preview: original -&gt; transformed -&gt; original -&gt; transformed, then stop.</div>
+          </div>
+          <div class="button-row">
+            <button class="secondary" type="button" id="showInverseButton">Show A then A<sup>-1</sup></button>
+          </div>
+          <div class="zoom-row">
+            <span class="zoom-label">Zoom</span>
+            <input class="zoom-slider" id="transformZoomSlider" type="range" min="0.7" max="2.25" step="0.01" value="1" aria-label="Transform view zoom">
+            <span class="zoom-value mono" id="transformZoomValue">100%</span>
+          </div>
+
+          <div class="stage" id="transformStage">
+            <canvas id="transformCanvas"></canvas>
+            <canvas id="transformCanvas2D" aria-hidden="true"></canvas>
+            <div class="det-gauge" id="transformDetGauge" data-sign="positive" aria-hidden="true">
+              <div class="det-gauge-value" id="transformDetValue">current volume scale<span class="det-gauge-meta">= |det(M(t))| = 8</span></div>
+              <div class="det-gauge-scale">
+                <span class="det-gauge-top" id="transformDetTarget">final |det(A)| = 8</span>
+                <div class="det-gauge-track">
+                  <div class="det-gauge-fill" id="transformDetFill"></div>
+                  <div class="det-gauge-marker" id="transformDetMarker"></div>
+                </div>
+                <span class="det-gauge-bottom">0</span>
+              </div>
+            </div>
+            <div class="canvas-labels" id="transformLabels"></div>
+          </div>
+
+          <div class="status-bar" id="transformCaption"><strong>det(A) = 8</strong> &rarr; signed volume scale factor. |det(A)| = 8 gives the volume scaling magnitude. Orientation is preserved. Full rank means the image has dimension 3.</div>
+          <div class="spotlight hidden" id="transformSpotlight"></div>
+        </div>
+      </section>
+      <section class="panel" id="panel-cofactor">
+        <div class="panel-header">
+          <div>
+            <h2>Cofactor Explorer</h2>
+            <p>Click a cofactor to see its sign, the surviving minor, the numerical cofactor value, the full cofactor matrix, the adjugate, and the inverse formula update together.</p>
+          </div>
+          <button class="panel-toggle" type="button" data-target="panel-cofactor">-</button>
+        </div>
+        <div class="panel-body">
+          <div class="cofactor-layout">
+            <div class="info-card">
+              <span class="card-title">Sign Grid</span>
+              <div class="cf-grid" id="cfGrid"></div>
+              <div class="hint" style="margin-top:12px;">Checkerboard signs combine with the corresponding minor determinants to produce the cofactors.</div>
+            </div>
+            <div class="stage cofactor-stage" id="cofactorStage">
+              <canvas id="cofactorCanvas"></canvas>
+              <canvas id="cofactorCanvas2D" aria-hidden="true"></canvas>
+              <div class="canvas-labels" id="cofactorLabels"></div>
+            </div>
+          </div>
+          <div class="zoom-row">
+            <span class="zoom-label">Zoom</span>
+            <input class="zoom-slider" id="cofactorZoomSlider" type="range" min="0.7" max="2.25" step="0.01" value="1" aria-label="Cofactor view zoom">
+            <span class="zoom-value mono" id="cofactorZoomValue">100%</span>
+          </div>
+
+          <div class="spotlight" id="cofactorExplanation"></div>
+
+          <div class="cofactor-meta">
+            <div class="info-card">
+              <span class="card-title">Selected Minor</span>
+              <div class="matrix-display two" id="minorMatrix"></div>
+            </div>
+            <div class="info-card">
+              <span class="card-title">Selected Cofactor</span>
+              <div class="formula" id="cofactorValue"></div>
+            </div>
+          </div>
+
+          <div class="matrix-trio">
+            <div class="matrix-card" id="cofactorMatrixCard">
+              <span class="card-title">Cofactor Matrix C</span>
+              <div class="matrix-display" id="cofactorMatrixDisplay"></div>
+            </div>
+            <div class="matrix-card" id="adjugateMatrixCard">
+              <span class="card-title">Adjugate adj(A) = C<sup>T</sup></span>
+              <div class="matrix-display" id="adjugateMatrixDisplay"></div>
+            </div>
+            <div class="matrix-card" id="inverseCard">
+              <span class="card-title" id="inverseCardTitle">Inverse Matrix A<sup>-1</sup> = (1 / det(A)) adj(A)</span>
+              <div class="matrix-display" id="inverseMatrixDisplay"></div>
+              <div class="formula" id="inverseFormula"></div>
+            </div>
+          </div>
+
+          <div class="matrix-card" id="inverseConstructionCard">
+            <span class="card-title">Inverse Construction</span>
+            <div class="cofactor-meta">
+              <div class="info-card">
+                <span class="card-title">A &middot; adj(A)</span>
+                <div class="matrix-display" id="aAdjDisplay"></div>
+              </div>
+              <div class="info-card">
+                <span class="card-title" id="detIdentityTitle">det(A) I<sub>n</sub></span>
+                <div class="matrix-display" id="detIdentityDisplay"></div>
+              </div>
+              <div class="info-card">
+                <span class="card-title" id="leftIdentityTitle">A &middot; A<sup>-1</sup> = I<sub>n</sub></span>
+                <div class="matrix-display" id="leftIdentityDisplay"></div>
+              </div>
+              <div class="info-card">
+                <span class="card-title" id="rightIdentityTitle">A<sup>-1</sup> &middot; A = I<sub>n</sub></span>
+                <div class="matrix-display" id="rightIdentityDisplay"></div>
+              </div>
+            </div>
+            <div class="status-bar" id="inverseConstructionNote"></div>
+          </div>
+
+          <div class="matrix-card" id="whyCofactorsSection">
+            <span class="card-title">Why Cofactors Work</span>
+            <div class="cofactor-meta">
+              <div class="info-card">
+                <span class="card-title">Helper Vector</span>
+                <div class="matrix-display" id="helperVectorDisplay"></div>
+                <div class="status-bar" id="helperMeaningText"></div>
+              </div>
+              <div class="info-card">
+                <span class="card-title">Dot Products</span>
+                <div id="helperDotList" class="dot-product-list"></div>
+              </div>
+            </div>
+            <div class="cofactor-meta">
+              <div class="info-card">
+                <span class="card-title">From Helpers To adj(A)</span>
+                <div class="formula" id="helperAssemblyText"></div>
+              </div>
+              <div class="info-card">
+                <span class="card-title">Why The Product Collapses</span>
+                <div class="matrix-display" id="helperProductDisplay"></div>
+                <div class="hint" id="helperProductText"></div>
+              </div>
+            </div>
+            <div class="status-bar" id="inverseBridgeWhy"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel glossary-panel" id="panel-glossary">
+        <div class="panel-header">
+          <div>
+            <h2>Glossary and Concept Map</h2>
+            <p>Each term has a one-line definition plus a quick "show me" action that focuses the relevant part of the app.</p>
+          </div>
+          <button class="panel-toggle" type="button" data-target="panel-glossary">-</button>
+        </div>
+        <div class="panel-body">
+          <div class="spotlight" id="glossarySpotlight">
+            Click any term card or its button to spotlight the matching geometry, theorem condition, or cofactor structure in the other panels.
+          </div>
+          <div class="term-grid" id="termGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.44/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const DEFAULT_MATRIX = [
+        [2, 1, 0],
+        [1, 3, 1],
+        [0, 1, 2]
+      ];
+      const PRESETS = {
+        identity: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        rotation: (function () {
+          const a = Math.PI / 6;
+          return [
+            [Math.cos(a), -Math.sin(a), 0],
+            [Math.sin(a), Math.cos(a), 0],
+            [0, 0, 1]
+          ];
+        }()),
+        shear: [[1, 1.25, 0.35], [0, 1, 0.45], [0, 0, 1]],
+        singular: [[1, 2, 0], [2, 4, 1], [0, 0, 0]]
+      };
+      const TERMS = [
+        { id: "column", title: "Column", definition: "For a matrix A, column <em>j</em> is A e<sub>j</sub>: the image of the <em>j</em>-th standard basis vector under the transformation." },
+        { id: "row", title: "Row", definition: "A row records one output coordinate as a linear combination of the input coordinates." },
+        { id: "rank", title: "Rank", definition: "The rank of A is the dimension of the image (column space) of A." },
+        { id: "span", title: "Span", definition: "The span of a set of vectors is the set of all linear combinations of those vectors." },
+        { id: "independence", title: "Linear Independence", definition: "A set of vectors is linearly independent if the only linear combination that gives the zero vector is the trivial one." },
+        { id: "determinant", title: "Determinant", definition: "For a square matrix, det(A) is the signed area scale factor in 2D or signed volume scale factor in 3D. Its magnitude gives the scaling factor, and its sign records orientation." },
+        { id: "cofactor", title: "Cofactor", definition: "The cofactor C<sub>ij</sub> is C<sub>ij</sub> = (-1)<sup>i+j</sup> det(M<sub>ij</sub>), where M<sub>ij</sub> is the minor obtained by deleting row <em>i</em> and column <em>j</em>." },
+        { id: "adjugate", title: "Adjugate / adj(A)", definition: "The adjugate of A is the transpose of the cofactor matrix: adj(A) = cof(A)<sup>T</sup>." },
+        { id: "invertible", title: "Invertible", definition: "A square matrix A is invertible if there exists a matrix A<sup>-1</sup> such that A A<sup>-1</sup> = A<sup>-1</sup> A = I<sub>n</sub>." },
+        { id: "surjective", title: "Surjective / Onto", definition: "A linear map is surjective if every vector in the codomain is the image of at least one input vector." },
+        { id: "injective", title: "Injective / One-to-One", definition: "A linear map is injective if different inputs always produce different outputs." },
+        { id: "axb", title: "Ax = b", definition: "The equation Ax = b asks whether b lies in the image of A, and if so, which input vectors x map to b." },
+        { id: "ax0", title: "Ax = 0", definition: "The equation Ax = 0 describes the kernel (null space) of A." },
+        { id: "trivial", title: "Trivial Solution", definition: "The trivial solution of Ax = 0 is x = 0." },
+        { id: "basis", title: "Basis", definition: "A basis is a linearly independent set of vectors that spans the space." },
+        { id: "image", title: "Image / Range", definition: "The image (range) of A is the set of all outputs Ax as x varies over the domain." }
+      ];
+      const cubeVertices = [
+        [0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],
+        [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]
+      ];
+      const EPS = 1e-9;
+
+      const state = {
+        dimension: 3,
+        matrix: cloneMatrix(DEFAULT_MATRIX),
+        selectedPreset: "",
+        selectedCofactor: { row: 0, col: 0 },
+        derived: null,
+        termTimer: null
+      };
+
+      const matrixGrid = document.getElementById("matrixGrid");
+      const detValue = document.getElementById("detValue");
+      const rankValue = document.getElementById("rankValue");
+      const imageDimText = document.getElementById("imageDimText");
+      const verdictBadge = document.getElementById("verdictBadge");
+      const verdictSummary = document.getElementById("verdictSummary");
+      const theoremList = document.getElementById("theoremList");
+      const showSpaceButton = document.getElementById("showSpaceButton");
+      const showInverseButton = document.getElementById("showInverseButton");
+      const transformLegend = document.getElementById("transformLegend");
+      const transformHint = document.getElementById("transformHint");
+      const transformZoomSlider = document.getElementById("transformZoomSlider");
+      const transformZoomValue = document.getElementById("transformZoomValue");
+      const transformCaption = document.getElementById("transformCaption");
+      const transformSpotlight = document.getElementById("transformSpotlight");
+      const cfGrid = document.getElementById("cfGrid");
+      const cofactorZoomSlider = document.getElementById("cofactorZoomSlider");
+      const cofactorZoomValue = document.getElementById("cofactorZoomValue");
+      const cofactorLabels = document.getElementById("cofactorLabels");
+      const cofactorExplanation = document.getElementById("cofactorExplanation");
+      const minorMatrix = document.getElementById("minorMatrix");
+      const cofactorValue = document.getElementById("cofactorValue");
+      const cofactorMatrixDisplay = document.getElementById("cofactorMatrixDisplay");
+      const adjugateMatrixDisplay = document.getElementById("adjugateMatrixDisplay");
+      const inverseCardTitle = document.getElementById("inverseCardTitle");
+      const inverseMatrixDisplay = document.getElementById("inverseMatrixDisplay");
+      const inverseFormula = document.getElementById("inverseFormula");
+      const aAdjDisplay = document.getElementById("aAdjDisplay");
+      const detIdentityTitle = document.getElementById("detIdentityTitle");
+      const detIdentityDisplay = document.getElementById("detIdentityDisplay");
+      const leftIdentityTitle = document.getElementById("leftIdentityTitle");
+      const leftIdentityDisplay = document.getElementById("leftIdentityDisplay");
+      const rightIdentityTitle = document.getElementById("rightIdentityTitle");
+      const rightIdentityDisplay = document.getElementById("rightIdentityDisplay");
+      const inverseConstructionNote = document.getElementById("inverseConstructionNote");
+      const whyCofactorsSection = document.getElementById("whyCofactorsSection");
+      const helperVectorDisplay = document.getElementById("helperVectorDisplay");
+      const helperMeaningText = document.getElementById("helperMeaningText");
+      const helperDotList = document.getElementById("helperDotList");
+      const helperAssemblyText = document.getElementById("helperAssemblyText");
+      const helperProductDisplay = document.getElementById("helperProductDisplay");
+      const helperProductText = document.getElementById("helperProductText");
+      const inverseBridgeWhy = document.getElementById("inverseBridgeWhy");
+      const rootElement = document.documentElement;
+      const themeToggle = document.getElementById("themeToggle");
+      const themeMediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+      let themeMode = "auto";
+      const glossarySpotlight = document.getElementById("glossarySpotlight");
+      const termGrid = document.getElementById("termGrid");
+      const dimensionButtons = Array.from(document.querySelectorAll(".dimension-btn"));
+      const presetButtons = Array.from(document.querySelectorAll(".preset"));
+      const collapsers = Array.from(document.querySelectorAll(".panel-toggle"));
+
+      buildMatrixInputs();
+      buildCofactorGrid();
+      buildGlossary();
+      setupCollapsers();
+      refreshDimensionButtons();
+      renderDimensionAwareUI();
+
+      const transformView = createTransformView({
+        canvas: document.getElementById("transformCanvas"),
+        flatCanvas: document.getElementById("transformCanvas2D"),
+        stage: document.getElementById("transformStage"),
+        labelsContainer: document.getElementById("transformLabels"),
+        zoomSlider: transformZoomSlider,
+        zoomValue: transformZoomValue
+      });
+      const cofactorView = createCofactorView({
+        canvas: document.getElementById("cofactorCanvas"),
+        flatCanvas: document.getElementById("cofactorCanvas2D"),
+        stage: document.getElementById("cofactorStage"),
+        labelsContainer: cofactorLabels,
+        zoomSlider: cofactorZoomSlider,
+        zoomValue: cofactorZoomValue
+      });
+
+      initTheme();
+      attachEvents();
+      setMatrix(DEFAULT_MATRIX, { preset: "" });
+      pickCofactor(0, 0);
+
+      let lastTime = performance.now();
+      function animate(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+        transformView.tick(dt, state.matrix, state.derived);
+        cofactorView.tick(dt);
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+
+      function buildMatrixInputs() {
+        matrixGrid.innerHTML = "";
+        matrixGrid.style.setProperty("--matrix-columns", String(state.dimension));
+        for (let row = 0; row < state.dimension; row += 1) {
+          for (let col = 0; col < state.dimension; col += 1) {
+            const input = document.createElement("input");
+            input.type = "number";
+            input.step = "any";
+            input.className = "matrix-input row-" + row + " col-" + col;
+            input.dataset.row = String(row);
+            input.dataset.col = String(col);
+            input.setAttribute("aria-label", "A " + (row + 1) + (col + 1));
+            matrixGrid.appendChild(input);
+          }
+        }
+      }
+
+      function buildCofactorGrid() {
+        cfGrid.innerHTML = "";
+        cfGrid.style.gridTemplateColumns = "repeat(" + state.dimension + ", 1fr)";
+        for (let row = 0; row < state.dimension; row += 1) {
+          for (let col = 0; col < state.dimension; col += 1) {
+            const sign = cofactorSign(row, col);
+            const cell = document.createElement("div");
+            cell.className = "cf-cell " + (sign === 1 ? "plus" : "minus");
+            cell.dataset.row = String(row);
+            cell.dataset.col = String(col);
+            cell.innerHTML = '<span class="sign">' + (sign === 1 ? "+" : "&minus;") + '</span><span class="lbl">C<sub>' + (row + 1) + (col + 1) + "</sub></span>";
+            cell.addEventListener("click", function () { pickCofactor(row, col); });
+            cfGrid.appendChild(cell);
+          }
+        }
+      }
+
+      function buildGlossary() {
+        termGrid.innerHTML = "";
+        TERMS.forEach(function (term) {
+          const card = document.createElement("article");
+          card.className = "term-card";
+          card.dataset.term = term.id;
+          card.innerHTML =
+            '<div class="term-header"><div><h3>' + term.title + '</h3></div><span class="term-tag">Focus</span></div>' +
+            "<p>" + term.definition + "</p>" +
+            '<div class="term-actions"><span class="hint">Highlight the matching geometry or algebra.</span><button type="button" class="secondary show-term">Show me</button></div>';
+          card.addEventListener("click", function () { focusTerm(term.id); });
+          card.querySelector(".show-term").addEventListener("click", function (event) {
+            event.stopPropagation();
+            focusTerm(term.id);
+          });
+          termGrid.appendChild(card);
+        });
+      }
+
+      function setupCollapsers() {
+        collapsers.forEach(function (button) {
+          button.addEventListener("click", function () {
+            const panel = document.getElementById(button.dataset.target);
+            const collapsed = panel.classList.toggle("collapsed");
+            button.textContent = collapsed ? "+" : "-";
+          });
+        });
+      }
+
+      function attachEvents() {
+        matrixGrid.addEventListener("input", function () {
+          state.selectedPreset = "";
+          refreshPresetButtons();
+          updateFromInputs();
+        });
+        dimensionButtons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            setDimension(Number(button.dataset.dimension));
+          });
+        });
+        showSpaceButton.addEventListener("click", function () {
+          transformView.startPingPong();
+          if (window.innerWidth < 900) {
+            document.getElementById("panel-transform").scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+          pulsePanel("panel-transform");
+        });
+        showInverseButton.addEventListener("click", function () {
+          transformView.startInversePreview();
+          pulsePanel("panel-transform");
+        });
+        presetButtons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            const key = button.dataset.preset;
+            setMatrix(PRESETS[key], { preset: key });
+            pulsePanel("panel-input");
+          });
+        });
+      }
+
+      function initTheme() {
+        themeMode = "auto";
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+        if (themeToggle) {
+          themeToggle.addEventListener("click", cycleTheme);
+        }
+        if (themeMediaQuery) {
+          const handlePreferenceChange = function () {
+            if (themeMode === "auto") {
+              applyTheme("auto");
+              updateThemeToggleLabel();
+            }
+          };
+          if (typeof themeMediaQuery.addEventListener === "function") {
+            themeMediaQuery.addEventListener("change", handlePreferenceChange);
+          } else if (typeof themeMediaQuery.addListener === "function") {
+            themeMediaQuery.addListener(handlePreferenceChange);
+          }
+        }
+      }
+
+      function cycleTheme() {
+        if (themeMode === "auto") {
+          themeMode = resolveTheme("auto") === "dark" ? "light" : "dark";
+        } else if (themeMode === "light") {
+          themeMode = "dark";
+        } else {
+          themeMode = "auto";
+        }
+        applyTheme(themeMode);
+        updateThemeToggleLabel();
+      }
+
+      function applyTheme(mode) {
+        rootElement.setAttribute("data-theme", resolveTheme(mode));
+      }
+
+      function updateThemeToggleLabel() {
+        if (!themeToggle) {
+          return;
+        }
+        themeToggle.textContent = "theme: " + themeMode;
+      }
+
+      function resolveTheme(mode) {
+        if (mode === "auto") {
+          return themeMediaQuery && themeMediaQuery.matches ? "dark" : "light";
+        }
+        return mode;
+      }
+
+      function cofactorSign(row, col) {
+        return (row + col) % 2 === 0 ? 1 : -1;
+      }
+
+      function formatZoomPercent(zoom) {
+        return Math.round(zoom * 100) + "%";
+      }
+
+      function createZoomModel(config) {
+        const model = {
+          zoom: typeof config.defaultZoom === "number" ? config.defaultZoom : 1,
+          defaultZoom: typeof config.defaultZoom === "number" ? config.defaultZoom : 1,
+          minZoom: typeof config.minZoom === "number" ? config.minZoom : 0.7,
+          maxZoom: typeof config.maxZoom === "number" ? config.maxZoom : 2.25,
+          step: typeof config.step === "number" ? config.step : 0.01,
+          setZoom: null,
+          adjustZoom: null,
+          resetZoom: null
+        };
+        const slider = config.slider;
+        const value = config.value;
+
+        function syncUi() {
+          if (slider) {
+            slider.min = String(model.minZoom);
+            slider.max = String(model.maxZoom);
+            slider.step = String(model.step);
+            slider.value = String(model.zoom);
+          }
+          if (value) {
+            value.textContent = formatZoomPercent(model.zoom);
+          }
+        }
+
+        model.setZoom = function (nextZoom) {
+          model.zoom = clamp(nextZoom, model.minZoom, model.maxZoom);
+          syncUi();
+          if (config.onChange) {
+            config.onChange(model.zoom, model);
+          }
+          return model.zoom;
+        };
+        model.adjustZoom = function (delta) {
+          return model.setZoom(model.zoom + delta);
+        };
+        model.resetZoom = function () {
+          return model.setZoom(model.defaultZoom);
+        };
+
+        if (slider) {
+          slider.addEventListener("input", function () {
+            model.setZoom(Number(slider.value));
+          });
+        }
+        syncUi();
+        return model;
+      }
+
+      function identityMatrixN(dimension) {
+        return Array.from({ length: dimension }, function (_row, row) {
+          return Array.from({ length: dimension }, function (_col, col) {
+            return row === col ? 1 : 0;
+          });
+        });
+      }
+
+      function coerceMatrixToDimension(matrix, dimension) {
+        const next = identityMatrixN(dimension);
+        const size = Math.min(matrix.length, dimension);
+        for (let row = 0; row < size; row += 1) {
+          for (let col = 0; col < size; col += 1) {
+            next[row][col] = matrix[row][col];
+          }
+        }
+        return next;
+      }
+
+      function refreshDimensionButtons() {
+        dimensionButtons.forEach(function (button) {
+          const active = Number(button.dataset.dimension) === state.dimension;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-checked", active ? "true" : "false");
+        });
+      }
+
+      function renderDimensionAwareUI() {
+        const legendItems = state.dimension === 2
+          ? [
+              { color: "#1d9e75", label: "column 1 = A " + basisNameHtml(0) },
+              { color: "#d85a30", label: "column 2 = A " + basisNameHtml(1) }
+            ]
+          : [
+              { color: "#1d9e75", label: "column 1 = A " + basisNameHtml(0) },
+              { color: "#d85a30", label: "column 2 = A " + basisNameHtml(1) },
+              { color: "#f0c44c", label: "column 3 = A " + basisNameHtml(2) }
+            ];
+        transformLegend.innerHTML = legendItems.map(function (item) {
+          return '<span class="legend-item"><span class="swatch" style="background:' + item.color + ';"></span>' + item.label + "</span>";
+        }).join("");
+        transformHint.innerHTML = state.dimension === 2
+          ? "Use the button in Panel 1 for the standard preview, or Show A then A<sup>-1</sup> for the undo preview when det(A) &ne; 0."
+          : "Drag to rotate. Use the button in Panel 1 for the standard preview, or Show A then A<sup>-1</sup> for the undo preview when det(A) &ne; 0.";
+        showInverseButton.disabled = !state.derived || !state.derived.invertible;
+        showInverseButton.title = state.derived && !state.derived.invertible
+          ? "Available only when det(A) ≠ 0."
+          : "Animate A followed by A⁻¹.";
+      }
+
+      function setDimension(nextDimension) {
+        if (nextDimension === state.dimension) {
+          return;
+        }
+        state.dimension = nextDimension;
+        state.matrix = coerceMatrixToDimension(state.matrix, nextDimension);
+        state.selectedCofactor = {
+          row: Math.min(state.selectedCofactor.row, nextDimension - 1),
+          col: Math.min(state.selectedCofactor.col, nextDimension - 1)
+        };
+        buildMatrixInputs();
+        buildCofactorGrid();
+        refreshDimensionButtons();
+        renderDimensionAwareUI();
+        setMatrix(state.matrix, { preset: state.selectedPreset });
+      }
+
+      function setMatrix(matrix, options) {
+        state.matrix = cloneMatrix(coerceMatrixToDimension(matrix, state.dimension));
+        state.selectedPreset = options && options.preset ? options.preset : "";
+        matrixGrid.querySelectorAll(".matrix-input").forEach(function (input) {
+          const row = Number(input.dataset.row);
+          const col = Number(input.dataset.col);
+          input.value = sanitizeNumber(state.matrix[row][col]);
+        });
+        refreshPresetButtons();
+        recompute();
+      }
+
+      function refreshPresetButtons() {
+        presetButtons.forEach(function (button) {
+          button.classList.toggle("active", button.dataset.preset === state.selectedPreset);
+        });
+      }
+
+      function updateFromInputs() {
+        const next = Array.from({ length: state.dimension }, function () {
+          return Array.from({ length: state.dimension }, function () { return 0; });
+        });
+        matrixGrid.querySelectorAll(".matrix-input").forEach(function (input) {
+          next[Number(input.dataset.row)][Number(input.dataset.col)] = readNumber(input.value);
+        });
+        state.matrix = next;
+        recompute();
+      }
+
+      function recompute() {
+        state.derived = deriveState(state.matrix, state.dimension);
+        renderDimensionAwareUI();
+        renderVerdict();
+        renderCofactorMath();
+        transformView.refresh(state.matrix, state.derived);
+        cofactorView.pick(state.selectedCofactor.row, state.selectedCofactor.col);
+      }
+
+      function renderVerdict() {
+        const d = state.derived;
+        detValue.textContent = formatNumber(d.det, 4);
+        rankValue.textContent = String(d.rank);
+        imageDimText.textContent = d.rankLabel;
+        verdictBadge.textContent = d.invertible ? "Invertible" : "Not Invertible";
+        verdictBadge.className = "verdict " + (d.invertible ? "good" : "bad");
+        verdictSummary.innerHTML = d.invertible
+          ? "<strong>This matrix is invertible.</strong> Because det(A) &ne; 0, the transformation has full rank, is one-to-one and onto, and has an inverse A<sup>-1</sup>."
+          : "<strong>This matrix is not invertible.</strong> Because det(A) = 0, the transformation is singular: it loses dimension, is not one-to-one, and A<sup>-1</sup> does not exist.";
+        const items = d.invertible ? d.theoremHolds : d.theoremFails;
+        theoremList.innerHTML = "";
+        items.forEach(function (item) {
+          const card = document.createElement("div");
+          card.className = "theorem-item " + (d.invertible ? "ok" : "fail");
+          card.innerHTML = '<span class="status-icon">' + (d.invertible ? "&#10003;" : "&#10005;") + "</span><div><strong>" + item.title + "</strong><br>" + item.detail + "</div>";
+          theoremList.appendChild(card);
+        });
+      }
+
+      function renderCofactorMath() {
+        const d = state.derived;
+        const row = state.selectedCofactor.row;
+        const col = state.selectedCofactor.col;
+        const rowIndex = row + 1;
+        const colIndex = col + 1;
+        const identityLabel = identityHtml(d.dimension);
+        const identityLatexLabel = identityLatex(d.dimension);
+        const minor = d.minors[row][col];
+        const cofactor = d.cofactors[row][col];
+        const signNumber = cofactorSign(row, col);
+        const signHtml = signNumber === 1 ? "+" : "&minus;";
+        const signLatex = signNumber === 1 ? "+1" : "-1";
+        const minorDet = minorDeterminant(minor);
+        const helperTolerance = 1e-7;
+        const helper = getHelperColumnInfo(state.matrix, d.dimension, col);
+        const componentNames = d.dimension === 2 ? ["x", "y"] : ["x", "y", "z"];
+        const verifiedAdjugateProduct = stabilizeMatrixAgainstExpected(d.adjugateProduct, d.detIdentity);
+        const verifiedLeftIdentity = d.invertible
+          ? stabilizeMatrixAgainstExpected(d.inverseLeftProduct, d.identity)
+          : null;
+        const verifiedRightIdentity = d.invertible
+          ? stabilizeMatrixAgainstExpected(d.inverseRightProduct, d.identity)
+          : null;
+        const helperProductClasses = d.adjugateProduct.map(function (productRow, rowIndexInner) {
+          return productRow.map(function (value, colIndexInner) {
+            if (rowIndexInner === colIndexInner) {
+              return Math.abs(value - d.detIdentity[rowIndexInner][colIndexInner]) < helperTolerance ? "det-hit" : "";
+            }
+            return Math.abs(value) < helperTolerance ? "zero-hit" : "";
+          });
+        });
+        const cofactorHtmlLabel = "C<sub>" + rowIndex + colIndex + "</sub>";
+        const cofactorLatexLabel = "C_{" + rowIndex + colIndex + "}";
+        const minorHtmlLabel = "M<sub>" + rowIndex + colIndex + "</sub>";
+        const minorLatexLabel = "M_{" + rowIndex + colIndex + "}";
+        const adjugateLatex = String.raw`\operatorname{adj}(A)`;
+        const cofactorOperatorLatex = String.raw`\operatorname{cof}(A)`;
+
+        minorMatrix.style.gridTemplateColumns = "repeat(" + minor[0].length + ", minmax(0, 1fr))";
+        cofactorMatrixDisplay.style.gridTemplateColumns = "repeat(" + d.dimension + ", minmax(0, 1fr))";
+        adjugateMatrixDisplay.style.gridTemplateColumns = "repeat(" + d.dimension + ", minmax(0, 1fr))";
+        aAdjDisplay.style.gridTemplateColumns = "repeat(" + d.dimension + ", minmax(0, 1fr))";
+        detIdentityDisplay.style.gridTemplateColumns = "repeat(" + d.dimension + ", minmax(0, 1fr))";
+        helperVectorDisplay.style.gridTemplateColumns = "1fr";
+        helperProductDisplay.style.gridTemplateColumns = "repeat(" + d.dimension + ", minmax(0, 1fr))";
+        detIdentityTitle.innerHTML = "det(A) " + identityLabel;
+        leftIdentityTitle.innerHTML = d.invertible ? "A &middot; A<sup>-1</sup> = " + identityLabel : "A &middot; A<sup>-1</sup>";
+        rightIdentityTitle.innerHTML = d.invertible ? "A<sup>-1</sup> &middot; A = " + identityLabel : "A<sup>-1</sup> &middot; A";
+        inverseCardTitle.innerHTML = d.invertible
+          ? "Inverse Matrix A<sup>-1</sup> = (1 / det(A)) adj(A)"
+          : "Inverse Matrix A<sup>-1</sup>";
+
+        minorMatrix.innerHTML = matrixToHtml(minor, { dims: [minor.length, minor[0].length], highlight: null });
+        aAdjDisplay.innerHTML = matrixToHtml(verifiedAdjugateProduct, { dims: [d.dimension, d.dimension], highlight: null });
+        detIdentityDisplay.innerHTML = matrixToHtml(d.detIdentity, { dims: [d.dimension, d.dimension], highlight: null });
+        helperVectorDisplay.innerHTML = matrixToHtml(
+          helper.helperVector.map(function (value) { return [value]; }),
+          { dims: [d.dimension, 1], highlight: { row: row, col: 0 } }
+        );
+        helperProductDisplay.innerHTML = matrixToHtmlClassified(verifiedAdjugateProduct, {
+          dims: [d.dimension, d.dimension],
+          cellClasses: helperProductClasses
+        });
+
+        helperDotList.innerHTML = helper.dotProducts.map(function (item) {
+          const rawKind = classifyAgainstTargets(item.value, d.det, 0, helperTolerance);
+          const kind = item.index === helper.matchIndex
+            ? (Math.abs(item.value - d.det) < helperTolerance ? "match" : rawKind === "match" ? "match" : "neutral")
+            : (Math.abs(item.value) < helperTolerance ? "zero" : rawKind === "zero" ? "zero" : "neutral");
+          const tailText = item.index === helper.matchIndex ? "det(A)" : "0";
+          const tailLatex = item.index === helper.matchIndex ? String.raw`\det(A)` : "0";
+          return '<div class="dot-product-row ' + kind + '">' +
+            mathHtml(
+              item.formulaLatex + " = " + latexNumber(item.value, 4) + " = " + tailLatex,
+              item.formulaHtml + " = " + formatNumber(item.value, 4) + ' <span class="mono">(' + tailText + ")</span>",
+              false
+            ) +
+            "</div>";
+        }).join("");
+
+        cofactorValue.innerHTML =
+          mathHtml(
+            minorLatexLabel + " = " + matrixLatex(minor, 4),
+            minorHtmlLabel + " = " + matrixInline(minor, 4),
+            true
+          ) +
+          mathHtml(
+            cofactorLatexLabel + " = (-1)^{" + rowIndex + "+" + colIndex + "} \\det(" + minorLatexLabel + ") = (" + signLatex + ")(" + latexNumber(minorDet, 4) + ") = " + latexNumber(cofactor, 4),
+            cofactorHtmlLabel + " = (" + signHtml + ") &middot; det(" + minorHtmlLabel + ") = (" + signHtml + ")(" + formatNumber(minorDet, 4) + ") = <strong>" + formatNumber(cofactor, 4) + "</strong>",
+            true
+          );
+
+        if (d.dimension === 2) {
+          const a1 = getColumn(state.matrix, 0);
+          const a2 = getColumn(state.matrix, 1);
+          const edgeName = helper.sourceLabelHtml;
+          const componentName = componentNames[row];
+          cofactorExplanation.innerHTML =
+            "<strong>2D guide:</strong> The transformed parallelogram is spanned by " +
+            mathHtml("a_1 = " + vectorLatex(a1, 4), columnNameHtml(0) + " = " + vectorInline(a1, 4), false) +
+            " and " +
+            mathHtml("a_2 = " + vectorLatex(a2, 4), columnNameHtml(1) + " = " + vectorInline(a2, 4), false) +
+            ". The highlighted edge is " + edgeName + ". The helper vector " +
+            mathHtml(helper.helperLabelLatex + " = " + vectorLatex(helper.helperVector, 4), helper.helperLabelHtml + " = " + vectorInline(helper.helperVector, 4), false) +
+            " is a signed perpendicular built from the other transformed edge " + edgeName + ". <strong>Selected cofactor:</strong> " +
+            mathHtml(cofactorLatexLabel + " = " + latexNumber(helper.helperVector[row], 4), cofactorHtmlLabel + " = " + formatNumber(helper.helperVector[row], 4), false) +
+            " is its " + componentName + "-component.";
+          helperMeaningText.innerHTML =
+            "<strong>Helper meaning:</strong> This helper vector is a signed perpendicular built from the other transformed edge " +
+            edgeName + ". Its selected signed " + componentName + "-component is " +
+            mathHtml(cofactorLatexLabel + " = " + latexNumber(helper.helperVector[row], 4), cofactorHtmlLabel + " = " + formatNumber(helper.helperVector[row], 4), false) +
+            ".";
+          cofactorMatrixDisplay.innerHTML = matrixToHtml(d.cofactors, { dims: [2, 2], highlight: { row: row, col: col } });
+          adjugateMatrixDisplay.innerHTML = matrixToHtml(d.adjugate, { dims: [2, 2], highlight: { row: col, col: row } });
+          if (d.invertible) {
+            inverseMatrixDisplay.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+            leftIdentityDisplay.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+            rightIdentityDisplay.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+            inverseMatrixDisplay.innerHTML = matrixToHtml(d.inverse, { dims: [2, 2], highlight: null });
+            leftIdentityDisplay.innerHTML = matrixToHtml(verifiedLeftIdentity, { dims: [2, 2], highlight: null });
+            rightIdentityDisplay.innerHTML = matrixToHtml(verifiedRightIdentity, { dims: [2, 2], highlight: null });
+            inverseFormula.innerHTML =
+              mathHtml(String.raw`A^{-1} = \frac{1}{\det(A)} ` + adjugateLatex, "A<sup>-1</sup> = (1 / det(A)) adj(A)", true) +
+              mathHtml(String.raw`\frac{1}{\det(A)} = \frac{1}{` + latexNumber(d.det, 4) + String.raw`} = ` + latexNumber(1 / d.det, 5), "1 / det(A) = 1 / " + formatNumber(d.det, 4) + " = " + formatNumber(1 / d.det, 5), true) +
+              mathHtml(String.raw`A^{-1} = ` + matrixLatex(d.inverse, 5), "A<sup>-1</sup> = " + matrixInline(d.inverse, 5), true);
+            inverseConstructionNote.innerHTML =
+              "<strong>Why the rescaling matters:</strong> " +
+              mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel, true) +
+              "adj(A) alone makes the product a scalar multiple of the identity, so it is only the inverse when det(A) = 1. " +
+              mathHtml(String.raw`A A^{-1} = A^{-1} A = ` + identityLatexLabel, "AA<sup>-1</sup> = A<sup>-1</sup>A = " + identityLabel, true);
+          } else {
+            inverseMatrixDisplay.style.gridTemplateColumns = "1fr";
+            leftIdentityDisplay.style.gridTemplateColumns = "1fr";
+            rightIdentityDisplay.style.gridTemplateColumns = "1fr";
+            inverseMatrixDisplay.innerHTML = '<div class="matrix-cell">A<sup>-1</sup> does not exist</div>';
+            leftIdentityDisplay.innerHTML = '<div class="matrix-cell">undefined because det(A) = 0</div>';
+            rightIdentityDisplay.innerHTML = '<div class="matrix-cell">undefined because det(A) = 0</div>';
+            inverseFormula.innerHTML =
+              mathHtml(String.raw`\det(A) = 0`, "det(A) = 0", true) +
+              "<div>A<sup>-1</sup> is undefined, because scaling by 1 / det(A) would divide by zero.</div>";
+            inverseConstructionNote.innerHTML =
+              "<strong>Singular case:</strong> " +
+              mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel + String.raw` = 0 \cdot ` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel + " = 0 &middot; " + identityLabel, true) +
+              "The product becomes the zero matrix rather than the identity.";
+          }
+        } else {
+          const faceLabels = ["columns 2 and 3", "columns 3 and 1", "columns 1 and 2"];
+          const componentName = componentNames[row];
+          cofactorExplanation.innerHTML =
+            "<strong>3D guide:</strong> The highlighted face is spanned by " + faceLabels[col] + ". The helper vector " +
+            mathHtml(helper.helperLabelLatex + " = " + vectorLatex(helper.helperVector, 4), helper.helperLabelHtml + " = " + vectorInline(helper.helperVector, 4), false) +
+            " is its oriented area vector, built from the other two transformed columns. <strong>Selected cofactor:</strong> " +
+            mathHtml(cofactorLatexLabel + " = " + latexNumber(helper.helperVector[row], 4), cofactorHtmlLabel + " = " + formatNumber(helper.helperVector[row], 4), false) +
+            " is the " + componentName + "-component." +
+            mathHtml(
+              cofactorLatexLabel + " = (-1)^{" + rowIndex + "+" + colIndex + "} \\det(" + minorLatexLabel + ")",
+              cofactorHtmlLabel + " = (-1)<sup>" + (rowIndex + colIndex) + "</sup> det(" + minorHtmlLabel + ")",
+              true
+            );
+          helperMeaningText.innerHTML =
+            "<strong>Helper meaning:</strong> This helper vector is the oriented area vector of the highlighted face. Its selected signed " +
+            componentName + "-component is " +
+            mathHtml(cofactorLatexLabel + " = " + latexNumber(helper.helperVector[row], 4), cofactorHtmlLabel + " = " + formatNumber(helper.helperVector[row], 4), false) +
+            ".";
+          cofactorMatrixDisplay.innerHTML = matrixToHtml(d.cofactors, { dims: [3, 3], highlight: { row: row, col: col } });
+          adjugateMatrixDisplay.innerHTML = matrixToHtml(d.adjugate, { dims: [3, 3], highlight: { row: col, col: row } });
+          if (d.invertible) {
+            inverseMatrixDisplay.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+            leftIdentityDisplay.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+            rightIdentityDisplay.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+            inverseMatrixDisplay.innerHTML = matrixToHtml(d.inverse, { dims: [3, 3], highlight: null });
+            leftIdentityDisplay.innerHTML = matrixToHtml(verifiedLeftIdentity, { dims: [3, 3], highlight: null });
+            rightIdentityDisplay.innerHTML = matrixToHtml(verifiedRightIdentity, { dims: [3, 3], highlight: null });
+            inverseFormula.innerHTML =
+              mathHtml(String.raw`A^{-1} = \frac{1}{\det(A)} ` + adjugateLatex, "A<sup>-1</sup> = (1 / det(A)) adj(A)", true) +
+              mathHtml(String.raw`\frac{1}{\det(A)} = \frac{1}{` + latexNumber(d.det, 4) + String.raw`} = ` + latexNumber(1 / d.det, 5), "1 / det(A) = 1 / " + formatNumber(d.det, 4) + " = " + formatNumber(1 / d.det, 5), true) +
+              mathHtml(String.raw`A^{-1} = ` + matrixLatex(d.inverse, 5), "A<sup>-1</sup> = " + matrixInline(d.inverse, 5), true);
+            inverseConstructionNote.innerHTML =
+              "<strong>Why the rescaling matters:</strong> " +
+              mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel, true) +
+              "adj(A) alone is only the inverse when det(A) = 1. " +
+              mathHtml(String.raw`A A^{-1} = A^{-1} A = ` + identityLatexLabel, "AA<sup>-1</sup> = A<sup>-1</sup>A = " + identityLabel, true);
+          } else {
+            inverseMatrixDisplay.style.gridTemplateColumns = "1fr";
+            leftIdentityDisplay.style.gridTemplateColumns = "1fr";
+            rightIdentityDisplay.style.gridTemplateColumns = "1fr";
+            inverseMatrixDisplay.innerHTML = '<div class="matrix-cell">A<sup>-1</sup> does not exist</div>';
+            leftIdentityDisplay.innerHTML = '<div class="matrix-cell">undefined because det(A) = 0</div>';
+            rightIdentityDisplay.innerHTML = '<div class="matrix-cell">undefined because det(A) = 0</div>';
+            inverseFormula.innerHTML =
+              mathHtml(String.raw`\det(A) = 0`, "det(A) = 0", true) +
+              "<div>A<sup>-1</sup> is undefined, because scaling by 1 / det(A) would divide by zero.</div>";
+            inverseConstructionNote.innerHTML =
+              "<strong>Singular case:</strong> " +
+              mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel + String.raw` = 0 \cdot ` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel + " = 0 &middot; " + identityLabel, true) +
+              "The product becomes the zero matrix rather than the identity.";
+          }
+        }
+
+        whyCofactorsSection.style.display = "";
+        helperAssemblyText.innerHTML =
+          "The selected helper vector " +
+          mathHtml(helper.helperLabelLatex, helper.helperLabelHtml, false) +
+          " contributes one column of " +
+          mathHtml(cofactorOperatorLatex + " = C", "cof(A) = C", false) +
+          ", not a column of " +
+          mathHtml(adjugateLatex, "adj(A)", false) +
+          ".<br>" +
+          mathHtml(String.raw`\operatorname{adj}(A) = \operatorname{cof}(A)^T`, "adj(A) = cof(A)<sup>T</sup>", true);
+        helperProductText.innerHTML =
+          "The selected helper vector is not yet a column of adj(A). It first becomes one column of cof(A), then transposition gives adj(A)." +
+          mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel, true) +
+          "That is why det(A) appears on the diagonal and the off-diagonal terms vanish because of orthogonality.";
+        if (d.invertible) {
+          inverseBridgeWhy.innerHTML =
+            "<strong>Inverse bridge:</strong> " +
+            mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel, true) +
+            "Because " +
+            mathHtml(String.raw`\det(A) = ` + latexNumber(d.det, 4), "det(A) = " + formatNumber(d.det, 4), false) +
+            " is nonzero, multiplying by " +
+            mathHtml(String.raw`\frac{1}{\det(A)}`, "1 / det(A)", false) +
+            " rescales that product to " + identityLabel + "." +
+            mathHtml(String.raw`A^{-1} = \frac{1}{\det(A)} ` + adjugateLatex, "A<sup>-1</sup> = (1 / det(A)) adj(A)", true);
+        } else {
+          inverseBridgeWhy.innerHTML =
+            "<strong>Inverse bridge:</strong> " +
+            mathHtml(String.raw`A\,` + adjugateLatex + String.raw` = \det(A)` + identityLatexLabel, "A adj(A) = det(A) " + identityLabel, true) +
+            "Here " +
+            mathHtml(String.raw`\det(A) = 0`, "det(A) = 0", false) +
+            ", so the needed rescaling by " +
+            mathHtml(String.raw`\frac{1}{\det(A)}`, "1 / det(A)", false) +
+            " is impossible and A<sup>-1</sup> does not exist.";
+        }
+      }
+
+      function pickCofactor(row, col) {
+        state.selectedCofactor = { row: row, col: col };
+        Array.from(cfGrid.children).forEach(function (cell) {
+          const active = Number(cell.dataset.row) === row && Number(cell.dataset.col) === col;
+          cell.classList.toggle("active", active);
+        });
+        if (state.derived) {
+          renderCofactorMath();
+        }
+        cofactorView.pick(row, col);
+      }
+
+      function focusTerm(termId) {
+        Array.from(termGrid.children).forEach(function (card) {
+          card.classList.toggle("active", card.dataset.term === termId);
+        });
+        if (state.termTimer) {
+          clearTimeout(state.termTimer);
+        }
+        clearPanelFocus();
+        const map = {
+          column: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            pulseMatrixInputs(function (_row, col) { return col < state.dimension; });
+            transformView.showConcept("column", state.dimension === 2
+              ? "Each colored vector is one column of A: the image of " + basisNameHtml(0) + " and " + basisNameHtml(1) + "."
+              : "Each colored edge is one column of A: the image of " + basisNameHtml(0) + ", " + basisNameHtml(1) + ", and " + basisNameHtml(2) + ".");
+            glossarySpotlight.innerHTML = state.dimension === 2
+              ? "<strong>Columns</strong> are the vertical stacks in Panel 1 and the two colored vectors in Panel 2."
+              : "<strong>Columns</strong> are the vertical stacks in Panel 1 and the three colored edges in Panel 2.";
+          },
+          row: function () {
+            pulsePanel("panel-input");
+            pulseMatrixInputs(function (row) { return row === 0; });
+            transformView.showConcept("row", "Rows control output coordinates. Each row mixes the inputs into one output measurement.");
+            glossarySpotlight.innerHTML = "<strong>Rows</strong> read across the matrix and govern the output coordinates.";
+          },
+          rank: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            pulseElement(document.getElementById("rankCard"));
+            transformView.showConcept("rank", "Rank " + state.derived.rank + " means the image is " + state.derived.rankLabel + ".");
+            glossarySpotlight.innerHTML = "<strong>Rank</strong> is the dimension of the image of the transformation.";
+          },
+          span: function () {
+            pulsePanel("panel-transform");
+            transformView.showConcept("span", "All reachable outputs come from combining the columns of A.");
+            glossarySpotlight.innerHTML = "<strong>Span</strong> is the full set of outputs you can build from the columns.";
+          },
+          independence: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            transformView.showConcept("independence", state.derived.invertible ? "These columns are linearly independent because det(A) &ne; 0." : "These columns are linearly dependent because the image has lower dimension.");
+            glossarySpotlight.innerHTML = "<strong>Linear independence</strong> of the columns is equivalent to full rank in this " + state.dimension + "&times;" + state.dimension + " setting.";
+          },
+          determinant: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            pulseElement(document.getElementById("detCard"));
+            transformView.showConcept("determinant", "det(A) is the signed " + state.derived.scaleWord + " scale factor; |det(A)| measures " + state.derived.scaleWord + " scaling magnitude, and det(A) = 0 means the transformation is singular.");
+            glossarySpotlight.innerHTML = "<strong>Determinant</strong> is the signed " + state.derived.scaleWord + " scale factor; |det(A)| gives the " + state.derived.scaleWord + " scaling magnitude, and the sign records orientation.";
+          },
+          cofactor: function () {
+            pulsePanel("panel-cofactor");
+            pulseElement(document.getElementById("cofactorMatrixCard"));
+            pickCofactor(state.selectedCofactor.row, state.selectedCofactor.col);
+            glossarySpotlight.innerHTML = state.dimension === 2
+              ? "<strong>Cofactors</strong> are the signed minor determinants C<sub>ij</sub> = (-1)<sup>i+j</sup> det(M<sub>ij</sub>), and Panel 3 highlights the surviving 1&times;1 minor."
+              : "<strong>Cofactors</strong> are the signed minor determinants C<sub>ij</sub> = (-1)<sup>i+j</sup> det(M<sub>ij</sub>), and Panel 3 links that definition to the highlighted face geometry.";
+          },
+          adjugate: function () {
+            pulsePanel("panel-cofactor");
+            pulseElement(document.getElementById("adjugateMatrixCard"));
+            glossarySpotlight.innerHTML = "<strong>The adjugate</strong> is the transpose of the cofactor matrix, so the highlight flips across the diagonal.";
+          },
+          invertible: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            pulseElement(verdictBadge);
+            transformView.showConcept("invertible", state.derived.invertible ? "This transformation is invertible because det(A) &ne; 0, so it has full rank and is both one-to-one and onto." : "This transformation is singular because det(A) = 0, so it is not invertible.");
+            glossarySpotlight.innerHTML = "<strong>Invertible</strong> means A has an inverse A<sup>-1</sup>; equivalently for this " + state.dimension + "&times;" + state.dimension + " case, det(A) &ne; 0, rank(A) = " + state.dimension + ", and the map is one-to-one and onto.";
+          },
+          surjective: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            transformView.showConcept("surjective", state.derived.invertible ? "The image fills all of " + realSpaceHtml(state.dimension) + ", so every output is reachable." : "The image misses some directions, so the map is not onto.");
+            glossarySpotlight.innerHTML = "<strong>Surjective</strong> means the image fills the codomain.";
+          },
+          injective: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            transformView.showConcept("injective", state.derived.invertible ? "Only x = 0 maps to the origin, so distinct inputs stay distinct." : "Different inputs collapse together because the map loses dimension.");
+            glossarySpotlight.innerHTML = "<strong>Injective</strong> means no collapsing of different inputs onto the same output.";
+          },
+          axb: function () {
+            pulsePanel("panel-transform");
+            transformView.showConcept("axb", state.dimension === 2 ? "The highlighted corner is A(1,1): one concrete reachable output b." : "The far corner is A(1,1,1): one concrete reachable output b.");
+            glossarySpotlight.innerHTML = "<strong>Ax = b</strong> asks which input lands at a chosen output.";
+          },
+          ax0: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            transformView.showConcept("ax0", state.derived.invertible ? "For an invertible matrix, the kernel contains only x = 0." : "For a singular matrix, the kernel contains nonzero vectors in addition to x = 0.");
+            glossarySpotlight.innerHTML = "<strong>Ax = 0</strong> describes the kernel of A: all inputs mapped to the zero vector.";
+          },
+          trivial: function () {
+            pulsePanel("panel-input");
+            pulseElement(theoremList);
+            transformView.showConcept("trivial", state.derived.invertible ? "The trivial solution x = 0 is the only one." : "Because the map is singular, Ax = 0 has nontrivial solutions too.");
+            glossarySpotlight.innerHTML = "<strong>The trivial solution</strong> is x = 0, and if it is the only one then the matrix is invertible.";
+          },
+          basis: function () {
+            pulsePanel("panel-input");
+            pulsePanel("panel-transform");
+            transformView.showConcept("basis", state.dimension === 2
+              ? "The standard basis vectors " + basisNameHtml(0) + " and " + basisNameHtml(1) + " become the two columns of A."
+              : "The standard basis vectors " + basisNameHtml(0) + ", " + basisNameHtml(1) + ", and " + basisNameHtml(2) + " become the three columns of A.");
+            glossarySpotlight.innerHTML = "<strong>A basis</strong> is a linearly independent set that spans the space.";
+          },
+          image: function () {
+            pulsePanel("panel-transform");
+            transformView.showConcept("image", "The transformed " + (state.dimension === 2 ? "square" : "cube") + " sits inside the image of A.");
+            glossarySpotlight.innerHTML = "<strong>The image</strong> is the set of all outputs Ax produced by the transformation.";
+          }
+        };
+        if (map[termId]) {
+          map[termId]();
+        }
+        state.termTimer = setTimeout(clearPanelFocus, 2400);
+      }
+
+      function clearPanelFocus() {
+        document.querySelectorAll(".panel").forEach(function (panel) { panel.classList.remove("focused"); });
+      }
+      function pulsePanel(id) {
+        const panel = document.getElementById(id);
+        panel.classList.add("focused");
+        setTimeout(function () { panel.classList.remove("focused"); }, 1800);
+      }
+      function pulseElement(element) {
+        element.classList.remove("pulse");
+        void element.offsetWidth;
+        element.classList.add("pulse");
+      }
+      function pulseMatrixInputs(predicate) {
+        matrixGrid.querySelectorAll(".matrix-input").forEach(function (input) {
+          const row = Number(input.dataset.row);
+          const col = Number(input.dataset.col);
+          if (predicate(row, col)) {
+            input.classList.remove("input-pulse");
+            void input.offsetWidth;
+            input.classList.add("input-pulse");
+          }
+        });
+      }
+
+      function deriveState(matrix, dimension) {
+        const det = determinantForDimension(matrix, dimension);
+        const rank = rankSquare(matrix);
+        const minors = matrix.map(function (_row, r) {
+          return matrix[r].map(function (_value, c) {
+            return getMinor(matrix, r, c);
+          });
+        });
+        const cofactors = matrix.map(function (_row, r) {
+          return matrix[r].map(function (_value, c) {
+            return cofactorSign(r, c) * minorDeterminant(minors[r][c]);
+          });
+        });
+        const adjugate = transpose(cofactors);
+        const identity = identityMatrixN(dimension);
+        const invertible = Math.abs(det) > EPS;
+        const inverse = invertible ? scaleMatrix(adjugate, 1 / det) : null;
+        const spaceLabel = realSpaceHtml(dimension);
+        const scaleWord = dimension === 2 ? "area" : "volume";
+        return {
+          dimension: dimension,
+          det: det,
+          rank: rank,
+          invertible: invertible,
+          minors: minors,
+          cofactors: cofactors,
+          adjugate: adjugate,
+          identity: identity,
+          inverse: inverse,
+          adjugateProduct: multiplyMatrices(matrix, adjugate),
+          detIdentity: scaleMatrix(identity, det),
+          inverseLeftProduct: invertible ? multiplyMatrices(matrix, inverse) : null,
+          inverseRightProduct: invertible ? multiplyMatrices(inverse, matrix) : null,
+          scaleWord: scaleWord,
+          theoremHolds: [
+            { title: "det(A) &ne; 0.", detail: "The determinant is " + formatNumber(det, 4) + ", so the transformation has nonzero signed " + scaleWord + " scaling." },
+            { title: "rank(A) = " + dimension + ".", detail: "The transformation has full rank, so its image is all of " + spaceLabel + "." },
+            { title: "The columns are linearly independent.", detail: "None of the column vectors can be built from the others." },
+            { title: "The columns span " + spaceLabel + ".", detail: "Every output vector can be reached by some combination of the columns." },
+            { title: "A is onto and one-to-one.", detail: "Full rank gives both surjectivity and injectivity." },
+            { title: "Ax = 0 has only the trivial solution.", detail: "Only x = 0 gets mapped to the origin." },
+            { title: "A<sup>-1</sup> exists.", detail: "The inverse matrix updates live in Panel 3." }
+          ],
+          theoremFails: [
+            { title: "det(A) = 0.", detail: "The determinant is zero, so the transformation is singular and the image has lower dimension." },
+            { title: "rank(A) is only " + rank + ".", detail: "The image is " + dimensionPhrase(rank, dimension) + ", not all of " + spaceLabel + "." },
+            { title: "The columns are linearly dependent.", detail: "At least one column is redundant because the transformation loses dimension." },
+            { title: "The columns do not span " + spaceLabel + ".", detail: "Some output directions are unreachable." },
+            { title: "A is not onto and not one-to-one.", detail: "Because the image has lower dimension, the map is neither onto nor one-to-one." },
+            { title: "Ax = 0 has nontrivial solutions.", detail: "Some nonzero vectors are sent to the origin." },
+            { title: "A<sup>-1</sup> does not exist.", detail: "Because the transformation is singular, no inverse matrix exists." }
+          ],
+          rankLabel: dimensionPhrase(rank, dimension),
+          caseText: rank === dimension
+            ? "Full rank means the image has dimension " + dimension + "."
+            : rank === 2
+              ? "Rank 2 means the image is a plane."
+              : rank === 1
+                ? "Rank 1 means the image is a line."
+                : "Rank 0 sends every point to the origin."
+        };
+      }
+
+      function attachConstrainedStageDrag(canvas, target) {
+        let drag = false;
+        let activePointerId = null;
+        let lastPointer = { x: 0, y: 0 };
+
+        canvas.addEventListener("pointerdown", function (event) {
+          if (activePointerId !== null) {
+            return;
+          }
+          drag = true;
+          activePointerId = event.pointerId;
+          lastPointer.x = event.clientX;
+          lastPointer.y = event.clientY;
+          canvas.setPointerCapture(event.pointerId);
+        });
+
+        canvas.addEventListener("pointermove", function (event) {
+          if (!drag || event.pointerId !== activePointerId) {
+            return;
+          }
+          target.rotation.y += (event.clientX - lastPointer.x) * 0.008;
+          target.rotation.x += (event.clientY - lastPointer.y) * 0.008;
+          target.rotation.x = clamp(target.rotation.x, -1.35, 1.35);
+          lastPointer.x = event.clientX;
+          lastPointer.y = event.clientY;
+        });
+
+        function stopDrag(event) {
+          if (event.pointerId !== activePointerId) {
+            return;
+          }
+          drag = false;
+          if (canvas.hasPointerCapture(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+          }
+          activePointerId = null;
+        }
+
+        canvas.addEventListener("pointerup", stopDrag);
+        canvas.addEventListener("pointercancel", stopDrag);
+      }
+
+      function createTransformView(config) {
+        const canvas = config.canvas;
+        const flatCanvas = config.flatCanvas;
+        const stage = config.stage;
+        const labelsContainer = config.labelsContainer;
+        const zoomSlider = config.zoomSlider;
+        const zoomValue = config.zoomValue;
+        const detGauge = stage.querySelector("#transformDetGauge");
+        const detGaugeFill = stage.querySelector("#transformDetFill");
+        const detGaugeMarker = stage.querySelector("#transformDetMarker");
+        const detGaugeValue = stage.querySelector("#transformDetValue");
+        const detGaugeTarget = stage.querySelector("#transformDetTarget") || stage.querySelector("#transformDetMax");
+        const flatCtx = flatCanvas.getContext("2d");
+        const labelEls = [];
+        const pointLabel = document.createElement("div");
+        pointLabel.className = "point-label";
+        pointLabel.textContent = "A(1,1,1)";
+        pointLabel.style.display = "none";
+        labelsContainer.appendChild(pointLabel);
+        for (let i = 0; i < 3; i += 1) {
+          const label = document.createElement("div");
+          label.className = "vector-label col-" + i;
+          labelsContainer.appendChild(label);
+          labelEls.push(label);
+        }
+
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let root = null;
+        let fitGroup = null;
+        let referenceGroup = null;
+        let shapeGroup = null;
+        let mesh = null;
+        let pointMarker = null;
+        let fallbackCtx = null;
+        let usesFallback = false;
+        let width = 0;
+        let height = 0;
+        let playhead = 1;
+        let previewPhase = "idle";
+        let frozenPreviewSignature = "";
+        let focusMessage = "";
+        const previewSpeed = 0.85;
+        const zoomModel = createZoomModel({
+          slider: zoomSlider,
+          value: zoomValue,
+          defaultZoom: 1,
+          minZoom: 0.7,
+          maxZoom: 2.25,
+          step: 0.01,
+          onChange: function () {
+            if (state.derived) {
+              refresh(state.matrix, state.derived);
+            }
+          }
+        });
+
+        try {
+          renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          scene = new THREE.Scene();
+          camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+          camera.position.set(0, 0.4, 7.4);
+          scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+          const key = new THREE.DirectionalLight(0xffffff, 0.8);
+          key.position.set(3, 5, 4);
+          scene.add(key);
+          const rim = new THREE.DirectionalLight(0x59d0c4, 0.55);
+          rim.position.set(-5, 2, -4);
+          scene.add(rim);
+          root = new THREE.Group();
+          root.rotation.x = -0.48;
+          root.rotation.y = 0.65;
+          scene.add(root);
+          fitGroup = new THREE.Group();
+          root.add(fitGroup);
+          referenceGroup = new THREE.Group();
+          fitGroup.add(referenceGroup);
+          shapeGroup = new THREE.Group();
+          shapeGroup.matrixAutoUpdate = false;
+          fitGroup.add(shapeGroup);
+
+          const geometry = new THREE.BoxGeometry(1, 1, 1);
+          geometry.translate(0.5, 0.5, 0.5);
+          const edgeGeometry = new THREE.EdgesGeometry(geometry);
+          referenceGroup.add(new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({
+            color: 0xf1eadf, transparent: true, opacity: 0.05, side: THREE.DoubleSide, shininess: 18, specular: 0xffffff
+          })));
+          referenceGroup.add(new THREE.LineSegments(
+            edgeGeometry,
+            new THREE.LineBasicMaterial({ color: 0xd8cab2, transparent: true, opacity: 0.22 })
+          ));
+          [0, 1, 2].forEach(function (index) {
+            const points = index === 0
+              ? [new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0)]
+              : index === 1
+                ? [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)]
+                : [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1)];
+            referenceGroup.add(new THREE.Line(
+              new THREE.BufferGeometry().setFromPoints(points),
+              new THREE.LineBasicMaterial({ color: 0xe8e1d4, transparent: true, opacity: 0.24 })
+            ));
+          });
+          mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({
+            color: 0x5ad8cb, transparent: true, opacity: 0.22, side: THREE.DoubleSide, shininess: 80, specular: 0xffffff
+          }));
+          shapeGroup.add(mesh);
+          shapeGroup.add(new THREE.LineSegments(
+            edgeGeometry,
+            new THREE.LineBasicMaterial({ color: 0xf4ede2, transparent: true, opacity: 0.88 })
+          ));
+
+          [0x1d9e75, 0xd85a30, 0xf0c44c].forEach(function (color, index) {
+            const points = index === 0
+              ? [new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 0, 0)]
+              : index === 1
+                ? [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)]
+                : [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1)];
+            shapeGroup.add(new THREE.Line(
+              new THREE.BufferGeometry().setFromPoints(points),
+              new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.95 })
+            ));
+          });
+
+          pointMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.065, 18, 18),
+            new THREE.MeshStandardMaterial({ color: 0xf0c44c, emissive: 0xf0c44c, emissiveIntensity: 0.35 })
+          );
+          pointMarker.position.set(1, 1, 1);
+          pointMarker.visible = false;
+          shapeGroup.add(pointMarker);
+
+          attachConstrainedStageDrag(canvas, root);
+        } catch (error) {
+          usesFallback = true;
+          fallbackCtx = canvas.getContext("2d");
+          const note = document.createElement("div");
+          note.className = "fallback-note";
+          note.textContent = "3D fallback";
+          stage.appendChild(note);
+        }
+
+        new ResizeObserver(handleResize).observe(stage);
+        handleResize();
+
+        function handleResize() {
+          const rect = stage.getBoundingClientRect();
+          width = Math.max(280, Math.floor(rect.width));
+          height = Math.max(260, Math.floor(rect.height));
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+          flatCanvas.width = width * dpr;
+          flatCanvas.height = height * dpr;
+          flatCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          if (usesFallback) {
+            fallbackCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          } else {
+            renderer.setPixelRatio(Math.min(dpr, 2));
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+          }
+        }
+
+        function startPingPong() {
+          playhead = 0;
+          frozenPreviewSignature = "";
+          previewPhase = "forward1";
+        }
+
+        function startInversePreview() {
+          if (!state.derived || !state.derived.invertible) {
+            return;
+          }
+          playhead = 0;
+          frozenPreviewSignature = signatureForMatrix(state.matrix);
+          previewPhase = "inverseForward";
+        }
+
+        function showConcept(_mode, message) {
+          focusMessage = message || "";
+          transformSpotlight.innerHTML = focusMessage ? "<strong>Show me:</strong> " + focusMessage : "";
+          transformSpotlight.classList.toggle("hidden", !focusMessage);
+          if (focusMessage) {
+            pulseElement(transformSpotlight);
+          }
+        }
+
+        function advancePreview(dt) {
+          if (previewPhase === "forward1") {
+            playhead = Math.min(1, playhead + dt * previewSpeed);
+            if (playhead >= 1 - EPS) {
+              playhead = 1;
+              previewPhase = "back";
+            }
+          } else if (previewPhase === "back") {
+            playhead = Math.max(0, playhead - dt * previewSpeed);
+            if (playhead <= EPS) {
+              playhead = 0;
+              previewPhase = "forward2";
+            }
+          } else if (previewPhase === "forward2") {
+            playhead = Math.min(1, playhead + dt * previewSpeed);
+            if (playhead >= 1 - EPS) {
+              playhead = 1;
+              previewPhase = "idle";
+            }
+          } else if (previewPhase === "inverseForward") {
+            playhead = Math.min(1, playhead + dt * previewSpeed);
+            if (playhead >= 1 - EPS) {
+              playhead = 0;
+              previewPhase = "inverseUndo";
+            }
+          } else if (previewPhase === "inverseUndo") {
+            playhead = Math.min(1, playhead + dt * previewSpeed);
+            if (playhead >= 1 - EPS) {
+              playhead = 1;
+              previewPhase = "inverseDone";
+            }
+          } else if (previewPhase === "inverseDone") {
+            playhead = 1;
+          } else {
+            playhead = 1;
+          }
+        }
+
+        function setCanvasMode(dimension) {
+          const useFlat = dimension === 2;
+          flatCanvas.style.display = useFlat ? "block" : "none";
+          canvas.style.display = useFlat ? "none" : "block";
+          pointLabel.textContent = useFlat ? "A(1,1)" : "A(1,1,1)";
+        }
+
+        function hideLabels() {
+          labelEls.forEach(function (label) { label.style.display = "none"; });
+          pointLabel.style.display = "none";
+        }
+
+        function orientationSentence(det, scaleWord) {
+          if (det > EPS) {
+            return " Orientation is preserved.";
+          }
+          if (det < -EPS) {
+            return " Orientation is reversed.";
+          }
+          return " The transformation is singular, so " + scaleWord + " collapses to 0.";
+        }
+
+        function updateDeterminantGauge(currentDet, targetDet, dimension, targetLabel) {
+          if (!detGauge || !detGaugeFill || !detGaugeMarker || !detGaugeValue || !detGaugeTarget) {
+            return;
+          }
+          const gaugeMax = Math.max(1, Math.abs(targetDet), EPS);
+          const normalized = clamp(Math.abs(currentDet) / gaugeMax, 0, 1);
+          detGaugeFill.style.height = (normalized * 100) + "%";
+          detGaugeMarker.style.bottom = (normalized * 100) + "%";
+          detGaugeValue.innerHTML =
+            "current " + (dimension === 2 ? "area" : "volume") + " scale" +
+            '<span class="det-gauge-meta">= |det(M(t))| = ' + formatNumber(Math.abs(currentDet), 3) + "</span>";
+          detGaugeTarget.textContent = "final |det(" + targetLabel + ")| = " + formatNumber(Math.abs(targetDet), 3);
+          detGauge.dataset.sign = Math.abs(currentDet) < EPS ? "zero" : currentDet < 0 ? "negative" : "positive";
+        }
+
+        function updateCaption(currentDet, moving, derived) {
+          const scaleLabel = derived.dimension === 2 ? "area" : "volume";
+          const identityLabel = identityHtml(derived.dimension);
+          const shapeLabel = derived.dimension === 2 ? "square" : "cube";
+          if (previewPhase === "inverseForward") {
+            transformCaption.innerHTML =
+              "<strong>First apply A</strong> &rarr; the unit " + shapeLabel + " moves from " + identityLabel + " to A.";
+            return;
+          }
+          if (previewPhase === "inverseUndo") {
+            transformCaption.innerHTML =
+              "<strong>Then apply A<sup>-1</sup></strong> &rarr; the undo map moves the transformed " + shapeLabel + " back toward " + identityLabel + ", so A<sup>-1</sup> A returns the geometry to its original position.";
+            return;
+          }
+          if (previewPhase === "inverseDone") {
+            transformCaption.innerHTML =
+              "<strong>Undo complete.</strong> The composite map A<sup>-1</sup> A = " + identityLabel + " brings the unit " + shapeLabel + " back to its original position.";
+            return;
+          }
+          if (moving) {
+            transformCaption.innerHTML =
+              "<strong>Current M(t)</strong> &rarr; signed " + scaleLabel + " scale factor. " +
+              "|det(M(t))| = " + formatNumber(Math.abs(currentDet), 3) + "." +
+              orientationSentence(currentDet, scaleLabel);
+            return;
+          }
+          transformCaption.innerHTML =
+            "<strong>det(A) = " + formatNumber(derived.det, 4) + "</strong> &rarr; signed " + scaleLabel + " scale factor. " +
+            "|det(A)| = " + formatNumber(Math.abs(derived.det), 4) + " gives the " + scaleLabel + " scaling magnitude." +
+            orientationSentence(derived.det, scaleLabel) + " " + derived.caseText;
+        }
+
+        function signatureForMatrix(matrix) {
+          return matrix.map(function (row) {
+            return row.join(",");
+          }).join(";");
+        }
+
+        function getCurrentPreviewMatrix(matrix, derived) {
+          const identity = derived.identity;
+          if (previewPhase === "inverseUndo" || previewPhase === "inverseDone") {
+            // During the undo phase we interpolate from I to A^{-1}, then compose that evolving inverse with A so the net map returns from A to I.
+            const undoMatrix = interpolateMatrix(identity, derived.inverse, playhead);
+            return multiplyMatrices(undoMatrix, matrix);
+          }
+          return interpolateMatrix(identity, matrix, playhead);
+        }
+
+        function updateLabels3D(matrix, moving) {
+          for (let i = 0; i < 3; i += 1) {
+            const point = new THREE.Vector3(i === 0 ? 1 : 0, i === 1 ? 1 : 0, i === 2 ? 1 : 0);
+            shapeGroup.localToWorld(point);
+            const projected = point.clone().project(camera);
+            const visible = projected.z < 1 && projected.z > -1;
+            const label = labelEls[i];
+            label.style.display = !moving && visible ? "block" : "none";
+            if (visible) {
+              label.textContent = columnNameText(i) + " = " + vectorInline(getColumn(matrix, i), 3);
+              label.style.left = ((projected.x * 0.5 + 0.5) * width) + "px";
+              label.style.top = ((-projected.y * 0.5 + 0.5) * height) + "px";
+              label.style.opacity = String(0.76 + 0.24 * playhead);
+            }
+          }
+          const markerPoint = new THREE.Vector3(1, 1, 1);
+          shapeGroup.localToWorld(markerPoint);
+          const projected = markerPoint.clone().project(camera);
+          const visible = pointMarker.visible && projected.z < 1 && projected.z > -1;
+          pointLabel.style.display = !moving && visible ? "block" : "none";
+          if (visible) {
+            pointLabel.style.left = ((projected.x * 0.5 + 0.5) * width) + "px";
+            pointLabel.style.top = ((-projected.y * 0.5 + 0.5) * height) + "px";
+          }
+        }
+
+        function updateLabels2D(matrix, stableFrame, moving) {
+          const centerX = stableFrame.center[0];
+          const centerY = stableFrame.center[1];
+          const scale = Math.min(width, height) * 0.28 * zoomModel.zoom / stableFrame.extent;
+          const columns = [getColumn(matrix, 0), getColumn(matrix, 1)];
+          labelEls.forEach(function (label, index) {
+            if (index >= columns.length || moving) {
+              label.style.display = "none";
+              return;
+            }
+            const vector = columns[index];
+            label.textContent = columnNameText(index) + " = " + vectorInline(vector, 3);
+            label.style.left = (width * 0.5 + (vector[0] - centerX) * scale) + "px";
+            label.style.top = (height * 0.56 - (vector[1] - centerY) * scale) + "px";
+            label.style.opacity = "1";
+            label.style.display = "block";
+          });
+          pointLabel.style.display = "none";
+          if (!moving && /A\(1,1\)|reachable|output/i.test(focusMessage)) {
+            const point = multiplyMatrixVector(matrix, [1, 1]);
+            pointLabel.style.left = (width * 0.5 + (point[0] - centerX) * scale) + "px";
+            pointLabel.style.top = (height * 0.56 - (point[1] - centerY) * scale) + "px";
+            pointLabel.style.display = "block";
+          }
+        }
+
+        function drawTransform2D(current, stableFrame, moving) {
+          flatCtx.clearRect(0, 0, width, height);
+          const a = multiplyMatrixVector(current, [1, 0]);
+          const b = multiplyMatrixVector(current, [0, 1]);
+          const point = multiplyMatrixVector(current, [1, 1]);
+          const currentInvertible = Math.abs(determinantForDimension(current, 2)) > EPS;
+          const centerX = stableFrame.center[0];
+          const centerY = stableFrame.center[1];
+          const scale = Math.min(width, height) * 0.28 * zoomModel.zoom / stableFrame.extent;
+          flatCtx.save();
+          flatCtx.translate(width * 0.5, height * 0.56);
+          flatCtx.scale(1, -1);
+          flatCtx.lineWidth = 1;
+          flatCtx.strokeStyle = "rgba(216, 202, 178, 0.35)";
+          flatCtx.fillStyle = "rgba(241, 234, 223, 0.08)";
+          flatCtx.beginPath();
+          [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(function (p, index) {
+            const x = (p[0] - centerX) * scale;
+            const y = (p[1] - centerY) * scale;
+            if (index === 0) {
+              flatCtx.moveTo(x, y);
+            } else {
+              flatCtx.lineTo(x, y);
+            }
+          });
+          flatCtx.closePath();
+          flatCtx.fill();
+          flatCtx.stroke();
+          drawAxis2D(flatCtx, [1 - centerX, -centerY], scale, "rgba(232, 225, 212, 0.34)", { lineWidth: 1, head: 7 });
+          drawAxis2D(flatCtx, [-centerX, 1 - centerY], scale, "rgba(232, 225, 212, 0.34)", { lineWidth: 1, head: 7 });
+          flatCtx.lineWidth = 2;
+          flatCtx.strokeStyle = currentInvertible ? "#59d0c4" : "#ff8b63";
+          flatCtx.fillStyle = currentInvertible ? "rgba(89,208,196,0.22)" : "rgba(255,139,99,0.2)";
+          flatCtx.beginPath();
+          [[0, 0], [a[0], a[1]], [a[0] + b[0], a[1] + b[1]], [b[0], b[1]]].forEach(function (p, index) {
+            const x = (p[0] - centerX) * scale;
+            const y = (p[1] - centerY) * scale;
+            if (index === 0) {
+              flatCtx.moveTo(x, y);
+            } else {
+              flatCtx.lineTo(x, y);
+            }
+          });
+          flatCtx.closePath();
+          flatCtx.fill();
+          flatCtx.stroke();
+          drawAxis2D(flatCtx, [a[0] - centerX, a[1] - centerY], scale, "#1d9e75", { lineWidth: 2, head: 10 });
+          drawAxis2D(flatCtx, [b[0] - centerX, b[1] - centerY], scale, "#d85a30", { lineWidth: 2, head: 10 });
+          if (/A\(1,1\)|reachable|output/i.test(focusMessage)) {
+            flatCtx.fillStyle = "#f0c44c";
+            flatCtx.beginPath();
+            flatCtx.arc((point[0] - centerX) * scale, (point[1] - centerY) * scale, 5, 0, Math.PI * 2);
+            flatCtx.fill();
+          }
+          flatCtx.restore();
+          updateLabels2D(current, stableFrame, moving);
+        }
+
+        function drawFallback3D(current, stableFrame) {
+          hideLabels();
+          const dpr = window.devicePixelRatio || 1;
+          fallbackCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          fallbackCtx.clearRect(0, 0, width, height);
+          const a = multiplyMatrixVector(current, [1, 0, 0]);
+          const b = multiplyMatrixVector(current, [0, 1, 0]);
+          const points = [[0, 0], [a[0], a[1]], [a[0] + b[0], a[1] + b[1]], [b[0], b[1]]];
+          const currentInvertible = Math.abs(determinantForDimension(current, 3)) > EPS;
+          const centerX = stableFrame.center[0];
+          const centerY = stableFrame.center[1];
+          const scale = Math.min(width, height) * 0.28 * zoomModel.zoom / stableFrame.extent;
+          fallbackCtx.save();
+          fallbackCtx.translate(width * 0.5, height * 0.56);
+          fallbackCtx.scale(1, -1);
+          fallbackCtx.lineWidth = 1;
+          fallbackCtx.strokeStyle = "rgba(216, 202, 178, 0.35)";
+          fallbackCtx.fillStyle = "rgba(241, 234, 223, 0.08)";
+          fallbackCtx.beginPath();
+          [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(function (p, index) {
+            const x = (p[0] - centerX) * scale;
+            const y = (p[1] - centerY) * scale;
+            if (index === 0) {
+              fallbackCtx.moveTo(x, y);
+            } else {
+              fallbackCtx.lineTo(x, y);
+            }
+          });
+          fallbackCtx.closePath();
+          fallbackCtx.fill();
+          fallbackCtx.stroke();
+          drawAxis2D(fallbackCtx, [1 - centerX, -centerY], scale, "rgba(232, 225, 212, 0.34)", { lineWidth: 1, head: 7 });
+          drawAxis2D(fallbackCtx, [-centerX, 1 - centerY], scale, "rgba(232, 225, 212, 0.34)", { lineWidth: 1, head: 7 });
+          fallbackCtx.lineWidth = 2;
+          fallbackCtx.strokeStyle = currentInvertible ? "#59d0c4" : "#ff8b63";
+          fallbackCtx.fillStyle = currentInvertible ? "rgba(89,208,196,0.22)" : "rgba(255,139,99,0.2)";
+          fallbackCtx.beginPath();
+          points.forEach(function (p, index) {
+            const x = (p[0] - centerX) * scale;
+            const y = (p[1] - centerY) * scale;
+            if (index === 0) {
+              fallbackCtx.moveTo(x, y);
+            } else {
+              fallbackCtx.lineTo(x, y);
+            }
+          });
+          fallbackCtx.closePath();
+          fallbackCtx.fill();
+          fallbackCtx.stroke();
+          drawAxis2D(fallbackCtx, [a[0] - centerX, a[1] - centerY], scale, "#1d9e75", { lineWidth: 2, head: 10 });
+          drawAxis2D(fallbackCtx, [b[0] - centerX, b[1] - centerY], scale, "#d85a30", { lineWidth: 2, head: 10 });
+          fallbackCtx.restore();
+        }
+
+        function renderFrame(matrix, derived) {
+          if (!derived) {
+            return;
+          }
+          const dimension = derived.dimension;
+          const moving = previewPhase !== "idle" && previewPhase !== "inverseDone";
+          const current = getCurrentPreviewMatrix(matrix, derived);
+          const currentDet = determinantForDimension(current, dimension);
+          const targetDet = previewPhase === "inverseUndo" || previewPhase === "inverseDone" ? 1 : derived.det;
+          const targetLabel = previewPhase === "inverseUndo" || previewPhase === "inverseDone"
+            ? identityText(dimension)
+            : "A";
+          setCanvasMode(dimension);
+          updateDeterminantGauge(currentDet, targetDet, dimension, targetLabel);
+          updateCaption(currentDet, moving, derived);
+          if (dimension === 2) {
+            drawTransform2D(current, getStableFrame2D(matrix), moving);
+            return;
+          }
+          if (usesFallback) {
+            drawFallback3D(current, getStableFrame2D(matrix));
+            return;
+          }
+          const stableFrame = getStableFrame(matrix);
+          const scale = (2.15 * zoomModel.zoom) / stableFrame.radius;
+          shapeGroup.matrix.copy(toMatrix4(current));
+          fitGroup.scale.setScalar(scale);
+          fitGroup.position.set(
+            -stableFrame.center[0] * scale,
+            -stableFrame.center[1] * scale,
+            -stableFrame.center[2] * scale
+          );
+          mesh.material.opacity = Math.abs(currentDet) > EPS ? 0.26 : 0.3;
+          mesh.material.color.setHex(Math.abs(currentDet) > EPS ? 0x59d0c4 : 0xff8b63);
+          pointMarker.visible = /A\(1,1(?:,1)?\)|reachable|output/i.test(focusMessage);
+          scene.updateMatrixWorld(true);
+          updateLabels3D(current, moving);
+          renderer.render(scene, camera);
+        }
+
+        function refresh(matrix, derived) {
+          if (!derived) {
+            return;
+          }
+          if (
+            (previewPhase === "inverseForward" || previewPhase === "inverseUndo" || previewPhase === "inverseDone") &&
+            frozenPreviewSignature &&
+            signatureForMatrix(matrix) !== frozenPreviewSignature
+          ) {
+            previewPhase = "idle";
+            playhead = 1;
+            frozenPreviewSignature = "";
+          }
+          if (previewPhase === "idle") {
+            playhead = 1;
+          }
+          renderFrame(matrix, derived);
+        }
+
+        function tick(dt, matrix, derived) {
+          if (!derived) {
+            return;
+          }
+          advancePreview(dt);
+          renderFrame(matrix, derived);
+        }
+
+        return {
+          tick: tick,
+          startPingPong: startPingPong,
+          startInversePreview: startInversePreview,
+          showConcept: showConcept,
+          refresh: refresh,
+          zoom: zoomModel,
+          setZoom: zoomModel.setZoom,
+          adjustZoom: zoomModel.adjustZoom
+        };
+      }
+
+      function createCofactorView(config) {
+        const canvas = config.canvas;
+        const flatCanvas = config.flatCanvas;
+        const stage = config.stage;
+        const labelsContainer = config.labelsContainer;
+        const zoomSlider = config.zoomSlider;
+        const zoomValue = config.zoomValue;
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let group = null;
+        let fitGroup = null;
+        let solidMesh = null;
+        let edgeLines = null;
+        let selectedFaceMesh = null;
+        let selectedFaceOutline = null;
+        let normalArrow = null;
+        let columnArrows = [];
+        let componentArrows = [];
+        let usesFallback = false;
+        let ctx = null;
+        let width = 0;
+        let height = 0;
+        let selectedRow = 0;
+        let selectedCol = 0;
+        let lastA1 = null;
+        let lastA2 = null;
+        let lastA3 = null;
+        let lastArea = null;
+        let lastCentroid = null;
+        const flatCtx = flatCanvas.getContext("2d");
+        const basisLabels = [];
+        const crossLabel = document.createElement("div");
+        const componentLabel = document.createElement("div");
+        const crossLabelTexts = ["a\u2082 \u00d7 a\u2083", "a\u2083 \u00d7 a\u2081", "a\u2081 \u00d7 a\u2082"];
+        const componentLabelTexts = ["x-component", "y-component", "z-component"];
+        const zoomModel = createZoomModel({
+          slider: zoomSlider,
+          value: zoomValue,
+          defaultZoom: 1,
+          minZoom: 0.7,
+          maxZoom: 2.25,
+          step: 0.01,
+          onChange: function () {
+            pick(selectedRow, selectedCol);
+          }
+        });
+        const componentColors = [0x1d9e75, 0xd85a30, 0xf0c44c];
+        const faceColors = [0x1d9e75, 0xd85a30, 0xf0c44c];
+        const faceDefs = [
+          {
+            face: function (a1, a2, a3) { return [[0, 0, 0], a2, add3(a2, a3), a3]; },
+            vector: function (a1, a2, a3) { return cross(a2, a3); }
+          },
+          {
+            face: function (a1, a2, a3) { return [[0, 0, 0], a3, add3(a3, a1), a1]; },
+            vector: function (a1, a2, a3) { return cross(a3, a1); }
+          },
+          {
+            face: function (a1, a2, a3) { return [[0, 0, 0], a1, add3(a1, a2), a2]; },
+            vector: function (a1, a2, a3) { return cross(a1, a2); }
+          }
+        ];
+
+        [crossLabel, componentLabel].forEach(function (label) {
+          label.className = "point-label";
+          label.style.display = "none";
+          if (labelsContainer) {
+            labelsContainer.appendChild(label);
+          }
+        });
+        crossLabel.style.borderColor = "rgba(89,208,196,0.38)";
+        componentLabel.style.borderColor = "rgba(240,196,76,0.4)";
+        for (let i = 0; i < 3; i += 1) {
+          const label = document.createElement("div");
+          label.className = "vector-label col-" + i;
+          label.style.display = "none";
+          if (labelsContainer) {
+            labelsContainer.appendChild(label);
+          }
+          basisLabels.push(label);
+        }
+
+        try {
+          renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          scene = new THREE.Scene();
+          camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+          camera.position.set(0, 0.4, 6.8);
+          camera.lookAt(0, 0, 0);
+          scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+          const light = new THREE.DirectionalLight(0xffffff, 0.9);
+          light.position.set(3, 4, 5);
+          scene.add(light);
+          group = new THREE.Group();
+          group.rotation.x = -0.48;
+          group.rotation.y = 0.65;
+          scene.add(group);
+          fitGroup = new THREE.Group();
+          group.add(fitGroup);
+
+          solidMesh = new THREE.Mesh(
+            new THREE.BufferGeometry(),
+            new THREE.MeshLambertMaterial({
+              color: 0xd8d3c5,
+              transparent: true,
+              opacity: 0.14,
+              side: THREE.DoubleSide,
+              depthWrite: false
+            })
+          );
+          fitGroup.add(solidMesh);
+
+          edgeLines = new THREE.LineSegments(
+            new THREE.BufferGeometry(),
+            new THREE.LineBasicMaterial({
+              color: 0x8c8476,
+              transparent: true,
+              opacity: 0.78
+            })
+          );
+          fitGroup.add(edgeLines);
+
+          selectedFaceMesh = new THREE.Mesh(
+            new THREE.BufferGeometry(),
+            new THREE.MeshLambertMaterial({
+              color: faceColors[0],
+              transparent: true,
+              opacity: 0.42,
+              side: THREE.DoubleSide,
+              depthWrite: false,
+              polygonOffset: true,
+              polygonOffsetFactor: -1,
+              polygonOffsetUnits: -1
+            })
+          );
+          selectedFaceMesh.renderOrder = 2;
+          fitGroup.add(selectedFaceMesh);
+
+          selectedFaceOutline = new THREE.LineLoop(
+            new THREE.BufferGeometry(),
+            new THREE.LineBasicMaterial({
+              color: faceColors[0],
+              transparent: true,
+              opacity: 1,
+              depthTest: false
+            })
+          );
+          selectedFaceOutline.renderOrder = 3;
+          fitGroup.add(selectedFaceOutline);
+
+          columnArrows = componentColors.map(function (color) {
+            const arrow = createArrow(color);
+            fitGroup.add(arrow);
+            return arrow;
+          });
+          componentArrows = componentColors.map(function (color) {
+            const arrow = createArrow(color);
+            fitGroup.add(arrow);
+            return arrow;
+          });
+          normalArrow = createArrow(0x59d0c4);
+          fitGroup.add(normalArrow);
+
+          attachConstrainedStageDrag(canvas, group);
+        } catch (error) {
+          usesFallback = true;
+          ctx = canvas.getContext("2d");
+          const note = document.createElement("div");
+          note.className = "fallback-note";
+          note.textContent = "Static fallback";
+          stage.appendChild(note);
+        }
+
+        new ResizeObserver(handleResize).observe(stage);
+        handleResize();
+
+        function handleResize() {
+          const rect = stage.getBoundingClientRect();
+          width = Math.max(260, Math.floor(rect.width));
+          height = Math.max(220, Math.floor(rect.height));
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = width * dpr;
+          canvas.height = height * dpr;
+          flatCanvas.width = width * dpr;
+          flatCanvas.height = height * dpr;
+          flatCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          if (usesFallback) {
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          } else {
+            renderer.setPixelRatio(Math.min(dpr, 2));
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+          }
+        }
+
+        function setCanvasMode(dimension) {
+          const useFlat = dimension === 2;
+          flatCanvas.style.display = useFlat ? "block" : "none";
+          canvas.style.display = useFlat ? "none" : "block";
+        }
+
+        function hide3DLabels() {
+          basisLabels.forEach(function (label) {
+            label.style.display = "none";
+          });
+          crossLabel.style.display = "none";
+          componentLabel.style.display = "none";
+        }
+
+        function getBasisArrowOpacity() {
+          return document.documentElement.dataset.theme === "dark" ? 0.24 : 0.2;
+        }
+
+        function sync3DArrowStyles() {
+          if (!lastA1 || !lastA2 || !lastA3) {
+            return;
+          }
+          updateColumnArrows(lastA1, lastA2, lastA3);
+        }
+
+        function projectLocalPoint(point) {
+          if (!fitGroup || !camera) {
+            return null;
+          }
+          const world = fitGroup.localToWorld(new THREE.Vector3(point[0], point[1], point[2]));
+          const projected = world.clone().project(camera);
+          return {
+            x: (projected.x * 0.5 + 0.5) * width,
+            y: (-projected.y * 0.5 + 0.5) * height,
+            z: projected.z
+          };
+        }
+
+        function measureOverlayLabel(text) {
+          flatCtx.save();
+          flatCtx.font = '600 12px "Consolas", "SFMono-Regular", monospace';
+          const textWidth = flatCtx.measureText(text).width;
+          flatCtx.restore();
+          return {
+            w: Math.ceil(textWidth + 20),
+            h: 26
+          };
+        }
+
+        function placeOverlayLabel(label, text, center, acceptedRects, options) {
+          const settings = options || {};
+          const inset = typeof settings.inset === "number" ? settings.inset : 12;
+          const maxClamp = typeof settings.maxClamp === "number" ? settings.maxClamp : 8;
+          if (!labelsContainer || !label) {
+            return false;
+          }
+          const box = measureOverlayLabel(text);
+          const rawX = center.x - box.w * 0.5;
+          const rawY = center.y - box.h * 0.5;
+          const x = clamp(rawX, inset, width - inset - box.w);
+          const y = clamp(rawY, inset, height - inset - box.h);
+          const clampDistance = Math.sqrt((x - rawX) * (x - rawX) + (y - rawY) * (y - rawY));
+          const rect = { x: x, y: y, w: box.w, h: box.h };
+
+          if (clampDistance > maxClamp || acceptedRects.some(function (placedRect) { return rectsOverlap(rect, placedRect); })) {
+            label.style.display = "none";
+            return false;
+          }
+
+          acceptedRects.push(rect);
+          label.textContent = text;
+          label.style.left = (x + box.w * 0.5) + "px";
+          label.style.top = (y + box.h * 0.5) + "px";
+          label.style.display = "block";
+          if (settings.borderColor) {
+            label.style.borderColor = settings.borderColor;
+          }
+          return true;
+        }
+
+        function tryPlace3DLabel(label, text, startLocal, endLocal, options, acceptedRects) {
+          const settings = options || {};
+          const startPoint = projectLocalPoint(startLocal);
+          const endPoint = projectLocalPoint(endLocal);
+          if (!startPoint || !endPoint) {
+            return false;
+          }
+          if (
+            startPoint.z <= -1 || startPoint.z >= 1 ||
+            endPoint.z <= -1 || endPoint.z >= 1
+          ) {
+            label.style.display = "none";
+            return false;
+          }
+          const dx = endPoint.x - startPoint.x;
+          const dy = endPoint.y - startPoint.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          const minLength = typeof settings.minLength === "number" ? settings.minLength : 42;
+          if (length < minLength) {
+            label.style.display = "none";
+            return false;
+          }
+          const ux = dx / length;
+          const uy = dy / length;
+          const px = -uy;
+          const py = ux;
+          const side = typeof settings.side === "number" ? settings.side : 1;
+          const offset = typeof settings.offset === "number" ? settings.offset : 12;
+          const offsetAlong = typeof settings.offsetAlong === "number" ? settings.offsetAlong : 10;
+          const center = settings.anchor === "midpoint"
+            ? {
+                x: (startPoint.x + endPoint.x) * 0.5 + px * offset * side,
+                y: (startPoint.y + endPoint.y) * 0.5 + py * offset * side
+              }
+            : {
+                x: endPoint.x + ux * offsetAlong + px * offset * side,
+                y: endPoint.y + uy * offsetAlong + py * offset * side
+              };
+          return placeOverlayLabel(label, text, center, acceptedRects, settings);
+        }
+
+        function updateLabels3D(a1, a2, a3, area, centroid) {
+          const acceptedRects = [];
+          const basisVectors = [a1, a2, a3];
+          const componentVector = selectedRow === 0
+            ? [area[0], 0, 0]
+            : selectedRow === 1
+              ? [0, area[1], 0]
+              : [0, 0, area[2]];
+
+          hide3DLabels();
+          tryPlace3DLabel(componentLabel, componentLabelTexts[selectedRow], centroid, add3(centroid, componentVector), {
+            anchor: "midpoint",
+            minLength: 30,
+            offset: 12,
+            side: 1,
+            maxClamp: 10,
+            borderColor: "rgba(240,196,76,0.4)"
+          }, acceptedRects);
+          tryPlace3DLabel(crossLabel, crossLabelTexts[selectedCol], centroid, add3(centroid, area), {
+            minLength: 42,
+            offset: 12,
+            offsetAlong: 8,
+            side: selectedCol === 1 ? -1 : 1,
+            maxClamp: 10,
+            borderColor: "rgba(89,208,196,0.38)"
+          }, acceptedRects);
+          basisVectors.forEach(function (vector, index) {
+            tryPlace3DLabel(basisLabels[index], columnNameText(index), [0, 0, 0], vector, {
+              minLength: 42,
+              offset: 10 + index,
+              offsetAlong: 8,
+              side: index === 1 ? -1 : 1,
+              maxClamp: 8
+            }, acceptedRects);
+          });
+        }
+
+        function add2(a, b) {
+          return [a[0] + b[0], a[1] + b[1]];
+        }
+
+        function getStageFrame2D(points) {
+          const xs = points.map(function (point) { return point[0]; });
+          const ys = points.map(function (point) { return point[1]; });
+          const centerX = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) * 0.5;
+          const centerY = (Math.min.apply(null, ys) + Math.max.apply(null, ys)) * 0.5;
+          const extent = Math.max(1.25, points.reduce(function (max, point) {
+            const dx = point[0] - centerX;
+            const dy = point[1] - centerY;
+            return Math.max(max, Math.sqrt(dx * dx + dy * dy));
+          }, 0));
+          return { center: [centerX, centerY], extent: extent };
+        }
+
+        function projectStagePoint(point, frame) {
+          const scale = Math.min(width, height) * 0.28 * zoomModel.zoom / frame.extent;
+          return {
+            x: width * 0.5 + (point[0] - frame.center[0]) * scale,
+            y: height * 0.56 - (point[1] - frame.center[1]) * scale
+          };
+        }
+
+        function getProjectedSegment(start, end, frame) {
+          const startPoint = projectStagePoint(start, frame);
+          const endPoint = projectStagePoint(end, frame);
+          const dx = endPoint.x - startPoint.x;
+          const dy = endPoint.y - startPoint.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          return {
+            startPoint: startPoint,
+            endPoint: endPoint,
+            dx: dx,
+            dy: dy,
+            length: length,
+            angle: Math.atan2(dy, dx)
+          };
+        }
+
+        function drawRoundedRect(x, y, boxWidth, boxHeight, radius) {
+          const r = Math.min(radius, boxWidth * 0.5, boxHeight * 0.5);
+          flatCtx.beginPath();
+          flatCtx.moveTo(x + r, y);
+          flatCtx.arcTo(x + boxWidth, y, x + boxWidth, y + boxHeight, r);
+          flatCtx.arcTo(x + boxWidth, y + boxHeight, x, y + boxHeight, r);
+          flatCtx.arcTo(x, y + boxHeight, x, y, r);
+          flatCtx.arcTo(x, y, x + boxWidth, y, r);
+          flatCtx.closePath();
+        }
+
+        function rectsOverlap(a, b) {
+          const gap = 4;
+          return !(
+            a.x + a.w + gap <= b.x ||
+            b.x + b.w + gap <= a.x ||
+            a.y + a.h + gap <= b.y ||
+            b.y + b.h + gap <= a.y
+          );
+        }
+
+        function drawStageLegend(items) {
+          const inset = 12;
+          const padX = 10;
+          const padY = 8;
+          const swatchWidth = 14;
+          const swatchGap = 8;
+          const rowGap = 6;
+          const fontSizes = [12, 11, 10, 9];
+          let fontSize = fontSizes[fontSizes.length - 1];
+          let legendWidth = 0;
+          let textWidths = [];
+
+          fontSizes.some(function (size) {
+            flatCtx.save();
+            flatCtx.font = '600 ' + size + 'px "Avenir Next", "Segoe UI", sans-serif';
+            textWidths = items.map(function (item) { return flatCtx.measureText(item.text).width; });
+            flatCtx.restore();
+            legendWidth = Math.ceil(padX * 2 + swatchWidth + swatchGap + Math.max.apply(null, textWidths));
+            if (legendWidth <= width - inset * 2) {
+              fontSize = size;
+              return true;
+            }
+            return false;
+          });
+
+          const legendHeight = Math.ceil(padY * 2 + items.length * fontSize + (items.length - 1) * rowGap);
+          const legendRect = {
+            x: inset,
+            y: inset,
+            w: Math.min(legendWidth, width - inset * 2),
+            h: legendHeight
+          };
+
+          flatCtx.save();
+          drawRoundedRect(legendRect.x, legendRect.y, legendRect.w, legendRect.h, 14);
+          flatCtx.fillStyle = "rgba(8,14,16,0.76)";
+          flatCtx.fill();
+          flatCtx.strokeStyle = "rgba(255,255,255,0.08)";
+          flatCtx.lineWidth = 1;
+          flatCtx.stroke();
+          flatCtx.font = '600 ' + fontSize + 'px "Avenir Next", "Segoe UI", sans-serif';
+          flatCtx.textAlign = "left";
+          flatCtx.textBaseline = "middle";
+          items.forEach(function (item, index) {
+            const rowCenterY = legendRect.y + padY + fontSize * 0.5 + index * (fontSize + rowGap);
+            const swatchX = legendRect.x + padX;
+            flatCtx.strokeStyle = item.color;
+            flatCtx.lineWidth = 3;
+            flatCtx.lineCap = "round";
+            flatCtx.beginPath();
+            flatCtx.moveTo(swatchX, rowCenterY);
+            flatCtx.lineTo(swatchX + swatchWidth, rowCenterY);
+            flatCtx.stroke();
+            flatCtx.fillStyle = "rgba(244,251,249,0.96)";
+            flatCtx.fillText(item.text, swatchX + swatchWidth + swatchGap, rowCenterY);
+          });
+          flatCtx.restore();
+
+          return legendRect;
+        }
+
+        function tryDrawStagePill(text, center, options, acceptedRects) {
+          const settings = options || {};
+          const inset = typeof settings.inset === "number" ? settings.inset : 12;
+          const fontSize = typeof settings.fontSize === "number" ? settings.fontSize : 11;
+          const padX = typeof settings.padX === "number" ? settings.padX : 9;
+          const padY = typeof settings.padY === "number" ? settings.padY : 5;
+          const maxClamp = typeof settings.maxClamp === "number" ? settings.maxClamp : 8;
+
+          flatCtx.save();
+          flatCtx.font = '600 ' + fontSize + 'px "Avenir Next", "Segoe UI", sans-serif';
+          const textWidth = flatCtx.measureText(text).width;
+          flatCtx.restore();
+
+          const boxWidth = Math.ceil(textWidth + padX * 2);
+          const boxHeight = Math.ceil(fontSize + padY * 2);
+          const rawX = center.x - boxWidth * 0.5;
+          const rawY = center.y - boxHeight * 0.5;
+          const x = clamp(rawX, inset, width - inset - boxWidth);
+          const y = clamp(rawY, inset, height - inset - boxHeight);
+          const clampDistance = Math.sqrt((x - rawX) * (x - rawX) + (y - rawY) * (y - rawY));
+          const rect = { x: x, y: y, w: boxWidth, h: boxHeight };
+
+          if (clampDistance > maxClamp) {
+            return false;
+          }
+          if (acceptedRects.some(function (placedRect) { return rectsOverlap(rect, placedRect); })) {
+            return false;
+          }
+
+          acceptedRects.push(rect);
+
+          flatCtx.save();
+          drawRoundedRect(rect.x, rect.y, rect.w, rect.h, 999);
+          flatCtx.fillStyle = "rgba(8,14,16,0.82)";
+          flatCtx.fill();
+          flatCtx.strokeStyle = settings.color || "rgba(255,255,255,0.16)";
+          flatCtx.globalAlpha = 0.38;
+          flatCtx.lineWidth = 1;
+          flatCtx.stroke();
+          flatCtx.globalAlpha = 1;
+          flatCtx.font = '600 ' + fontSize + 'px "Avenir Next", "Segoe UI", sans-serif';
+          flatCtx.fillStyle = "rgba(244,251,249,0.96)";
+          flatCtx.textAlign = "center";
+          flatCtx.textBaseline = "middle";
+          flatCtx.fillText(text, rect.x + rect.w * 0.5, rect.y + rect.h * 0.5 + 0.5);
+          flatCtx.restore();
+          return true;
+        }
+
+        function tryDrawStageLabel(text, vector, frame, options, acceptedRects) {
+          const settings = options || {};
+          const segment = getProjectedSegment([0, 0], vector, frame);
+          const minLength = typeof settings.minLength === "number" ? settings.minLength : 42;
+          const side = typeof settings.side === "number" ? settings.side : 1;
+          const offsetAlong = typeof settings.offsetAlong === "number" ? settings.offsetAlong : 12;
+          const offsetNormal = typeof settings.offsetNormal === "number" ? settings.offsetNormal : 10;
+          if (segment.length < minLength) {
+            return false;
+          }
+          const ux = segment.dx / segment.length;
+          const uy = segment.dy / segment.length;
+          const px = -uy;
+          const py = ux;
+          return tryDrawStagePill(text, {
+            x: segment.endPoint.x + ux * offsetAlong + px * offsetNormal * side,
+            y: segment.endPoint.y + uy * offsetAlong + py * offsetNormal * side
+          }, settings, acceptedRects);
+        }
+
+        function tryDrawSegmentLabel(text, start, end, frame, options, acceptedRects) {
+          const settings = options || {};
+          const segment = getProjectedSegment(start, end, frame);
+          const minLength = typeof settings.minLength === "number" ? settings.minLength : 30;
+          const side = typeof settings.side === "number" ? settings.side : -1;
+          const offsetNormal = typeof settings.offsetNormal === "number" ? settings.offsetNormal : 11;
+          if (segment.length < minLength) {
+            return false;
+          }
+          const ux = segment.dx / segment.length;
+          const uy = segment.dy / segment.length;
+          const px = -uy;
+          const py = ux;
+          return tryDrawStagePill(text, {
+            x: (segment.startPoint.x + segment.endPoint.x) * 0.5 + px * offsetNormal * side,
+            y: (segment.startPoint.y + segment.endPoint.y) * 0.5 + py * offsetNormal * side
+          }, settings, acceptedRects);
+        }
+
+        function drawWorldPolygon(points, frame, options) {
+          const fill = options && options.fill;
+          const stroke = options && options.stroke;
+          const lineWidth = options && options.lineWidth ? options.lineWidth : 1.5;
+          flatCtx.beginPath();
+          points.forEach(function (point, index) {
+            const projected = projectStagePoint(point, frame);
+            if (index === 0) {
+              flatCtx.moveTo(projected.x, projected.y);
+            } else {
+              flatCtx.lineTo(projected.x, projected.y);
+            }
+          });
+          flatCtx.closePath();
+          if (fill) {
+            flatCtx.fillStyle = fill;
+            flatCtx.fill();
+          }
+          if (stroke) {
+            flatCtx.strokeStyle = stroke;
+            flatCtx.lineWidth = lineWidth;
+            flatCtx.stroke();
+          }
+        }
+
+        function drawWorldArrow(origin, vector, frame, options) {
+          const settings = options || {};
+          const end = [origin[0] + vector[0], origin[1] + vector[1]];
+          const segment = getProjectedSegment(origin, end, frame);
+          if (segment.length < 1) {
+            return segment;
+          }
+          const head = Math.min(Math.max(segment.length * 0.16, 8), 14);
+          flatCtx.save();
+          flatCtx.strokeStyle = settings.color || "#1d9e75";
+          flatCtx.fillStyle = settings.color || "#1d9e75";
+          flatCtx.lineWidth = settings.lineWidth || 2;
+          flatCtx.setLineDash(settings.dash || []);
+          flatCtx.globalAlpha = typeof settings.alpha === "number" ? settings.alpha : 1;
+          flatCtx.beginPath();
+          flatCtx.moveTo(segment.startPoint.x, segment.startPoint.y);
+          flatCtx.lineTo(segment.endPoint.x, segment.endPoint.y);
+          flatCtx.stroke();
+          flatCtx.beginPath();
+          flatCtx.moveTo(segment.endPoint.x, segment.endPoint.y);
+          flatCtx.lineTo(segment.endPoint.x - head * Math.cos(segment.angle - Math.PI / 6), segment.endPoint.y - head * Math.sin(segment.angle - Math.PI / 6));
+          flatCtx.lineTo(segment.endPoint.x - head * Math.cos(segment.angle + Math.PI / 6), segment.endPoint.y - head * Math.sin(segment.angle + Math.PI / 6));
+          flatCtx.closePath();
+          flatCtx.fill();
+          flatCtx.restore();
+          return segment;
+        }
+
+        function drawWorldSegment(start, end, frame, options) {
+          const settings = options || {};
+          const segment = getProjectedSegment(start, end, frame);
+          flatCtx.save();
+          flatCtx.strokeStyle = settings.color || "#f0c44c";
+          flatCtx.lineWidth = settings.lineWidth || 2;
+          flatCtx.setLineDash(settings.dash || []);
+          flatCtx.globalAlpha = typeof settings.alpha === "number" ? settings.alpha : 1;
+          flatCtx.beginPath();
+          flatCtx.moveTo(segment.startPoint.x, segment.startPoint.y);
+          flatCtx.lineTo(segment.endPoint.x, segment.endPoint.y);
+          flatCtx.stroke();
+          flatCtx.restore();
+          return segment;
+        }
+
+        function drawOriginMarker(frame) {
+          const origin = projectStagePoint([0, 0], frame);
+          flatCtx.save();
+          flatCtx.fillStyle = "#f0c44c";
+          flatCtx.beginPath();
+          flatCtx.arc(origin.x, origin.y, 4, 0, Math.PI * 2);
+          flatCtx.fill();
+          flatCtx.restore();
+        }
+
+        function drawTwoByTwoStage() {
+          const matrix = state.matrix;
+          const a1 = getColumn(matrix, 0);
+          const a2 = getColumn(matrix, 1);
+          const selectedEdge = selectedCol === 0 ? a2 : a1;
+          const perpendicular = selectedCol === 0 ? rotateCw90(a2) : rotateCcw90(a1);
+          const perpendicularName = selectedCol === 0 ? "cw90(a\u2082)" : "ccw90(a\u2081)";
+          const selectedComponent = selectedRow === 0 ? "x" : "y";
+          const selectedComponentVector = selectedRow === 0 ? [perpendicular[0], 0] : [0, perpendicular[1]];
+          const otherComponentStart = selectedComponentVector;
+          const otherComponentEnd = perpendicular;
+          const parallelogram = [[0, 0], a1, add2(a1, a2), a2];
+          const referenceSquare = [[0, 0], [1, 0], [1, 1], [0, 1]];
+          const frame = getStageFrame2D([
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            a1,
+            a2,
+            add2(a1, a2),
+            perpendicular,
+            selectedComponentVector
+          ]);
+          const styles = getComputedStyle(document.documentElement);
+          const mutedColor = styles.getPropertyValue("--muted").trim() || "#655b4e";
+          const edgeColor = styles.getPropertyValue("--accent").trim() || "#0b8f8a";
+          const perpendicularColor = styles.getPropertyValue("--accent-2").trim() || "#d5783c";
+          const componentColor = styles.getPropertyValue("--focus").trim() || "#f0c44c";
+          const occupiedRects = [];
+          flatCtx.clearRect(0, 0, width, height);
+          flatCtx.fillStyle = "rgba(255,255,255,0.02)";
+          flatCtx.fillRect(0, 0, width, height);
+
+          drawWorldPolygon(referenceSquare, frame, {
+            fill: "rgba(255,255,255,0.04)",
+            stroke: "rgba(216,202,178,0.35)",
+            lineWidth: 1.2
+          });
+          drawWorldPolygon(parallelogram, frame, {
+            fill: "rgba(89,208,196,0.14)",
+            stroke: "rgba(89,208,196,0.72)",
+            lineWidth: 2
+          });
+          drawOriginMarker(frame);
+          drawWorldArrow([0, 0], a1, frame, {
+            color: edgeColor,
+            lineWidth: selectedEdge === a1 ? 3.5 : 2,
+            alpha: selectedEdge === a1 ? 1 : 0.5
+          });
+          drawWorldArrow([0, 0], a2, frame, {
+            color: edgeColor,
+            lineWidth: selectedEdge === a2 ? 3.5 : 2,
+            alpha: selectedEdge === a2 ? 1 : 0.5
+          });
+          drawWorldArrow([0, 0], perpendicular, frame, {
+            color: perpendicularColor,
+            lineWidth: 3,
+            alpha: 0.98
+          });
+          drawWorldSegment([0, 0], selectedComponentVector, frame, {
+            color: componentColor,
+            lineWidth: 4,
+            alpha: 0.95
+          });
+          drawWorldSegment(otherComponentStart, otherComponentEnd, frame, {
+            color: mutedColor,
+            lineWidth: 2,
+            alpha: 0.45,
+            dash: [6, 6]
+          });
+          occupiedRects.push(drawStageLegend([
+            { color: edgeColor, text: "teal = edges a\u2081, a\u2082" },
+            { color: perpendicularColor, text: "orange = perpendicular" },
+            { color: componentColor, text: "yellow = selected component = cofactor" }
+          ]));
+          tryDrawStageLabel("a\u2081", a1, frame, {
+            color: edgeColor,
+            minLength: 42,
+            side: 1
+          }, occupiedRects);
+          tryDrawStageLabel("a\u2082", a2, frame, {
+            color: edgeColor,
+            minLength: 42,
+            side: -1
+          }, occupiedRects);
+          tryDrawStageLabel(perpendicularName, perpendicular, frame, {
+            color: perpendicularColor,
+            minLength: 42,
+            side: 1
+          }, occupiedRects);
+          tryDrawSegmentLabel(selectedComponent + "-component", [0, 0], selectedComponentVector, frame, {
+            color: componentColor,
+            minLength: 30
+          }, occupiedRects);
+        }
+
+        function createArrow(color) {
+          const arrow = new THREE.ArrowHelper(
+            new THREE.Vector3(1, 0, 0),
+            new THREE.Vector3(0, 0, 0),
+            1,
+            color,
+            0.18,
+            0.12
+          );
+          arrow.line.material.transparent = true;
+          arrow.cone.material.transparent = true;
+          arrow.visible = false;
+          return arrow;
+        }
+
+        function replaceGeometry(object, geometry) {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          object.geometry = geometry;
+        }
+
+        function vectorLength(vector) {
+          return Math.sqrt(
+            vector[0] * vector[0] +
+            vector[1] * vector[1] +
+            vector[2] * vector[2]
+          );
+        }
+
+        function pushTriangle(target, a, b, c) {
+          target.push(
+            a[0], a[1], a[2],
+            b[0], b[1], b[2],
+            c[0], c[1], c[2]
+          );
+        }
+
+        function pushQuad(target, a, b, c, d) {
+          pushTriangle(target, a, b, c);
+          pushTriangle(target, a, c, d);
+        }
+
+        function buildParallelepipedGeometry(a1, a2, a3) {
+          const origin = [0, 0, 0];
+          const a12 = add3(a1, a2);
+          const a13 = add3(a1, a3);
+          const a23 = add3(a2, a3);
+          const a123 = add3(a12, a3);
+          const positions = [];
+          [
+            [origin, a1, a12, a2],
+            [origin, a2, a23, a3],
+            [origin, a3, a13, a1],
+            [a123, a13, a3, a23],
+            [a123, a23, a2, a12],
+            [a123, a12, a1, a13]
+          ].forEach(function (face) {
+            pushQuad(positions, face[0], face[1], face[2], face[3]);
+          });
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+          geometry.computeVertexNormals();
+          return geometry;
+        }
+
+        function buildFaceGeometry(face) {
+          const positions = [];
+          pushQuad(positions, face[0], face[1], face[2], face[3]);
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+          geometry.computeVertexNormals();
+          return geometry;
+        }
+
+        function buildFaceOutlineGeometry(face) {
+          return new THREE.BufferGeometry().setFromPoints(face.map(function (point) {
+            return new THREE.Vector3(point[0], point[1], point[2]);
+          }));
+        }
+
+        function setArrow(arrow, origin, vector, color, opacity) {
+          const length = vectorLength(vector);
+          arrow.position.set(origin[0], origin[1], origin[2]);
+          arrow.setColor(new THREE.Color(color));
+          arrow.line.material.opacity = opacity;
+          arrow.cone.material.opacity = opacity;
+          if (length < EPS) {
+            arrow.visible = false;
+            return;
+          }
+          const direction = new THREE.Vector3(vector[0], vector[1], vector[2]).normalize();
+          const headLength = Math.min(Math.max(length * 0.22, 0.08), length * 0.6);
+          const headWidth = Math.min(Math.max(length * 0.12, 0.05), 0.18);
+          arrow.visible = true;
+          arrow.setDirection(direction);
+          arrow.setLength(length, headLength, headWidth);
+        }
+
+        function updateFullParallelepiped(a1, a2, a3) {
+          const geometry = buildParallelepipedGeometry(a1, a2, a3);
+          replaceGeometry(solidMesh, geometry);
+          replaceGeometry(edgeLines, new THREE.EdgesGeometry(geometry));
+        }
+
+        function updateSelectedFace(face, col) {
+          selectedFaceMesh.material.color.setHex(faceColors[col]);
+          selectedFaceOutline.material.color.setHex(faceColors[col]);
+          replaceGeometry(selectedFaceMesh, buildFaceGeometry(face));
+          replaceGeometry(selectedFaceOutline, buildFaceOutlineGeometry(face));
+        }
+
+        function updateColumnArrows(a1, a2, a3) {
+          const opacity = getBasisArrowOpacity();
+          [a1, a2, a3].forEach(function (vector, index) {
+            setArrow(columnArrows[index], [0, 0, 0], vector, componentColors[index], opacity);
+          });
+        }
+
+        function updateNormalArrow(centroid, area) {
+          setArrow(normalArrow, centroid, area, 0x59d0c4, 0.98);
+        }
+
+        function updateComponentArrows(centroid, area, row) {
+          const components = [
+            [area[0], 0, 0],
+            [0, area[1], 0],
+            [0, 0, area[2]]
+          ];
+          componentArrows.forEach(function (arrow, index) {
+            if (index !== row) {
+              arrow.visible = false;
+              return;
+            }
+            setArrow(arrow, centroid, components[index], componentColors[index], 0.92);
+          });
+        }
+
+        function fitSceneToGeometry(a1, a2, a3) {
+          const origin = [0, 0, 0];
+          const a12 = add3(a1, a2);
+          const a13 = add3(a1, a3);
+          const a23 = add3(a2, a3);
+          const a123 = add3(a12, a3);
+          const points = [origin, a1, a2, a3, a12, a13, a23, a123];
+          faceDefs.forEach(function (faceDef) {
+            const face = faceDef.face(a1, a2, a3);
+            const area = faceDef.vector(a1, a2, a3);
+            const centroid = scale3(add3(face[1], face[3]), 0.5);
+            points.push(centroid, add3(centroid, area));
+            points.push(
+              add3(centroid, [area[0], 0, 0]),
+              add3(centroid, [0, area[1], 0]),
+              add3(centroid, [0, 0, area[2]])
+            );
+          });
+          const bounds = computeBounds(points);
+          const center = [
+            (bounds.min[0] + bounds.max[0]) * 0.5,
+            (bounds.min[1] + bounds.max[1]) * 0.5,
+            (bounds.min[2] + bounds.max[2]) * 0.5
+          ];
+          const radius = Math.max(1.15, points.reduce(function (max, point) {
+            const dx = point[0] - center[0];
+            const dy = point[1] - center[1];
+            const dz = point[2] - center[2];
+            return Math.max(max, Math.sqrt(dx * dx + dy * dy + dz * dz));
+          }, 0));
+          const scale = (4 * zoomModel.zoom) / radius;
+          fitGroup.scale.setScalar(scale);
+          fitGroup.position.set(
+            -center[0] * scale,
+            -center[1] * scale,
+            -center[2] * scale
+          );
+        }
+
+        function pick(row, col) {
+          selectedRow = row;
+          selectedCol = col;
+          if (state.dimension === 2) {
+            hide3DLabels();
+            setCanvasMode(2);
+            drawTwoByTwoStage();
+            return;
+          }
+          setCanvasMode(3);
+          if (usesFallback) {
+            hide3DLabels();
+            drawFallback();
+            return;
+          }
+          const a1 = getColumn(state.matrix, 0);
+          const a2 = getColumn(state.matrix, 1);
+          const a3 = getColumn(state.matrix, 2);
+          const faceDef = faceDefs[col];
+          const face = faceDef.face(a1, a2, a3);
+          const area = faceDef.vector(a1, a2, a3);
+          const centroid = scale3(add3(face[1], face[3]), 0.5);
+          lastA1 = a1;
+          lastA2 = a2;
+          lastA3 = a3;
+          lastArea = area;
+          lastCentroid = centroid;
+          updateFullParallelepiped(a1, a2, a3);
+          updateSelectedFace(face, col);
+          updateColumnArrows(a1, a2, a3);
+          updateNormalArrow(centroid, area);
+          updateComponentArrows(centroid, area, row);
+          fitSceneToGeometry(a1, a2, a3);
+          scene.updateMatrixWorld(true);
+          camera.updateMatrixWorld(true);
+          updateLabels3D(a1, a2, a3, area, centroid);
+        }
+
+        function tick(dt) {
+          if (state.dimension === 2) {
+            hide3DLabels();
+            setCanvasMode(2);
+            drawTwoByTwoStage();
+            return;
+          }
+          setCanvasMode(3);
+          if (usesFallback) {
+            hide3DLabels();
+            drawFallback();
+            return;
+          }
+          sync3DArrowStyles();
+          scene.updateMatrixWorld(true);
+          camera.updateMatrixWorld(true);
+          if (lastA1 && lastA2 && lastA3 && lastArea && lastCentroid) {
+            updateLabels3D(lastA1, lastA2, lastA3, lastArea, lastCentroid);
+          }
+          renderer.render(scene, camera);
+        }
+
+        function drawFallback() {
+          const width = canvas.width / (window.devicePixelRatio || 1);
+          const height = canvas.height / (window.devicePixelRatio || 1);
+          ctx.clearRect(0, 0, width, height);
+          ctx.strokeStyle = "#8c8476";
+          ctx.lineWidth = 2;
+          ctx.fillStyle = "rgba(89,208,196,0.14)";
+          const size = Math.min(width, height) * 0.42 * zoomModel.zoom;
+          ctx.save();
+          ctx.translate(width * 0.5, height * 0.52);
+          ctx.beginPath();
+          ctx.rect(-size * 0.5, -size * 0.5, size, size);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        return {
+          pick: pick,
+          tick: tick,
+          zoom: zoomModel,
+          setZoom: zoomModel.setZoom,
+          adjustZoom: zoomModel.adjustZoom
+        };
+      }
+
+      function determinant3(m) {
+        return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+          - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+          + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+      }
+      function determinant2(m) { return m[0][0] * m[1][1] - m[0][1] * m[1][0]; }
+      function determinantForDimension(matrix, dimension) {
+        return dimension === 2 ? determinant2(matrix) : determinant3(matrix);
+      }
+      function minorDeterminant(minor) {
+        return minor.length === 1 ? minor[0][0] : determinant2(minor);
+      }
+      function getMinor(m, removeRow, removeCol) {
+        const rows = [];
+        for (let row = 0; row < m.length; row += 1) {
+          if (row === removeRow) { continue; }
+          const next = [];
+          for (let col = 0; col < m[row].length; col += 1) {
+            if (col !== removeCol) { next.push(m[row][col]); }
+          }
+          rows.push(next);
+        }
+        return rows;
+      }
+      function rankSquare(matrix) {
+        const size = matrix.length;
+        const a = cloneMatrix(matrix);
+        let rank = 0;
+        let row = 0;
+        for (let col = 0; col < size && row < size; col += 1) {
+          let pivot = row;
+          for (let r = row + 1; r < size; r += 1) {
+            if (Math.abs(a[r][col]) > Math.abs(a[pivot][col])) { pivot = r; }
+          }
+          if (Math.abs(a[pivot][col]) < EPS) { continue; }
+          if (pivot !== row) {
+            const temp = a[row];
+            a[row] = a[pivot];
+            a[pivot] = temp;
+          }
+          const pivotValue = a[row][col];
+          for (let c = col; c < size; c += 1) { a[row][c] /= pivotValue; }
+          for (let r = 0; r < size; r += 1) {
+            if (r === row) { continue; }
+            const factor = a[r][col];
+            if (Math.abs(factor) < EPS) { continue; }
+            for (let c = col; c < size; c += 1) { a[r][c] -= factor * a[row][c]; }
+          }
+          row += 1;
+          rank += 1;
+        }
+        return rank;
+      }
+      function transpose(m) {
+        return m[0].map(function (_value, col) {
+          return m.map(function (row) { return row[col]; });
+        });
+      }
+      function multiplyMatrices(a, b) {
+        return a.map(function (row) {
+          return b[0].map(function (_value, col) {
+            return row.reduce(function (sum, entry, index) {
+              return sum + entry * b[index][col];
+            }, 0);
+          });
+        });
+      }
+      function scaleMatrix(matrix, scalar) {
+        return matrix.map(function (row) {
+          return row.map(function (value) { return value * scalar; });
+        });
+      }
+      function add3(a, b) {
+        return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+      }
+      function scale3(v, s) {
+        return [v[0] * s, v[1] * s, v[2] * s];
+      }
+      function cross(a, b) {
+        return [
+          a[1] * b[2] - a[2] * b[1],
+          a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0]
+        ];
+      }
+      function multiplyMatrixVector(matrix, vector) {
+        return matrix.map(function (row) {
+          return row.reduce(function (sum, value, index) {
+            return sum + value * (typeof vector[index] === "number" ? vector[index] : 0);
+          }, 0);
+        });
+      }
+      function interpolateMatrix(a, b, t) {
+        return a.map(function (row, r) {
+          return row.map(function (_value, c) { return lerp(a[r][c], b[r][c], t); });
+        });
+      }
+      function toMatrix4(m) {
+        return new THREE.Matrix4().set(
+          m[0][0], m[0][1], m[0][2], 0,
+          m[1][0], m[1][1], m[1][2], 0,
+          m[2][0], m[2][1], m[2][2], 0,
+          0, 0, 0, 1
+        );
+      }
+      function computeBounds(points) {
+        const min = [Infinity, Infinity, Infinity];
+        const max = [-Infinity, -Infinity, -Infinity];
+        points.forEach(function (point) {
+          for (let i = 0; i < 3; i += 1) {
+            min[i] = Math.min(min[i], point[i]);
+            max[i] = Math.max(max[i], point[i]);
+          }
+        });
+        return { min: min, max: max };
+      }
+      function getStableFrame(matrix) {
+        const targetVerts = cubeVertices.map(function (vertex) {
+          return multiplyMatrixVector(matrix, vertex);
+        });
+        const allVerts = cubeVertices.concat(targetVerts);
+        const bounds = computeBounds(allVerts);
+        const center = [
+          (bounds.min[0] + bounds.max[0]) * 0.5,
+          (bounds.min[1] + bounds.max[1]) * 0.5,
+          (bounds.min[2] + bounds.max[2]) * 0.5
+        ];
+        const radius = Math.max(1.15, allVerts.reduce(function (max, vertex) {
+          const dx = vertex[0] - center[0];
+          const dy = vertex[1] - center[1];
+          const dz = vertex[2] - center[2];
+          return Math.max(max, Math.sqrt(dx * dx + dy * dy + dz * dz));
+        }, 0));
+        return { center: center, radius: radius };
+      }
+      function getStableFrame2D(matrix) {
+        const a = multiplyMatrixVector(matrix, [1, 0]);
+        const b = multiplyMatrixVector(matrix, [0, 1]);
+        const points = [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0], [a[0], a[1]], [a[0] + b[0], a[1] + b[1]], [b[0], b[1]]];
+        const xs = points.map(function (point) { return point[0]; });
+        const ys = points.map(function (point) { return point[1]; });
+        const centerX = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) * 0.5;
+        const centerY = (Math.min.apply(null, ys) + Math.max.apply(null, ys)) * 0.5;
+        const extent = Math.max(1.2, points.reduce(function (max, point) {
+          const dx = point[0] - centerX;
+          const dy = point[1] - centerY;
+          return Math.max(max, Math.sqrt(dx * dx + dy * dy));
+        }, 0));
+        return { center: [centerX, centerY], extent: extent };
+      }
+      function drawAxis2D(ctx, vec, scale, color, options) {
+        const settings = options || {};
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = settings.lineWidth || 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(vec[0] * scale, vec[1] * scale);
+        ctx.stroke();
+        const angle = Math.atan2(vec[1], vec[0]);
+        const tipX = vec[0] * scale;
+        const tipY = vec[1] * scale;
+        const head = settings.head || 10;
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(tipX - head * Math.cos(angle - Math.PI / 6), tipY - head * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(tipX - head * Math.cos(angle + Math.PI / 6), tipY - head * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      }
+      function renderLatexInto(element, latex, displayMode, fallbackText) {
+        if (!element) {
+          return;
+        }
+        if (window.katex && typeof window.katex.render === "function") {
+          try {
+            element.innerHTML = "";
+            window.katex.render(latex, element, {
+              throwOnError: false,
+              displayMode: !!displayMode
+            });
+            return;
+          } catch (error) {
+            // Fall back to plain HTML below if KaTeX is unavailable or the expression fails to render.
+          }
+        }
+        element.innerHTML = fallbackText || latex;
+      }
+      function mathHtml(latex, fallbackText, displayMode) {
+        const tag = displayMode ? "div" : "span";
+        const className = displayMode ? "math-display" : "math-inline";
+        if (window.katex && typeof window.katex.renderToString === "function") {
+          try {
+            return "<" + tag + ' class="' + className + '">' +
+              window.katex.renderToString(latex, {
+                throwOnError: false,
+                displayMode: !!displayMode
+              }) +
+              "</" + tag + ">";
+          } catch (error) {
+            // Fall back to the provided HTML below.
+          }
+        }
+        return "<" + tag + ' class="' + className + '">' + (fallbackText || latex) + "</" + tag + ">";
+      }
+      function latexNumber(value, digits) {
+        const text = formatNumber(value, digits);
+        const match = /^(-?\d+(?:\.\d+)?)e([+-]?\d+)$/i.exec(text);
+        if (match) {
+          return match[1] + " \\times 10^{" + Number(match[2]) + "}";
+        }
+        return text;
+      }
+      function matrixLatex(matrix, digits) {
+        return String.raw`\begin{bmatrix}` + matrix.map(function (row) {
+          return row.map(function (value) { return latexNumber(value, digits || 4); }).join(" & ");
+        }).join(String.raw` \\ `) + String.raw`\end{bmatrix}`;
+      }
+      function vectorLatex(vector, digits) {
+        return matrixLatex(vector.map(function (value) { return [value]; }), digits || 4);
+      }
+      function toUnicodeSubscript(value) {
+        const map = {
+          "-": "\u208b",
+          "0": "\u2080",
+          "1": "\u2081",
+          "2": "\u2082",
+          "3": "\u2083",
+          "4": "\u2084",
+          "5": "\u2085",
+          "6": "\u2086",
+          "7": "\u2087",
+          "8": "\u2088",
+          "9": "\u2089"
+        };
+        return String(value).split("").map(function (character) {
+          return map[character] || character;
+        }).join("");
+      }
+      function columnNameHtml(index) {
+        return "a<sub>" + (index + 1) + "</sub>";
+      }
+      function columnNameText(index) {
+        return "a" + toUnicodeSubscript(index + 1);
+      }
+      function basisNameHtml(index) {
+        return "e<sub>" + (index + 1) + "</sub>";
+      }
+      function identityLatex(dimension) {
+        return "I_{" + dimension + "}";
+      }
+      function realSpaceHtml(dimension) {
+        return "ℝ<sup>" + dimension + "</sup>";
+      }
+      function identityMatrix() { return identityMatrixN(3); }
+      function identityHtml(dimension) {
+        return "I<sub>" + dimension + "</sub>";
+      }
+      function identityText(dimension) {
+        return "I" + toUnicodeSubscript(dimension);
+      }
+      function getColumn(matrix, col) {
+        return matrix.map(function (row) { return row[col]; });
+      }
+      function dotVector(a, b) {
+        return a.reduce(function (sum, value, index) {
+          return sum + value * b[index];
+        }, 0);
+      }
+      function rotateCw90(vector) {
+        return [vector[1], -vector[0]];
+      }
+      function rotateCcw90(vector) {
+        return [-vector[1], vector[0]];
+      }
+      function classifyAgainstTargets(value, matchTarget, zeroTarget, tolerance) {
+        if (Math.abs(value - matchTarget) < tolerance) { return "match"; }
+        if (Math.abs(value - zeroTarget) < tolerance) { return "zero"; }
+        return "neutral";
+      }
+      function getHelperColumnInfo(matrix, dimension, col) {
+        const columns = Array.from({ length: dimension }, function (_unused, index) {
+          return getColumn(matrix, index);
+        });
+
+        if (dimension === 2) {
+          const helperVector = col === 0 ? rotateCw90(columns[1]) : rotateCcw90(columns[0]);
+          const helperLabelHtml = col === 0 ? "cw90(" + columnNameHtml(1) + ")" : "ccw90(" + columnNameHtml(0) + ")";
+          const helperLabelLatex = col === 0 ? String.raw`\operatorname{cw90}(a_2)` : String.raw`\operatorname{ccw90}(a_1)`;
+          const sourceLabelHtml = col === 0 ? columnNameHtml(1) : columnNameHtml(0);
+          return {
+            helperVector: helperVector,
+            helperLabelHtml: helperLabelHtml,
+            helperLabelLatex: helperLabelLatex,
+            sourceLabelHtml: sourceLabelHtml,
+            matchIndex: col,
+            dotProducts: columns.map(function (column, index) {
+              return {
+                index: index,
+                formulaHtml: columnNameHtml(index) + " &middot; " + helperLabelHtml,
+                formulaLatex: "a_{" + (index + 1) + "} \\cdot " + helperLabelLatex,
+                value: dotVector(column, helperVector)
+              };
+            })
+          };
+        }
+
+        const helperVector = col === 0 ? cross(columns[1], columns[2])
+          : col === 1 ? cross(columns[2], columns[0])
+          : cross(columns[0], columns[1]);
+        const helperLabelHtml = col === 0 ? columnNameHtml(1) + " &times; " + columnNameHtml(2)
+          : col === 1 ? columnNameHtml(2) + " &times; " + columnNameHtml(0)
+          : columnNameHtml(0) + " &times; " + columnNameHtml(1);
+        const helperLabelLatex = col === 0 ? String.raw`a_2 \times a_3`
+          : col === 1 ? String.raw`a_3 \times a_1`
+          : String.raw`a_1 \times a_2`;
+
+        return {
+          helperVector: helperVector,
+          helperLabelHtml: helperLabelHtml,
+          helperLabelLatex: helperLabelLatex,
+          sourceLabelHtml: col === 0 ? "columns 2 and 3" : col === 1 ? "columns 3 and 1" : "columns 1 and 2",
+          matchIndex: col,
+          dotProducts: columns.map(function (column, index) {
+            return {
+              index: index,
+              formulaHtml: columnNameHtml(index) + " &middot; (" + helperLabelHtml + ")",
+              formulaLatex: "a_{" + (index + 1) + "} \\cdot (" + helperLabelLatex + ")",
+              value: dotVector(column, helperVector)
+            };
+          })
+        };
+      }
+      function stabilizeMatrixAgainstExpected(matrix, expected) {
+        const tolerance = 1e-7;
+        return matrix.map(function (row, rowIndex) {
+          return row.map(function (value, colIndex) {
+            const target = expected[rowIndex][colIndex];
+            return Math.abs(value - target) < tolerance ? target : value;
+          });
+        });
+      }
+      function matrixToHtml(matrix, options) {
+        const rows = options.dims[0];
+        const cols = options.dims[1];
+        let html = "";
+        for (let row = 0; row < rows; row += 1) {
+          for (let col = 0; col < cols; col += 1) {
+            const hit = options.highlight && options.highlight.row === row && options.highlight.col === col;
+            html += '<div class="matrix-cell' + (hit ? " highlight" : "") + '">' + formatNumber(matrix[row][col], 4) + "</div>";
+          }
+        }
+        return html;
+      }
+      function matrixToHtmlClassified(matrix, options) {
+        const rows = options.dims[0];
+        const cols = options.dims[1];
+        const cellClasses = options.cellClasses || [];
+        let html = "";
+        for (let row = 0; row < rows; row += 1) {
+          for (let col = 0; col < cols; col += 1) {
+            const extraClass = cellClasses[row] && cellClasses[row][col] ? " " + cellClasses[row][col] : "";
+            html += '<div class="matrix-cell' + extraClass + '">' + formatNumber(matrix[row][col], 4) + "</div>";
+          }
+        }
+        return html;
+      }
+      function matrixInline(matrix, digits) {
+        return "[" + matrix.map(function (row) {
+          return row.map(function (value) { return formatNumber(value, digits || 4); }).join(", ");
+        }).join("; ") + "]";
+      }
+      function vectorInline(vector, digits) {
+        return "(" + vector.map(function (value) { return formatNumber(value, digits || 3); }).join(", ") + ")";
+      }
+      function formatNumber(value, digits) {
+        const places = typeof digits === "number" ? digits : 3;
+        if (Math.abs(value) < EPS) { return "0"; }
+        const rounded = Number(value.toFixed(places));
+        if (Math.abs(rounded) >= 10000 || Math.abs(rounded) < 0.001) { return rounded.toExponential(2); }
+        return String(rounded);
+      }
+      function sanitizeNumber(value) {
+        return Math.abs(value - Math.round(value)) < EPS ? String(Math.round(value)) : formatNumber(value, 4);
+      }
+      function readNumber(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : 0;
+      }
+      function cloneMatrix(matrix) {
+        return matrix.map(function (row) { return row.slice(); });
+      }
+      function dimensionPhrase(rank, dimension) {
+        if (rank === dimension) {
+          return dimension === 2 ? "two-dimensional" : "three-dimensional";
+        }
+        return rank === 2 ? "a plane" : rank === 1 ? "a line" : "the origin only";
+      }
+      function orientationText(det) {
+        if (Math.abs(det) < EPS) { return "singular"; }
+        return det < 0 ? "orientation flipped" : "orientation preserved";
+      }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    }());
+  </script>
+</body>
+</html>
