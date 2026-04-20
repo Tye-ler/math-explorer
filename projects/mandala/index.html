@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mandala Explorer</title>
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 1120px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255,255,255,0.10);
+      --line-strong: rgba(255,255,255,0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+      --select-field-bg: var(--menu-bg);
+      --select-arrow-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' width='10' height='6'%3E%3Cpath fill='%23aaaaaa' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255,255,255,0.14);
+      --viz-grid: rgba(255,255,255,0.08);
+      --viz-axis: rgba(255,255,255,0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0,0,0,0.08);
+      --line-strong: rgba(0,0,0,0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+      --select-field-bg: transparent;
+      --select-arrow-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' width='10' height='6'%3E%3Cpath fill='%234f4f4f' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0,0,0,0.10);
+      --viz-grid: rgba(0,0,0,0.05);
+      --viz-axis: rgba(0,0,0,0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ta-site-header,
+    .ta-site-header * {
+      box-sizing: border-box;
+    }
+
+    .ta-site-header {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    .theme-toggle:focus-visible,
+    .control input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+    .control select:focus-visible,
+    button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .ta-site-project-shell {
+      min-height: calc(100vh - var(--ta-site-header-height));
+    }
+
+    .page-shell {
+      width: min(100% - 2rem, var(--max-width));
+      margin: 0 auto;
+      padding: var(--space-4) 0;
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .page-topbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      min-height: 28px;
+      text-align: center;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    .hero {
+      display: grid;
+      gap: 0.45rem;
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.15;
+      font-weight: 400;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 72ch;
+      font-size: 12px;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+      gap: var(--space-4);
+      align-items: start;
+    }
+
+    .section {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .surface {
+      border: 1px solid var(--line);
+      padding: var(--space-2);
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    :root[data-theme="light"] .surface {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .control-stack {
+      display: grid;
+      gap: var(--space-2);
+    }
+
+    .control {
+      display: grid;
+      gap: 0.3rem;
+    }
+
+    .control label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .control-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .mode-hidden {
+      display: none !important;
+    }
+
+    .preset-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .swatch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: transform 0.1s ease, border-color 0.1s ease;
+    }
+
+    .swatch:hover {
+      transform: scale(1.12);
+    }
+
+    .swatch[data-selected="true"] {
+      border-color: var(--accent);
+    }
+
+    .proc-status {
+      font-size: 11px;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      border-radius: 3px;
+    }
+
+    .proc-status[data-active="true"] {
+      border-color: rgba(94, 200, 120, 0.45);
+      color: #8fd4a4;
+    }
+
+    .proc-status[data-paused="true"] {
+      border-color: rgba(230, 190, 80, 0.55);
+      color: #e6c060;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .visualization-box {
+      position: relative;
+      border: 1px dashed var(--viz-frame);
+      background: var(--viz-bg);
+      color: var(--viz-text);
+      padding: var(--space-2);
+      font-size: 12px;
+    }
+
+    .viz-stack {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-width: min(92vw, 640px);
+      margin: 0 auto;
+    }
+
+    .viz-stack canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    #canvas-art {
+      cursor: crosshair;
+    }
+
+    #canvas-art[data-eraser="true"] {
+      cursor: cell;
+    }
+
+    #canvas-guides {
+      pointer-events: none;
+    }
+
+    .summary-block {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .summary-block strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .summary-block code {
+      font-size: 11px;
+      color: var(--viz-text);
+    }
+
+    .control input:not([type="checkbox"]):not([type="radio"]),
+    .control textarea,
+    button {
+      min-height: 28px;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .control select {
+      min-height: 28px;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 2rem 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: var(--select-field-bg);
+      background-image: var(--select-arrow-svg);
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 10px 6px;
+      width: 100%;
+    }
+
+    .control input:not([type="checkbox"]):not([type="radio"]):hover,
+    .control select:hover,
+    button:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    :root[data-theme="dark"] .control select:hover {
+      background-color: var(--menu-bg);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    .control input[type="color"] {
+      padding: 2px;
+      min-height: 32px;
+      cursor: pointer;
+    }
+
+    .control input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      height: 16px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .control input[type="range"]::-webkit-slider-runnable-track {
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 4px;
+      height: 14px;
+      margin-top: -6.5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .control input[type="range"]::-moz-range-track {
+      height: 1px;
+      background: var(--line-strong);
+      border: 0;
+    }
+
+    .control input[type="range"]::-moz-range-thumb {
+      width: 4px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .val {
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    @media (max-width: 900px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .ta-site-project-shell {
+        min-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+
+      .page-shell {
+        padding: var(--space-3) 0;
+        gap: var(--space-3);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="ta-site-header" data-project-header data-root="../../" aria-label="Site header">
+    <div class="ta-site-nav">
+      <a class="ta-site-brand" data-project-header-link="home" href="../../">Tyeler Ahern</a>
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" data-project-header-link="home" href="../../">Home</a>
+        <a class="ta-site-link" data-project-header-link="projects" href="../../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="ta-site-project-shell">
+    <div class="page-shell">
+      <div class="page-topbar">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+      </div>
+
+      <section class="hero" aria-labelledby="project-title">
+        <h1 id="project-title">Mandala Explorer</h1>
+        <p>
+          A square-canvas pattern playground: draw with radial symmetry, or run orbit, spiral, pulse, Lissajous, and harmonograph generators on the same surface. Tune parameters and read the active geometry below.
+        </p>
+      </section>
+
+      <div class="content-grid">
+        <aside class="section" aria-labelledby="controls-heading">
+          <h2 id="controls-heading" class="sr-only">controls</h2>
+
+          <div class="surface">
+            <div class="section">
+              <h2>presets</h2>
+              <div class="preset-grid">
+                <button type="button" data-preset="flower">simple flower</button>
+                <button type="button" data-preset="starburst">starburst</button>
+                <button type="button" data-preset="orbit-bloom">orbit bloom</button>
+                <button type="button" data-preset="liss-weave">lissajous weave</button>
+                <button type="button" data-preset="harm-lace">harmonograph lace</button>
+                <button type="button" id="btn-defaults">reset defaults</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface">
+            <div class="control-stack">
+              <div class="section">
+                <h2>drawing</h2>
+                <div class="control">
+                  <label for="symmetry">symmetry count <span class="val" id="symmetry-val"></span></label>
+                  <input id="symmetry" type="range" min="2" max="36" value="12" />
+                </div>
+                <div class="control">
+                  <label for="brush">brush size <span class="val" id="brush-val"></span></label>
+                  <input id="brush" type="range" min="1" max="28" value="3" />
+                </div>
+                <div class="control">
+                  <label for="opacity">opacity / fade <span class="val" id="opacity-val"></span></label>
+                  <input id="opacity" type="range" min="5" max="100" value="100" />
+                </div>
+                <div class="control-row">
+                  <label><input id="reflect" type="checkbox" checked /> reflect</label>
+                  <label><input id="glow" type="checkbox" /> glow</label>
+                  <label><input id="dot-mode" type="checkbox" /> dot mode</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface">
+            <div class="control-stack">
+              <div class="section">
+                <h2>color</h2>
+                <div class="control">
+                  <label for="color-primary">primary</label>
+                  <input id="color-primary" type="color" value="#c084fc" />
+                </div>
+                <div class="control">
+                  <label for="color-bg">background</label>
+                  <input id="color-bg" type="color" value="#0a0a12" />
+                </div>
+                <div class="control">
+                  <label>swatches</label>
+                  <div class="swatch-row" id="swatch-row" aria-label="Color swatches"></div>
+                </div>
+                <div class="control-row">
+                  <label><input id="rainbow" type="checkbox" /> rainbow</label>
+                  <label><input id="eraser" type="checkbox" /> eraser</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface">
+            <div class="control-stack">
+              <div class="section">
+                <h2>mode</h2>
+                <div class="control">
+                  <label for="draw-mode">generator</label>
+                  <select id="draw-mode">
+                    <option value="manual" selected>manual</option>
+                    <option value="orbit">orbit</option>
+                    <option value="spiral">spiral</option>
+                    <option value="pulse">pulse</option>
+                    <option value="lissajous">lissajous</option>
+                    <option value="harmonograph">harmonograph</option>
+                  </select>
+                </div>
+                <p class="proc-status" id="proc-status" aria-live="polite">manual · draw on the canvas</p>
+                <div class="btn-row" id="proc-transport">
+                  <button type="button" id="btn-proc-start" disabled>start</button>
+                  <button type="button" id="btn-proc-pause" disabled>pause</button>
+                  <button type="button" id="btn-proc-stop" disabled>stop mode</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface mode-hidden" id="panel-mode-orbit">
+            <div class="section">
+              <h2>orbit tuning</h2>
+              <div class="control">
+                <label for="orbit-speed">angular speed <span class="val" id="orbit-speed-val"></span></label>
+                <input id="orbit-speed" type="range" min="1" max="10" value="5" />
+              </div>
+              <p class="summary-block" style="margin:0;font-size:11px;">Four concentric traces with different radii and drift rates; each vertex moves on its own circle.</p>
+            </div>
+          </div>
+
+          <div class="surface mode-hidden" id="panel-mode-spiral">
+            <div class="section">
+              <h2>spiral tuning</h2>
+              <div class="control">
+                <label for="spiral-speed">expansion speed <span class="val" id="spiral-speed-val"></span></label>
+                <input id="spiral-speed" type="range" min="1" max="10" value="5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="surface mode-hidden" id="panel-mode-pulse">
+            <div class="section">
+              <h2>pulse tuning</h2>
+              <div class="control">
+                <label for="pulse-speed">motion speed <span class="val" id="pulse-speed-val"></span></label>
+                <input id="pulse-speed" type="range" min="1" max="10" value="5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="surface mode-hidden" id="panel-mode-liss">
+            <div class="section">
+              <h2>lissajous tuning</h2>
+              <div class="control">
+                <label for="liss-ratio">frequency ratio (a : b)</label>
+                <select id="liss-ratio">
+                  <option value="1,2">1 : 2</option>
+                  <option value="1,3">1 : 3</option>
+                  <option value="2,3" selected>2 : 3</option>
+                  <option value="3,4">3 : 4</option>
+                  <option value="3,5">3 : 5</option>
+                  <option value="4,5">4 : 5</option>
+                  <option value="5,6">5 : 6</option>
+                  <option value="5,8">5 : 8</option>
+                </select>
+              </div>
+              <div class="control">
+                <label for="liss-phase">phase φ on x (× π) <span class="val" id="liss-phase-val"></span></label>
+                <input id="liss-phase" type="range" min="0" max="200" value="32" />
+              </div>
+              <div class="control">
+                <label for="liss-speed">time speed <span class="val" id="liss-speed-val"></span></label>
+                <input id="liss-speed" type="range" min="1" max="10" value="5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="surface mode-hidden" id="panel-mode-harm">
+            <div class="section">
+              <h2>harmonograph tuning</h2>
+              <div class="control">
+                <label for="harm-damping">damping (decay rate) <span class="val" id="harm-damping-val"></span></label>
+                <input id="harm-damping" type="range" min="5" max="100" value="12" />
+              </div>
+              <div class="control">
+                <label for="harm-speed">time speed <span class="val" id="harm-speed-val"></span></label>
+                <input id="harm-speed" type="range" min="1" max="10" value="5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="surface">
+            <div class="control-stack">
+              <div class="section">
+                <h2>view / helpers</h2>
+                <div class="control-row">
+                  <label><input id="guide-overlay" type="checkbox" /> guide overlay</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="surface">
+            <div class="control-stack">
+              <div class="section">
+                <h2>editing / output</h2>
+                <div class="btn-row">
+                  <button type="button" id="btn-undo">undo</button>
+                  <button type="button" id="btn-clear">clear</button>
+                  <button type="button" id="btn-save">save PNG</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="section" aria-labelledby="viz-title">
+          <h2 id="viz-title" class="sr-only">canvas</h2>
+          <div class="visualization-box">
+            <div class="viz-stack" id="viz-mount">
+              <canvas id="canvas-art" width="640" height="640"></canvas>
+              <canvas id="canvas-guides" width="640" height="640"></canvas>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="section surface" aria-labelledby="math-title">
+        <h2 id="math-title">math readout</h2>
+        <p id="math-summary" class="summary-block" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+(function () {
+  "use strict";
+
+  const THEME_KEY = "math-explorer-theme";
+  const root = document.documentElement;
+  const themeToggle = document.getElementById("theme-toggle");
+  const themeMq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  let themeMode = "auto";
+
+  function resolveTheme(mode) {
+    if (mode === "light" || mode === "dark") return mode;
+    return themeMq && themeMq.matches ? "dark" : "light";
+  }
+
+  function applyTheme(mode) {
+    root.setAttribute("data-theme", resolveTheme(mode));
+    if (themeToggle) themeToggle.textContent = "theme: " + mode;
+    try {
+      localStorage.setItem(THEME_KEY, mode);
+    } catch (_) {}
+    window.dispatchEvent(new CustomEvent("math-explorer-themechange"));
+  }
+
+  function loadStoredTheme() {
+    try {
+      const s = localStorage.getItem(THEME_KEY);
+      if (s === "light" || s === "dark" || s === "auto") return s;
+    } catch (_) {}
+    return "auto";
+  }
+
+  function cycleTheme() {
+    if (themeMode === "auto") themeMode = resolveTheme("auto") === "dark" ? "light" : "dark";
+    else if (themeMode === "light") themeMode = "dark";
+    else themeMode = "auto";
+    applyTheme(themeMode);
+  }
+
+  themeMode = loadStoredTheme();
+  applyTheme(themeMode);
+  if (themeToggle) themeToggle.addEventListener("click", cycleTheme);
+  if (themeMq && themeMq.addEventListener) {
+    themeMq.addEventListener("change", () => {
+      if (themeMode === "auto") applyTheme("auto");
+    });
+  } else if (themeMq && themeMq.addListener) {
+    themeMq.addListener(() => {
+      if (themeMode === "auto") applyTheme("auto");
+    });
+  }
+  })();
+
+  (function main() {
+    "use strict";
+
+    const artCanvas = document.getElementById("canvas-art");
+    const guideCanvas = document.getElementById("canvas-guides");
+    const artCtx = artCanvas.getContext("2d");
+    const guideCtx = guideCanvas.getContext("2d");
+    const vizMount = document.getElementById("viz-mount");
+
+    const els = {
+      symmetry: document.getElementById("symmetry"),
+      symmetryVal: document.getElementById("symmetry-val"),
+      brush: document.getElementById("brush"),
+      brushVal: document.getElementById("brush-val"),
+      opacity: document.getElementById("opacity"),
+      opacityVal: document.getElementById("opacity-val"),
+      reflect: document.getElementById("reflect"),
+      glow: document.getElementById("glow"),
+      dotMode: document.getElementById("dot-mode"),
+      colorPrimary: document.getElementById("color-primary"),
+      colorBg: document.getElementById("color-bg"),
+      swatchRow: document.getElementById("swatch-row"),
+      rainbow: document.getElementById("rainbow"),
+      eraser: document.getElementById("eraser"),
+      drawMode: document.getElementById("draw-mode"),
+      procStatus: document.getElementById("proc-status"),
+      btnProcStart: document.getElementById("btn-proc-start"),
+      btnProcPause: document.getElementById("btn-proc-pause"),
+      btnProcStop: document.getElementById("btn-proc-stop"),
+      guideOverlay: document.getElementById("guide-overlay"),
+      btnUndo: document.getElementById("btn-undo"),
+      btnClear: document.getElementById("btn-clear"),
+      btnSave: document.getElementById("btn-save"),
+      btnDefaults: document.getElementById("btn-defaults"),
+      mathSummary: document.getElementById("math-summary"),
+      panelOrbit: document.getElementById("panel-mode-orbit"),
+      panelSpiral: document.getElementById("panel-mode-spiral"),
+      panelPulse: document.getElementById("panel-mode-pulse"),
+      panelLiss: document.getElementById("panel-mode-liss"),
+      panelHarm: document.getElementById("panel-mode-harm"),
+      orbitSpeed: document.getElementById("orbit-speed"),
+      orbitSpeedVal: document.getElementById("orbit-speed-val"),
+      spiralSpeed: document.getElementById("spiral-speed"),
+      spiralSpeedVal: document.getElementById("spiral-speed-val"),
+      pulseSpeed: document.getElementById("pulse-speed"),
+      pulseSpeedVal: document.getElementById("pulse-speed-val"),
+      lissRatio: document.getElementById("liss-ratio"),
+      lissPhase: document.getElementById("liss-phase"),
+      lissPhaseVal: document.getElementById("liss-phase-val"),
+      lissSpeed: document.getElementById("liss-speed"),
+      lissSpeedVal: document.getElementById("liss-speed-val"),
+      harmDamping: document.getElementById("harm-damping"),
+      harmDampingVal: document.getElementById("harm-damping-val"),
+      harmSpeed: document.getElementById("harm-speed"),
+      harmSpeedVal: document.getElementById("harm-speed-val"),
+    };
+
+    const SWATCHES = ["#c084fc", "#60a5fa", "#34d399", "#fbbf24", "#f87171", "#fb923c", "#f472b6", "#e2e8f0", "#ffffff"];
+
+    const state = {
+      hue: 0,
+      bgHex: "#0a0a12",
+      drawing: false,
+      lastX: null,
+      lastY: null,
+      undoStack: [],
+      proc: {
+        running: false,
+        paused: false,
+        raf: null,
+        modeKey: "manual",
+        t: 0,
+        orbitPrev: null,
+        spiral: { a: 0, r: 0, grow: true, px: null, py: null },
+        pulsePrev: null,
+        lissPrev: null,
+        harmPrev: null,
+        orbitAngles: [0, 1, 2.5, 4],
+        orbitR: [55, 100, 150, 195],
+        orbitBase: [0.018, -0.013, 0.009, -0.006],
+      },
+    };
+
+    function cx() {
+      return artCanvas.width / 2;
+    }
+    function cy() {
+      return artCanvas.height / 2;
+    }
+
+    function procSpeedMult(el) {
+      return Number(el.value) / 5;
+    }
+
+    function fillBackground() {
+      const w = artCanvas.width;
+      const h = artCanvas.height;
+      artCtx.save();
+      artCtx.globalCompositeOperation = "source-over";
+      artCtx.fillStyle = state.bgHex;
+      artCtx.fillRect(0, 0, w, h);
+      artCtx.restore();
+    }
+
+    function resizeCanvases() {
+      const cssW = vizMount.clientWidth;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const next = Math.max(280, Math.floor(cssW * dpr));
+      if (next === artCanvas.width && next === artCanvas.height) return;
+
+      const tmp = document.createElement("canvas");
+      tmp.width = artCanvas.width;
+      tmp.height = artCanvas.height;
+      tmp.getContext("2d").drawImage(artCanvas, 0, 0);
+
+      artCanvas.width = artCanvas.height = next;
+      guideCanvas.width = guideCanvas.height = next;
+
+      fillBackground();
+      artCtx.drawImage(tmp, 0, 0, next, next);
+      state.undoStack.length = 0;
+      redrawGuides();
+      refreshMathSummary();
+    }
+
+    function saveUndo() {
+      try {
+        state.undoStack.push(artCtx.getImageData(0, 0, artCanvas.width, artCanvas.height));
+        if (state.undoStack.length > 24) state.undoStack.shift();
+      } catch (_) {}
+    }
+
+    function undo() {
+      if (!state.undoStack.length) return;
+      artCtx.putImageData(state.undoStack.pop(), 0, 0);
+      redrawGuides();
+    }
+
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace("#", "");
+      const r = parseInt(h.slice(0, 2), 16);
+      const g = parseInt(h.slice(2, 4), 16);
+      const b = parseInt(h.slice(4, 6), 16);
+      return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+    }
+
+    function canvasBgLuminance() {
+      const h = state.bgHex.replace("#", "");
+      if (h.length < 6) return 0.15;
+      const r = parseInt(h.slice(0, 2), 16) / 255;
+      const g = parseInt(h.slice(2, 4), 16) / 255;
+      const b = parseInt(h.slice(4, 6), 16) / 255;
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
+    function getStrokeColor() {
+      const op = Number(els.opacity.value) / 100;
+      if (els.eraser.checked) return null;
+      if (els.rainbow.checked) {
+        state.hue = (state.hue + 2) % 360;
+        return "hsla(" + state.hue + ",100%,62%," + op + ")";
+      }
+      return hexToRgba(els.colorPrimary.value, op);
+    }
+
+    function applyStrokeStyle(color, lineWidth) {
+      if (els.eraser.checked) {
+        artCtx.globalCompositeOperation = "source-over";
+        artCtx.strokeStyle = state.bgHex;
+        artCtx.fillStyle = state.bgHex;
+        artCtx.lineWidth = lineWidth * 3.5;
+        artCtx.shadowBlur = 0;
+      } else {
+        artCtx.globalCompositeOperation = "source-over";
+        artCtx.strokeStyle = color;
+        artCtx.fillStyle = color;
+        artCtx.lineWidth = lineWidth;
+        const g = els.glow.checked;
+        artCtx.shadowBlur = g ? 14 : 0;
+        artCtx.shadowColor = g ? color : "transparent";
+      }
+      artCtx.lineCap = "round";
+      artCtx.lineJoin = "round";
+    }
+
+    function symDraw(x1, y1, x2, y2, colorOverride) {
+      const n = Number(els.symmetry.value);
+      const reflect = els.reflect.checked;
+      const lw = Number(els.brush.value);
+      const dot = els.dotMode.checked;
+      const c = colorOverride != null ? colorOverride : getStrokeColor();
+      applyStrokeStyle(c, lw);
+
+      const ox = cx();
+      const oy = cy();
+      const dTheta = (Math.PI * 2) / n;
+      const dx1 = x1 - ox;
+      const dy1 = y1 - oy;
+      const dx2 = x2 - ox;
+      const dy2 = y2 - oy;
+
+      for (let i = 0; i < n; i++) {
+        const a = dTheta * i;
+        const co = Math.cos(a);
+        const si = Math.sin(a);
+
+        const rx1 = co * dx1 - si * dy1 + ox;
+        const ry1 = si * dx1 + co * dy1 + oy;
+        const rx2 = co * dx2 - si * dy2 + ox;
+        const ry2 = si * dx2 + co * dy2 + oy;
+
+        if (dot && !els.eraser.checked) {
+          artCtx.beginPath();
+          artCtx.arc(rx2, ry2, lw, 0, Math.PI * 2);
+          artCtx.fill();
+          if (reflect) {
+            const mx2 = co * dx2 + si * dy2 + ox;
+            const my2 = si * dx2 - co * dy2 + oy;
+            artCtx.beginPath();
+            artCtx.arc(mx2, my2, lw, 0, Math.PI * 2);
+            artCtx.fill();
+          }
+        } else {
+          artCtx.beginPath();
+          artCtx.moveTo(rx1, ry1);
+          artCtx.lineTo(rx2, ry2);
+          artCtx.stroke();
+          if (reflect) {
+            const mx1 = co * dx1 + si * dy1 + ox;
+            const my1 = si * dx1 - co * dy1 + oy;
+            const mx2 = co * dx2 + si * dy2 + ox;
+            const my2 = si * dx2 - co * dy2 + oy;
+            artCtx.beginPath();
+            artCtx.moveTo(mx1, my1);
+            artCtx.lineTo(mx2, my2);
+            artCtx.stroke();
+          }
+        }
+      }
+      artCtx.globalCompositeOperation = "source-over";
+      artCtx.shadowBlur = 0;
+    }
+
+    function redrawGuides() {
+      const w = guideCanvas.width;
+      const h = guideCanvas.height;
+      guideCtx.clearRect(0, 0, w, h);
+      if (!els.guideOverlay.checked) return;
+
+      const ox = w / 2;
+      const oy = h / 2;
+      const R = Math.min(w, h) * 0.48;
+      const onDarkCanvas = canvasBgLuminance() < 0.5;
+      const major = onDarkCanvas ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.26)";
+      const faint = onDarkCanvas ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.11)";
+      const n = Number(els.symmetry.value);
+      const dTheta = (Math.PI * 2) / n;
+
+      guideCtx.save();
+      guideCtx.strokeStyle = faint;
+      guideCtx.lineWidth = 1.25;
+      [0.25, 0.5, 0.75].forEach(function (f) {
+        guideCtx.beginPath();
+        guideCtx.arc(ox, oy, R * f, 0, Math.PI * 2);
+        guideCtx.stroke();
+      });
+
+      guideCtx.strokeStyle = major;
+      guideCtx.lineWidth = 1.35;
+      for (let i = 0; i < n; i++) {
+        const a = dTheta * i;
+        guideCtx.beginPath();
+        guideCtx.moveTo(ox, oy);
+        guideCtx.lineTo(ox + Math.cos(a) * R, oy + Math.sin(a) * R);
+        guideCtx.stroke();
+      }
+
+      guideCtx.fillStyle = onDarkCanvas ? "rgba(134,225,255,0.82)" : "rgba(47,111,237,0.82)";
+      guideCtx.beginPath();
+      guideCtx.arc(ox, oy, 3, 0, Math.PI * 2);
+      guideCtx.fill();
+      guideCtx.restore();
+    }
+
+    function posFromEvent(e) {
+      const r = artCanvas.getBoundingClientRect();
+      const p = e.touches ? e.touches[0] : e;
+      return [
+        ((p.clientX - r.left) / r.width) * artCanvas.width,
+        ((p.clientY - r.top) / r.height) * artCanvas.height,
+      ];
+    }
+
+    function manualAllowed() {
+      return els.drawMode.value === "manual" || (state.proc.paused && state.proc.running);
+    }
+
+    function pointerDown(e) {
+      if (!manualAllowed()) return;
+      state.drawing = true;
+      saveUndo();
+      const xy = posFromEvent(e);
+      state.lastX = xy[0];
+      state.lastY = xy[1];
+      if (els.dotMode.checked) symDraw(xy[0], xy[1], xy[0], xy[1]);
+    }
+
+    function pointerMove(e) {
+      if (!state.drawing || !manualAllowed()) return;
+      const xy = posFromEvent(e);
+      if (!els.dotMode.checked) symDraw(state.lastX, state.lastY, xy[0], xy[1]);
+      else symDraw(xy[0], xy[1], xy[0], xy[1]);
+      state.lastX = xy[0];
+      state.lastY = xy[1];
+    }
+
+    function pointerUp() {
+      state.drawing = false;
+      state.lastX = null;
+      state.lastY = null;
+    }
+
+    artCanvas.addEventListener("mousedown", pointerDown);
+    artCanvas.addEventListener("mousemove", pointerMove);
+    artCanvas.addEventListener("mouseup", pointerUp);
+    artCanvas.addEventListener("mouseleave", pointerUp);
+    artCanvas.addEventListener(
+      "touchstart",
+      function (e) {
+        e.preventDefault();
+        pointerDown(e);
+      },
+      { passive: false }
+    );
+    artCanvas.addEventListener(
+      "touchmove",
+      function (e) {
+        e.preventDefault();
+        pointerMove(e);
+      },
+      { passive: false }
+    );
+    artCanvas.addEventListener("touchend", pointerUp);
+
+    function stopProcedural(resetMotion) {
+      if (state.proc.raf) {
+        cancelAnimationFrame(state.proc.raf);
+        state.proc.raf = null;
+      }
+      state.proc.running = false;
+      state.proc.paused = false;
+      if (resetMotion) resetProcMotion();
+      syncProcUi();
+    }
+
+    function resetProcMotion() {
+      state.proc.t = 0;
+      state.proc.orbitPrev = null;
+      state.proc.spiral = { a: 0, r: 0, grow: true, px: null, py: null };
+      state.proc.pulsePrev = null;
+      state.proc.lissPrev = null;
+      state.proc.harmPrev = null;
+      state.proc.orbitAngles = [0, 1, 2.5, 4];
+    }
+
+    function syncProcUi() {
+      const m = els.drawMode.value;
+      const isProc = m !== "manual";
+      els.btnProcStart.disabled = !isProc || state.proc.running;
+      els.btnProcPause.disabled = !isProc || !state.proc.running;
+      els.btnProcStop.disabled = !isProc || (!state.proc.running && !state.proc.paused);
+
+      if (!isProc) {
+        els.procStatus.textContent = "manual · draw on the canvas";
+        els.procStatus.setAttribute("data-active", "false");
+        els.procStatus.setAttribute("data-paused", "false");
+        els.btnProcPause.textContent = "pause";
+        return;
+      }
+
+      if (!state.proc.running) {
+        els.procStatus.textContent = m + " · idle — press start";
+        els.procStatus.setAttribute("data-active", "false");
+        els.procStatus.setAttribute("data-paused", "false");
+      } else if (state.proc.paused) {
+        els.procStatus.textContent = m + " · paused";
+        els.procStatus.setAttribute("data-active", "true");
+        els.procStatus.setAttribute("data-paused", "true");
+        els.btnProcPause.textContent = "resume";
+      } else {
+        els.procStatus.textContent = m + " · running";
+        els.procStatus.setAttribute("data-active", "true");
+        els.procStatus.setAttribute("data-paused", "false");
+        els.btnProcPause.textContent = "pause";
+      }
+    }
+
+    function showModePanels() {
+      const m = els.drawMode.value;
+      els.panelOrbit.classList.toggle("mode-hidden", m !== "orbit");
+      els.panelSpiral.classList.toggle("mode-hidden", m !== "spiral");
+      els.panelPulse.classList.toggle("mode-hidden", m !== "pulse");
+      els.panelLiss.classList.toggle("mode-hidden", m !== "lissajous");
+      els.panelHarm.classList.toggle("mode-hidden", m !== "harmonograph");
+    }
+
+    function procFrame() {
+      if (!state.proc.running || state.proc.paused) return;
+
+      const m = els.drawMode.value;
+      const ox = cx();
+      const oy = cy();
+
+      if (m === "orbit") {
+        const sm = procSpeedMult(els.orbitSpeed);
+        const R = state.proc.orbitR;
+        const base = state.proc.orbitBase;
+        const prev = state.proc.orbitPrev || [];
+        const next = [];
+        for (let i = 0; i < R.length; i++) {
+          state.proc.orbitAngles[i] += base[i] * sm;
+          const x = ox + Math.cos(state.proc.orbitAngles[i]) * R[i];
+          const y = oy + Math.sin(state.proc.orbitAngles[i]) * R[i];
+          if (prev[i]) symDraw(prev[i][0], prev[i][1], x, y, getStrokeColor());
+          next.push([x, y]);
+        }
+        state.proc.orbitPrev = next;
+      } else if (m === "spiral") {
+        const sm = procSpeedMult(els.spiralSpeed);
+        const sp = state.proc.spiral;
+        sp.a += 0.06 * sm;
+        if (sp.grow) {
+          sp.r += 0.9 * sm;
+          if (sp.r > Math.min(artCanvas.width, artCanvas.height) * 0.36) sp.grow = false;
+        } else {
+          sp.r -= 0.9 * sm;
+          if (sp.r < 2) sp.grow = true;
+        }
+        const x = ox + Math.cos(sp.a) * sp.r;
+        const y = oy + Math.sin(sp.a) * sp.r;
+        if (sp.px != null) symDraw(sp.px, sp.py, x, y, getStrokeColor());
+        sp.px = x;
+        sp.py = y;
+      } else if (m === "pulse") {
+        const sm = procSpeedMult(els.pulseSpeed);
+        state.proc.t += 0.04 * sm;
+        const t = state.proc.t;
+        const r = 80 + Math.sin(t * 3) * 60 + Math.sin(t * 7) * 30;
+        const w = t + Math.sin(t * 2) * 0.3;
+        const x = ox + Math.cos(w) * r;
+        const y = oy + Math.sin(w) * r;
+        const prev = state.proc.pulsePrev;
+        if (prev) symDraw(prev[0], prev[1], x, y, getStrokeColor());
+        state.proc.pulsePrev = [x, y];
+      } else if (m === "lissajous") {
+        const sm = procSpeedMult(els.lissSpeed);
+        state.proc.t += 0.015 * sm;
+        const t = state.proc.t;
+        const rat = els.lissRatio.value.split(",").map(Number);
+        const a = rat[0];
+        const b = rat[1];
+        const phi = (Number(els.lissPhase.value) / 100) * Math.PI;
+        const amp = Math.min(artCanvas.width, artCanvas.height) * 0.34;
+        const x = ox + amp * Math.sin(a * t + phi);
+        const y = oy + amp * Math.sin(b * t);
+        const prev = state.proc.lissPrev;
+        if (prev) symDraw(prev[0], prev[1], x, y, getStrokeColor());
+        state.proc.lissPrev = [x, y];
+      } else if (m === "harmonograph") {
+        const sm = procSpeedMult(els.harmSpeed);
+        const dampSlider = Number(els.harmDamping.value);
+        const d = 0.00005 + (dampSlider / 100) * 0.0004;
+        const f1 = 2.01;
+        const f2 = 3.001;
+        const f3 = 1.999;
+        const f4 = 2.998;
+        for (let step = 0; step < 3; step++) {
+          state.proc.t += 0.018 * sm;
+          const t = state.proc.t;
+          const decay = Math.exp(-d * t);
+          const x = ox + decay * (165 * Math.sin(f1 * t + 0.5) + 65 * Math.sin(f2 * t + 1.2));
+          const y = oy + decay * (165 * Math.sin(f3 * t + 0.2) + 65 * Math.sin(f4 * t));
+          const prev = state.proc.harmPrev;
+          if (prev) symDraw(prev[0], prev[1], x, y, getStrokeColor());
+          state.proc.harmPrev = [x, y];
+        }
+        if (Math.exp(-d * state.proc.t) < 0.035) {
+          state.proc.t = 0;
+          state.proc.harmPrev = null;
+        }
+      }
+
+      state.proc.raf = requestAnimationFrame(procFrame);
+      refreshMathSummary();
+      redrawGuides();
+    }
+
+    function startProcedural() {
+      if (els.drawMode.value === "manual") return;
+      saveUndo();
+      state.proc.running = true;
+      state.proc.paused = false;
+      resetProcMotion();
+      syncProcUi();
+      state.proc.raf = requestAnimationFrame(procFrame);
+    }
+
+    function togglePause() {
+      if (!state.proc.running || els.drawMode.value === "manual") return;
+      state.proc.paused = !state.proc.paused;
+      syncProcUi();
+      if (!state.proc.paused && !state.proc.raf) {
+        state.proc.raf = requestAnimationFrame(procFrame);
+      } else if (state.proc.paused && state.proc.raf) {
+        cancelAnimationFrame(state.proc.raf);
+        state.proc.raf = null;
+      }
+    }
+
+    function stopMode() {
+      if (els.drawMode.value === "manual") return;
+      stopProcedural(true);
+      syncProcUi();
+      redrawGuides();
+      refreshMathSummary();
+    }
+
+    els.btnProcStart.addEventListener("click", startProcedural);
+    els.btnProcPause.addEventListener("click", togglePause);
+    els.btnProcStop.addEventListener("click", stopMode);
+
+    els.drawMode.addEventListener("change", function () {
+      stopProcedural(true);
+      showModePanels();
+      syncProcUi();
+      artCanvas.dataset.eraser = els.eraser.checked ? "true" : "false";
+      refreshMathSummary();
+      redrawGuides();
+    });
+
+    function refreshLabels() {
+      els.symmetryVal.textContent = "(" + els.symmetry.value + ")";
+      els.brushVal.textContent = els.brush.value;
+      els.opacityVal.textContent = els.opacity.value + "%";
+      els.orbitSpeedVal.textContent = els.orbitSpeed.value;
+      els.spiralSpeedVal.textContent = els.spiralSpeed.value;
+      els.pulseSpeedVal.textContent = els.pulseSpeed.value;
+      els.lissPhaseVal.textContent = (Number(els.lissPhase.value) / 100).toFixed(2) + " π";
+      els.lissSpeedVal.textContent = els.lissSpeed.value;
+      els.harmDampingVal.textContent = els.harmDamping.value;
+      els.harmSpeedVal.textContent = els.harmSpeed.value;
+    }
+
+    function refreshMathSummary() {
+      const n = Number(els.symmetry.value);
+      const dTheta = (2 * Math.PI) / n;
+      const dDeg = (360 / n).toFixed(2);
+      const reflectOn = els.reflect.checked;
+      const mode = els.drawMode.value;
+
+      let body =
+        "<strong>Symmetry.</strong> n = " +
+        n +
+        "; one full turn is split into n equal sectors. Angular step <code>Δθ = 2π / n</code> ≈ " +
+        dTheta.toFixed(4) +
+        " rad (" +
+        dDeg +
+        "°). Every stroke you make is copied by rotation through k·Δθ for k = 0…n−1.";
+
+      if (mode === "manual") {
+        body +=
+          "<br /><br /><strong>Manual.</strong> The pointer path is rotated about the center. " +
+          (reflectOn
+            ? "<strong>Reflect</strong> adds a mirror copy across each sector’s bisector, doubling motifs within every wedge."
+            : "Reflect is off: only pure rotational copies appear.");
+      } else {
+        const running = state.proc.running && !state.proc.paused;
+        body +=
+          "<br /><br /><strong>Generator.</strong> Mode <code>" +
+          mode +
+          "</code> " +
+          (running ? "is advancing time each frame" : state.proc.paused ? "is paused (time frozen)" : "is idle until you press start") +
+          ". The same symmetry group applies to each segment between consecutive samples.";
+
+        if (mode === "orbit") {
+          const sm = procSpeedMult(els.orbitSpeed);
+          body +=
+            "<br /><br /><strong>Orbit.</strong> Several radii Rᵢ are fixed; each angle θᵢ grows at its own rate. Sample point: <code>(x,y) = (x₀ + Rᵢ cos θᵢ, y₀ + Rᵢ sin θᵢ)</code>. " +
+            "Speed scale ≈ " +
+            sm.toFixed(2) +
+            "× relative to baseline; smaller radii can outrun larger ones because each θᵢ step is independent.";
+        } else if (mode === "spiral") {
+          body +=
+            "<br /><br /><strong>Spiral.</strong> Radius r(t) breathes between bounds while angle a(t) increases. The pen traces <code>(x,y) = (x₀ + r cos a, y₀ + r sin a)</code>: Archimedes-like growth/shrink with continuous rotation. ";
+        } else if (mode === "pulse") {
+          body +=
+            "<br /><br /><strong>Pulse.</strong> Radius is a sum of sinusoids in time, and the heading wobbles slightly: r(t) and ψ(t) feed <code>(x,y) = (x₀ + r cos ψ, y₀ + r sin ψ)</code>, so the path dances in and out from the center.";
+        } else if (mode === "lissajous") {
+          const rat = els.lissRatio.value.split(",").map(Number);
+          const a = rat[0];
+          const b = rat[1];
+          const phi = (Number(els.lissPhase.value) / 100) * Math.PI;
+          const phiPi = (Number(els.lissPhase.value) / 100).toFixed(2);
+          body +=
+            "<br /><br /><strong>Lissajous.</strong> Two orthogonal harmonic motions with frequency ratio <strong>a : b = " +
+            a +
+            " : " +
+            b +
+            "</strong>. With amplitude A ≈ B and phase φ = " +
+            phiPi +
+            "·π rad on the horizontal component:<br /><code>x = x₀ + A sin(a·t + φ)</code>, <code>y = y₀ + B sin(b·t)</code>. " +
+            "Closed curves appear when a/b is rational; the phase φ slides the horizontal wave relative to the vertical.";
+        } else if (mode === "harmonograph") {
+          const dampSlider = Number(els.harmDamping.value);
+          const d = 0.00005 + (dampSlider / 100) * 0.0004;
+          body +=
+            "<br /><br /><strong>Harmonograph.</strong> Each axis is a sum of two detuned sinusoids; the whole trace is scaled by a decaying envelope <code>e^(−d·t)</code> with d ≈ " +
+            d.toExponential(2) +
+            ". That models damped pendula: frequencies slowly beat while friction shrinks the figure toward the center. When the envelope is tiny the motion resets for another lace pass.";
+        }
+      }
+
+      els.mathSummary.innerHTML = body;
+    }
+
+    els.symmetry.addEventListener("input", function () {
+      refreshLabels();
+      refreshMathSummary();
+      redrawGuides();
+    });
+    ["brush", "opacity", "orbit-speed", "spiral-speed", "pulse-speed", "liss-phase", "liss-speed", "harm-damping", "harm-speed"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", function () {
+        refreshLabels();
+        refreshMathSummary();
+      });
+    });
+    els.lissRatio.addEventListener("change", refreshMathSummary);
+
+    ["reflect", "glow", "dot-mode", "guide-overlay"].forEach(function (id) {
+      document.getElementById(id).addEventListener("change", function () {
+        refreshMathSummary();
+        redrawGuides();
+      });
+    });
+
+    els.colorBg.addEventListener("input", function () {
+      state.bgHex = els.colorBg.value;
+      saveUndo();
+      fillBackground();
+      redrawGuides();
+      refreshMathSummary();
+    });
+
+    els.colorPrimary.addEventListener("input", refreshMathSummary);
+
+    els.rainbow.addEventListener("change", function () {
+      if (els.rainbow.checked) els.eraser.checked = false;
+      refreshMathSummary();
+    });
+    els.eraser.addEventListener("change", function () {
+      if (els.eraser.checked) els.rainbow.checked = false;
+      artCanvas.dataset.eraser = els.eraser.checked ? "true" : "false";
+      refreshMathSummary();
+    });
+
+    els.btnUndo.addEventListener("click", undo);
+    document.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault();
+        undo();
+      }
+    });
+
+    els.btnClear.addEventListener("click", function () {
+      stopProcedural(true);
+      saveUndo();
+      fillBackground();
+      syncProcUi();
+      redrawGuides();
+      refreshMathSummary();
+    });
+
+    els.btnSave.addEventListener("click", function () {
+      const out = document.createElement("canvas");
+      out.width = artCanvas.width;
+      out.height = artCanvas.height;
+      const octx = out.getContext("2d");
+      octx.fillStyle = state.bgHex;
+      octx.fillRect(0, 0, out.width, out.height);
+      octx.drawImage(artCanvas, 0, 0);
+      const a = document.createElement("a");
+      a.download = "mandala-explorer.png";
+      a.href = out.toDataURL("image/png");
+      a.click();
+    });
+
+    function selectSwatch(hex) {
+      els.colorPrimary.value = hex;
+      SWATCHES.forEach(function (_, i) {
+        const el = els.swatchRow.children[i];
+        if (el) el.dataset.selected = el.title === hex ? "true" : "false";
+      });
+      if (els.rainbow.checked) els.rainbow.checked = false;
+      refreshMathSummary();
+    }
+
+    SWATCHES.forEach(function (hex) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "swatch";
+      b.title = hex;
+      b.style.background = hex;
+      b.addEventListener("click", function () {
+        selectSwatch(hex);
+      });
+      els.swatchRow.appendChild(b);
+    });
+    selectSwatch(els.colorPrimary.value);
+
+    const PRESETS = {
+      flower: function () {
+        els.drawMode.value = "manual";
+        els.symmetry.value = "8";
+        els.brush.value = "4";
+        els.reflect.checked = true;
+        els.dotMode.checked = false;
+        els.glow.checked = true;
+        els.colorPrimary.value = "#f472b6";
+        selectSwatch("#f472b6");
+      },
+      starburst: function () {
+        els.drawMode.value = "manual";
+        els.symmetry.value = "16";
+        els.brush.value = "2";
+        els.dotMode.checked = true;
+        els.reflect.checked = true;
+        els.glow.checked = false;
+        els.colorPrimary.value = "#fbbf24";
+        selectSwatch("#fbbf24");
+      },
+      "orbit-bloom": function () {
+        els.drawMode.value = "orbit";
+        els.symmetry.value = "14";
+        els.brush.value = "2";
+        els.orbitSpeed.value = "7";
+        els.reflect.checked = true;
+        els.glow.checked = true;
+        els.colorPrimary.value = "#60a5fa";
+        selectSwatch("#60a5fa");
+      },
+      "liss-weave": function () {
+        els.drawMode.value = "lissajous";
+        els.symmetry.value = "12";
+        els.lissRatio.value = "3,4";
+        els.lissPhase.value = "50";
+        els.lissSpeed.value = "4";
+        els.brush.value = "2";
+        els.glow.checked = false;
+        els.colorPrimary.value = "#34d399";
+        selectSwatch("#34d399");
+      },
+      "harm-lace": function () {
+        els.drawMode.value = "harmonograph";
+        els.symmetry.value = "10";
+        els.harmDamping.value = "18";
+        els.harmSpeed.value = "6";
+        els.brush.value = "2";
+        els.glow.checked = true;
+        els.colorPrimary.value = "#c084fc";
+        selectSwatch("#c084fc");
+      },
+    };
+
+    document.querySelectorAll("[data-preset]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const key = btn.getAttribute("data-preset");
+        if (PRESETS[key]) {
+          stopProcedural(true);
+          PRESETS[key]();
+          showModePanels();
+          refreshLabels();
+          syncProcUi();
+          refreshMathSummary();
+          redrawGuides();
+        }
+      });
+    });
+
+    els.btnDefaults.addEventListener("click", function () {
+      stopProcedural(true);
+      els.drawMode.value = "manual";
+      els.symmetry.value = "12";
+      els.brush.value = "3";
+      els.opacity.value = "100";
+      els.reflect.checked = true;
+      els.glow.checked = false;
+      els.dotMode.checked = false;
+      els.colorPrimary.value = "#c084fc";
+      els.colorBg.value = "#0a0a12";
+      state.bgHex = els.colorBg.value;
+      els.rainbow.checked = false;
+      els.eraser.checked = false;
+      artCanvas.dataset.eraser = "false";
+      els.guideOverlay.checked = false;
+      els.orbitSpeed.value = "5";
+      els.spiralSpeed.value = "5";
+      els.pulseSpeed.value = "5";
+      els.lissRatio.value = "2,3";
+      els.lissPhase.value = "32";
+      els.lissSpeed.value = "5";
+      els.harmDamping.value = "12";
+      els.harmSpeed.value = "5";
+      fillBackground();
+      showModePanels();
+      selectSwatch("#c084fc");
+      refreshLabels();
+      syncProcUi();
+      redrawGuides();
+      refreshMathSummary();
+    });
+
+    window.addEventListener("resize", function () {
+      clearTimeout(window.__mandalaResizeT);
+      window.__mandalaResizeT = setTimeout(resizeCanvases, 120);
+    });
+
+    window.addEventListener("math-explorer-themechange", function () {
+      redrawGuides();
+    });
+
+    state.bgHex = els.colorBg.value;
+    fillBackground();
+    showModePanels();
+    refreshLabels();
+    syncProcUi();
+    resizeCanvases();
+    refreshMathSummary();
+    redrawGuides();
+  })();
+  </script>
+</body>
+</html>

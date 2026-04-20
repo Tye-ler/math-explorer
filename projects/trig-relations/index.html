@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trig Relations</title>
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 960px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255,255,255,0.10);
+      --line-strong: rgba(255,255,255,0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255,255,255,0.14);
+      --viz-grid: rgba(255,255,255,0.08);
+      --viz-axis: rgba(255,255,255,0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+    }
+
+    :root[data-theme="light"] {
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0,0,0,0.08);
+      --line-strong: rgba(0,0,0,0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0,0,0,0.10);
+      --viz-grid: rgba(0,0,0,0.05);
+      --viz-axis: rgba(0,0,0,0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ta-site-header,
+    .ta-site-header * {
+      box-sizing: border-box;
+    }
+
+    .ta-site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .ta-site-nav-end {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      text-align: center;
+      min-height: 28px;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    .theme-toggle:focus-visible,
+    .trig-controls .control input[type="range"]:focus-visible,
+    .trig-controls button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .ta-site-project-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - var(--ta-site-header-height));
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-2);
+    }
+
+    .trig-viz-frame {
+      border: 1px solid var(--viz-frame);
+      border-radius: 6px;
+      background: var(--viz-bg);
+      padding: var(--space-2);
+      line-height: 0;
+    }
+
+    .trig-viz-frame canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .trig-controls {
+      display: flex;
+      gap: var(--space-4);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: min(100%, var(--max-width));
+    }
+
+    .trig-controls .control {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 12px;
+    }
+
+    .trig-controls .control label {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .trig-controls .control input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100px;
+      height: 16px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .trig-controls .control input[type="range"]::-webkit-slider-runnable-track {
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .trig-controls .control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 4px;
+      height: 14px;
+      margin-top: -6.5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .trig-controls .control input[type="range"]::-moz-range-track {
+      height: 1px;
+      background: var(--line-strong);
+      border: 0;
+    }
+
+    .trig-controls .control input[type="range"]::-moz-range-thumb {
+      width: 4px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--control-text);
+    }
+
+    .trig-controls .control input[type="range"]:hover::-webkit-slider-runnable-track,
+    .trig-controls .control input[type="range"]:focus-visible::-webkit-slider-runnable-track,
+    .trig-controls .control input[type="range"]:hover::-moz-range-track,
+    .trig-controls .control input[type="range"]:focus-visible::-moz-range-track {
+      background: var(--control-text-hover);
+    }
+
+    .trig-controls .control input[type="range"]:hover::-webkit-slider-thumb,
+    .trig-controls .control input[type="range"]:focus-visible::-webkit-slider-thumb,
+    .trig-controls .control input[type="range"]:hover::-moz-range-thumb,
+    .trig-controls .control input[type="range"]:focus-visible::-moz-range-thumb {
+      border-color: var(--control-text-hover);
+      background: var(--control-text-hover);
+    }
+
+    .trig-controls .val {
+      min-width: 32px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .trig-controls button {
+      min-height: 28px;
+      background: none;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .trig-controls button:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ta-site-link {
+        transition: none;
+      }
+      .theme-toggle,
+      .trig-controls button {
+        transition: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .ta-site-nav-end {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+
+      .ta-site-project-shell {
+        min-height: calc(100vh - var(--ta-site-header-height-stacked));
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="ta-site-header" aria-label="Site header">
+  <div class="ta-site-nav">
+    <a class="ta-site-brand" href="../">Tyeler Ahern</a>
+    <div class="ta-site-nav-end">
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" href="../">Home</a>
+        <a class="ta-site-link" href="../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+    </div>
+  </div>
+</header>
+
+<main class="ta-site-project-shell">
+  <div class="trig-viz-frame">
+    <canvas id="c" width="600" height="600"></canvas>
+  </div>
+
+  <div class="trig-controls controls">
+    <div class="control">
+      <label for="speed">speed</label>
+      <input type="range" id="speed" min="1" max="20" value="1">
+      <span class="val" id="speed-val">1</span>
+    </div>
+    <div class="control">
+      <label for="scale">scale</label>
+      <input type="range" id="scale" min="20" max="140" value="140">
+      <span class="val" id="scale-val">140</span>
+    </div>
+    <button type="button" id="pause">pause</button>
+    <button type="button" id="ghosts">ghosts off</button>
+  </div>
+</main>
+
+<script>
+(() => {
+  const rootElement = document.documentElement;
+  const themeToggle = document.querySelector("#theme-toggle");
+  const mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  let themeMode = "auto";
+
+  initializeTheme();
+
+  function initializeTheme() {
+    themeMode = "auto";
+    applyTheme(themeMode);
+    updateThemeToggleLabel();
+
+    if (themeToggle) {
+      themeToggle.addEventListener("click", cycleThemeMode);
+    }
+
+    if (mediaQuery) {
+      const handleChange = () => {
+        if (themeMode === "auto") {
+          applyTheme("auto");
+          updateThemeToggleLabel();
+        }
+      };
+
+      if (typeof mediaQuery.addEventListener === "function") {
+        mediaQuery.addEventListener("change", handleChange);
+      } else if (typeof mediaQuery.addListener === "function") {
+        mediaQuery.addListener(handleChange);
+      }
+    }
+  }
+
+  function applyTheme(mode) {
+    rootElement.setAttribute("data-theme", resolveTheme(mode));
+    window.dispatchEvent(new CustomEvent("ta-theme-applied"));
+  }
+
+  function cycleThemeMode() {
+    if (themeMode === "auto") {
+      themeMode = resolveTheme("auto") === "dark" ? "light" : "dark";
+    } else if (themeMode === "light") {
+      themeMode = "dark";
+    } else {
+      themeMode = "auto";
+    }
+
+    applyTheme(themeMode);
+    updateThemeToggleLabel();
+  }
+
+  function updateThemeToggleLabel() {
+    if (!themeToggle) return;
+    themeToggle.textContent = `theme: ${themeMode}`;
+  }
+
+  function resolveTheme(mode) {
+    if (mode === "auto") {
+      return mediaQuery && mediaQuery.matches ? "dark" : "light";
+    }
+    return mode;
+  }
+})();
+</script>
+
+<script>
+// ─── canvas setup ───
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d');
+const W = cvs.width;
+const H = cvs.height;
+const cx = W / 2;   // center x
+const cy = H / 2;   // center y
+
+const viz = {
+  bg: '#1f1f1f',
+  grid: 'rgba(255,255,255,0.08)',
+  axis: 'rgba(255,255,255,0.24)',
+  frame: 'rgba(255,255,255,0.14)',
+  text: '#cdcdcd',
+  highlight: '#e1e1e1',
+  point: '#5f8fe8',
+};
+
+function readVizCss() {
+  const s = getComputedStyle(document.documentElement);
+  viz.bg = s.getPropertyValue('--viz-bg').trim() || viz.bg;
+  viz.grid = s.getPropertyValue('--viz-grid').trim() || viz.grid;
+  viz.axis = s.getPropertyValue('--viz-axis').trim() || viz.axis;
+  viz.frame = s.getPropertyValue('--viz-frame').trim() || viz.frame;
+  viz.text = s.getPropertyValue('--viz-text').trim() || viz.text;
+  viz.highlight = s.getPropertyValue('--viz-highlight').trim() || viz.highlight;
+  viz.point = s.getPropertyValue('--viz-point').trim() || viz.point;
+}
+
+readVizCss();
+window.addEventListener('ta-theme-applied', () => {
+  readVizCss();
+  draw();
+});
+
+// ─── state ───
+let t0 = null;
+let paused = false;
+let pausedAt = 0;
+let theta = 0;
+
+// ─── controls ───
+const speedEl = document.getElementById('speed');
+const scaleEl = document.getElementById('scale');
+const pauseBtn = document.getElementById('pause');
+const ghostsBtn = document.getElementById('ghosts');
+
+speedEl.addEventListener('input', () => {
+  document.getElementById('speed-val').textContent = speedEl.value;
+});
+scaleEl.addEventListener('input', () => {
+  document.getElementById('scale-val').textContent = scaleEl.value;
+});
+pauseBtn.addEventListener('click', () => {
+  paused = !paused;
+  pauseBtn.textContent = paused ? 'resume' : 'pause';
+  if (!paused) t0 = null; // reset timer offset on resume
+});
+ghostsBtn.addEventListener('click', () => {
+  ghostsEnabled = !ghostsEnabled;
+  ghostsBtn.textContent = ghostsEnabled ? 'ghosts off' : 'ghosts on';
+});
+
+// ─── helpers ───
+function line(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function dot(x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function grid() {
+  const step = 40;
+  ctx.strokeStyle = viz.grid;
+  ctx.lineWidth = 0.5;
+  for (let x = cx % step; x < W; x += step) line(x, 0, x, H);
+  for (let y = cy % step; y < H; y += step) line(0, y, W, y);
+
+  // axes
+  ctx.strokeStyle = viz.axis;
+  ctx.lineWidth = 1;
+  line(0, cy, W, cy);
+  line(cx, 0, cx, H);
+}
+
+function drawLinesAt(th, alpha, xOffset) {
+  const a = -th + Math.PI / 2;
+  const C = Math.cos(a);
+  const S = Math.sin(a);
+  const R = Number(scaleEl.value);
+  const ppx = cx + R * C - xOffset;
+  const ppy = cy - R * S;
+  const sTipX = cx + R / C - xOffset;
+  const cTipY = cy - R / S;
+
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = .5;
+
+  //ctx.strokeStyle = '#34eb46'; line(cx - xOffset, ppy, ppx, ppy);
+  //ctx.strokeStyle = '#ff0000'; line(ppx, cy, ppx, ppy);
+  ctx.strokeStyle = '#ebc034'; line(ppx, ppy, sTipX, cy);
+  //ctx.strokeStyle = '#eb34eb'; line(cx - xOffset, cy, sTipX, cy);
+  ctx.strokeStyle = '#f56f27'; line(ppx, ppy, cx - xOffset, cTipY);
+  //ctx.strokeStyle = '#34e8eb'; line(cx - xOffset, cy, cx - xOffset, cTipY);
+
+  ctx.globalAlpha = 1;
+}
+
+let ghostsEnabled = true;
+let frameCount = 0;
+const SNAPSHOT_EVERY = 20;  // adjust this — lower = more ghosts, higher = fewer
+const snapshots = [];
+const SNAP_DURATION = Math.PI * 1; // fade over one revolution
+// ─── draw ───
+// theta sweeps 0 → 2π continuously.
+// R is "unit circle radius" — controlled by the scale slider.
+function draw() {
+  const R = Number(scaleEl.value);
+  const angle = theta - Math.PI / 2;
+  const C = Math.cos(-angle);
+  const S = Math.sin(-angle);
+
+  // clear
+  ctx.fillStyle = viz.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  grid();
+  if (ghostsEnabled) {
+    frameCount++;
+    if (frameCount % SNAPSHOT_EVERY === 0) {
+      snapshots.push(theta);
+    }
+    const snapCutoff = theta - SNAP_DURATION;
+    while (snapshots.length > 0 && snapshots[0] < snapCutoff) snapshots.shift();
+
+    for (const snap of snapshots) {
+      const age = (snap - snapCutoff) / SNAP_DURATION; // 0=oldest, 1=newest
+      const xOffset = (1 - age) * cx; // newest=0, oldest=shifted full cx to the left
+      drawLinesAt(snap, age * 0.4, xOffset);
+    }
+  }
+  // ── unit circle ──
+  ctx.strokeStyle = viz.frame;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // ── point on circle ──
+  const px = cx + R * C;
+  const py = cy - R * S; // subtract because canvas y is flipped
+
+  const secTipX = cx + R / C;
+  const cscTipY = cy - R / S;
+
+  const tanTipX = cx + R;
+  const tanTipY = cy - R * S / C;
+
+  const rLabelX = ((cx + px) / 2) + 15;
+  const rLabelY = ((cy + py) / 2) + 15;
+  const cosLabelX = ((cx + px) / 2);
+  const cosLabelY = py - 5;
+  const sinLabelX = px + 20;
+  const sinLabelY = ((cy + py) / 2);
+  const tanLabelX = ((px + secTipX) / 2) + 15;
+  const tanLabelY = ((py + cy) / 2) - 15;
+  const secLabelX = ((cx + secTipX) / 2) + 15;
+  const secLabelY = cy + 15;
+  const cotLabelX = ((cx + px) / 2) + 15;
+  const cotLabelY = ((py + cscTipY) / 2) - 15;
+  const cscLabelX = cx + 20;
+  const cscLabelY = ((cy + cscTipY) / 2) - 15;
+
+
+  // ── trig functions ──
+  ctx.strokeStyle = viz.highlight;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + (theta % (Math.PI * 2)), false);  // circle around radius
+  ctx.stroke();
+
+  ctx.strokeStyle = viz.text;
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 1.5;
+  line(cx, cy, px, py);                 // radius
+  ctx.globalAlpha = 1;
+
+  ctx.strokeStyle = '#34eb46';
+  ctx.lineWidth = 2;
+  line(cx, py, px, py);                 // cos (horizontal)
+
+  ctx.strokeStyle = '#ff0000';
+  ctx.lineWidth = 2;
+  line(px, cy, px, py);                 // sin (vertical)
+
+  ctx.strokeStyle = '#ebc034';
+  ctx.lineWidth = 2;
+  line(px, py, secTipX, cy);            // tan (from tip of sin/cos)
+
+  ctx.strokeStyle = '#eb34eb';
+  ctx.lineWidth = 2;
+  line(cx, cy, secTipX, cy);            // sec (connects from center to tan)
+
+  ctx.strokeStyle = '#f56f27';
+  ctx.lineWidth = 2;
+  line(px, py, cx, cscTipY);            // cot ()
+
+  ctx.strokeStyle = '#34e8eb';
+  ctx.lineWidth = 2;
+  line(cx, cy, cx, cscTipY);            // csc ()
+
+
+/*
+  ctx.strokeStyle = '#ebc034';
+  ctx.lineWidth = 2;
+  line(tanTipX, cy, tanTipX, tanTipY);  // tan (horizontal from (1, 0))
+*/
+
+/*
+  ctx.strokeStyle = '#eb34eb';
+  ctx.lineWidth = 2;
+  line(cx, cy, tanTipX, tanTipY);       // sec (connects from center to tan)
+*/
+  // ── dots ──
+  ctx.globalAlpha = 0.45;
+  dot(cx, cy, 3, viz.axis);
+  ctx.globalAlpha = 1;
+  dot(px, py, 5, viz.highlight);
+
+  // ── label ──
+  ctx.font = '11px monospace';
+  ctx.fillStyle = viz.text;
+  ctx.globalAlpha = 0.35;
+  ctx.textAlign = 'center';
+  ctx.fillText(`θ = ${(theta * 180 / Math.PI % 360).toFixed(1)}°`, cx, H - 16);
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = viz.text;
+  ctx.font = '13px monospace';
+  ctx.fillText('r = 1', rLabelX, rLabelY);
+
+  ctx.fillStyle = '#34eb46';
+  ctx.font = '13px monospace';
+  ctx.fillText('cos θ', cosLabelX, cosLabelY);
+
+  ctx.fillStyle = '#ff0000';
+  ctx.font = '13px monospace';
+  ctx.fillText('sin θ', sinLabelX, sinLabelY);
+
+  ctx.fillStyle = '#ebc034';
+  ctx.font = '13px monospace';
+  ctx.fillText('tan θ', tanLabelX, tanLabelY);
+
+  ctx.fillStyle = '#eb34eb';
+  ctx.font = '13px monospace';
+  ctx.fillText('sec θ', secLabelX, secLabelY);
+
+  ctx.fillStyle = '#f56f27';
+  ctx.font = '13px monospace';
+  ctx.fillText('cot θ', cotLabelX, cotLabelY);
+
+  ctx.fillStyle = '#34e8eb';
+  ctx.font = '13px monospace';
+  ctx.fillText('csc θ', cscLabelX, cscLabelY);
+}
+
+// ─── animation loop ──────────────────────────────────────────
+function loop(ts) {
+  if (!paused) {
+    if (!t0) t0 = ts;
+    const speed = Number(speedEl.value);
+    // theta increases over time; speed slider controls how fast (radians/sec)
+    theta = ((ts - t0) / 1000) * (speed / 50) * Math.PI * 2;
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
