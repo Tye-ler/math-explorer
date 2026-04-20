@@ -21,6 +21,7 @@
 
     :root,
     :root[data-theme="dark"] {
+      color-scheme: dark;
       --bg-start: #171717;
       --bg-end: #1d1d1d;
       --text: #d7d7d7;
@@ -30,6 +31,8 @@
       --control-text: #aaaaaa;
       --control-text-hover: #e0e0e0;
       --menu-bg: #262626;
+      --select-field-bg: var(--menu-bg);
+      --select-arrow-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' width='10' height='6'%3E%3Cpath fill='%23aaaaaa' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
 
       --viz-bg: #1f1f1f;
       --viz-frame: rgba(255,255,255,0.14);
@@ -44,6 +47,7 @@
     }
 
     :root[data-theme="light"] {
+      color-scheme: light;
       --bg-start: #f7f7f5;
       --bg-end: #efefec;
       --text: #222222;
@@ -53,6 +57,8 @@
       --control-text: #4f4f4f;
       --control-text-hover: #1f1f1f;
       --menu-bg: #e8e8e4;
+      --select-field-bg: transparent;
+      --select-arrow-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' width='10' height='6'%3E%3Cpath fill='%234f4f4f' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
       --accent: #4a7bd1;
 
       --viz-bg: #ffffff;
@@ -436,7 +442,6 @@
     }
 
     .control input:not([type="checkbox"]):not([type="radio"]),
-    .control select,
     .control textarea,
     button {
       min-height: 28px;
@@ -448,7 +453,27 @@
       cursor: pointer;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
-      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+    }
+
+    .control select {
+      min-height: 28px;
+      border: 1px solid var(--line-strong);
+      color: var(--control-text);
+      padding: 4px 2rem 4px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      transition: border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: var(--select-field-bg);
+      background-image: var(--select-arrow-svg);
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 10px 6px;
     }
 
     .control input:not([type="checkbox"]):not([type="radio"]):hover,
@@ -459,12 +484,43 @@
       color: var(--control-text-hover);
     }
 
+    :root[data-theme="dark"] .control select:hover {
+      background-color: var(--menu-bg);
+    }
+
     button:disabled,
     button[disabled] {
       opacity: 0.45;
       cursor: not-allowed;
       border-color: var(--line);
       color: var(--muted);
+    }
+
+    .control select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: var(--line);
+      color: var(--muted);
+      background-color: var(--select-field-bg);
+      background-image: var(--select-arrow-svg);
+    }
+
+    :root[data-theme="dark"] .control select:disabled {
+      background-color: rgba(38, 38, 38, 0.65);
+    }
+
+    :root[data-theme="light"] .control select:disabled {
+      background-color: rgba(255, 255, 255, 0.45);
+    }
+
+    :root[data-theme="dark"] .control select option {
+      background-color: var(--menu-bg);
+      color: var(--control-text);
+    }
+
+    :root[data-theme="light"] .control select option {
+      background-color: #fff;
+      color: var(--control-text);
     }
 
     .control input[type="number"]::-webkit-outer-spin-button,
@@ -753,6 +809,29 @@
                   <label for="cell-spacing">cell spacing / scale</label>
                   <input id="cell-spacing" type="range" min="0.2" max="2" step="0.02" value="1" />
                 </div>
+                <div class="rw-rule-section" id="square-overlay-section" aria-label="Square spiral duplicate layer">
+                  <span class="rw-group-label">duplicate prime layer</span>
+                  <p class="rw-hint">Exact lattice experiment (exact render mode only). Focus the plot and use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to translate by ±1 step.</p>
+                  <div class="rw-check-line">
+                    <input id="ss-overlay-show" type="checkbox" />
+                    <label for="ss-overlay-show">Show duplicate prime layer</label>
+                  </div>
+                  <div class="rw-check-line">
+                    <input id="ss-overlay-overlap-only" type="checkbox" />
+                    <label for="ss-overlay-overlap-only">Show prime overlap only</label>
+                  </div>
+                  <div class="rw-check-line">
+                    <input id="ss-overlay-flip" type="checkbox" />
+                    <label for="ss-overlay-flip">Flip duplicate sheet (left–right)</label>
+                  </div>
+                  <div class="control" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+                    <span style="opacity:0.85;">rotate</span>
+                    <button type="button" class="stepper-button" id="ss-rot-left" title="Rotate duplicate −90°">−90°</button>
+                    <button type="button" class="stepper-button" id="ss-rot-right" title="Rotate duplicate +90°">+90°</button>
+                    <span id="ss-rot-readout" style="min-width:3.5rem;" aria-live="polite">0°</span>
+                  </div>
+                  <p class="rw-hint" id="ss-dup-readout" aria-live="polite">translation (dx, dy) = (0, 0)</p>
+                </div>
               </div>
 
               <div id="prime-stack-controls" class="control-stack mode-hidden">
@@ -811,6 +890,11 @@
                   <div class="rw-check-line"><input id="rw-collision-persist" type="checkbox" checked /><label for="rw-collision-persist">Persist switched turn direction</label></div>
                   <div class="rw-check-line"><input id="rw-collision-opposite" type="checkbox" /><label for="rw-collision-opposite">Try opposite turn if first fallback fails</label></div>
                   <div class="rw-check-line"><input id="rw-collision-terminate" type="checkbox" checked /><label for="rw-collision-terminate">Terminate if fallback also collides</label></div>
+                  <div class="rw-check-line"><input id="rw-turn-memory-backtrack" type="checkbox" /><label for="rw-turn-memory-backtrack">Use turn-memory backtracking</label></div>
+                  <div class="control rw-turn-memory-depth-control">
+                    <label for="rw-turn-memory-depth">Turn memory depth</label>
+                    <input id="rw-turn-memory-depth" type="number" min="1" max="20" step="1" value="3" />
+                  </div>
                   <p class="rw-hint" id="rw-collision-hint"></p>
                 </div>
 
@@ -833,6 +917,11 @@
           <h2 id="visualization-title">canvas</h2>
           <div class="surface">
             <div class="visualization-box">
+              <div class="viz-view-toolbar" style="display:flex; justify-content:flex-end; margin-bottom:0.35rem;">
+                <button type="button" id="reset-view-btn" class="stepper-button" title="Reset pan and zoom to fit the current plot in the canvas">
+                  Reset view
+                </button>
+              </div>
               <div id="viz-mount" class="viz-mount" aria-label="prime distribution plot"></div>
               <div id="plot-tooltip-hover" class="plot-tooltip" aria-hidden="true"></div>
               <div id="plot-tooltip-tap" class="plot-tooltip plot-tooltip--tap" aria-hidden="true"></div>
@@ -863,6 +952,8 @@
       /** Above this, exact spiral data is built in a Web Worker (main-thread sieve/points stay bounded). */
       const N_SYNC_EXACT_MAX = 65536;
       const AGGREGATE_GRID_SIZE = 320;
+      /** When aggregate tier is active, suffix tracks zoom/grid/overlay so worker data can refine. */
+      let lastRenderedAggregateSuffix = "";
       const POLAR_GUIDE_MAX_N = 120000;
       const FIT_PADDING = 28;
 
@@ -1044,6 +1135,8 @@
           rwCollisionPersist: document.getElementById("rw-collision-persist"),
           rwCollisionOpposite: document.getElementById("rw-collision-opposite"),
           rwCollisionTerminate: document.getElementById("rw-collision-terminate"),
+          rwTurnMemoryBacktrack: document.getElementById("rw-turn-memory-backtrack"),
+          rwTurnMemoryDepth: document.getElementById("rw-turn-memory-depth"),
           rwCollisionHint: document.getElementById("rw-collision-hint"),
           rwShowStart: document.getElementById("rw-show-start"),
           rwShowEnd: document.getElementById("rw-show-end"),
@@ -1051,6 +1144,7 @@
           rwShowFallback: document.getElementById("rw-show-fallback"),
           rwColorTriggers: document.getElementById("rw-color-triggers"),
           vizMount: document.getElementById("viz-mount"),
+          resetViewBtn: document.getElementById("reset-view-btn"),
           vizBox: document.querySelector(".visualization-box"),
           plotTooltipHover: document.getElementById("plot-tooltip-hover"),
           plotTooltipTap: document.getElementById("plot-tooltip-tap"),
@@ -1058,6 +1152,13 @@
           renderTier: document.getElementById("render-tier"),
           renderStatus: document.getElementById("render-status"),
           renderTierWrap: document.getElementById("render-tier-wrap"),
+          ssOverlayShow: document.getElementById("ss-overlay-show"),
+          ssOverlayOverlapOnly: document.getElementById("ss-overlay-overlap-only"),
+          ssOverlayFlip: document.getElementById("ss-overlay-flip"),
+          ssRotLeft: document.getElementById("ss-rot-left"),
+          ssRotRight: document.getElementById("ss-rot-right"),
+          ssRotReadout: document.getElementById("ss-rot-readout"),
+          ssDupReadout: document.getElementById("ss-dup-readout"),
         };
 
         const pageShell = document.querySelector(".page-shell");
@@ -1065,6 +1166,8 @@
 
         const ZOOM_MIN = 0.25;
         const ZOOM_MAX = 64;
+        /** Guard pan offsets so a bad wheel/pinch cannot push the plot irrecoverably far. */
+        const VIEW_PAN_MAX_ABS = 5e6;
         const M_DERIVED_FALLBACK = 12;
         let viewZoom = 1;
         let viewPanX = 0;
@@ -1101,6 +1204,30 @@
         let spiralWorkerTargetKey = "";
         let lastWorkerSurvivor = null;
         let lastEffectiveRenderLabel = "";
+
+        /** Square spiral duplicate-layer overlay (exact lattice, exact render only). */
+        const SQ_OV_ORIGINAL = "#f44336";
+        const SQ_OV_DUPLICATE = "#eab308";
+        const SQ_OV_OVERLAP = "#22c55e";
+
+        function hexToRgba(hex, alpha) {
+          const h = String(hex || "").replace("#", "");
+          if (h.length !== 6 || !/^[0-9a-fA-F]+$/.test(h)) return hex;
+          const r = parseInt(h.slice(0, 2), 16);
+          const g = parseInt(h.slice(2, 4), 16);
+          const b = parseInt(h.slice(4, 6), 16);
+          return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+        }
+        let ssOvRotQ = 0;
+        let ssOvDx = 0;
+        let ssOvDy = 0;
+        let squareOvLatticeCacheKey = "";
+        let squareOvPrimeGx = null;
+        let squareOvPrimeGy = null;
+        let squareOvPrimeLen = 0;
+        let squareOvSetsSig = "";
+        let squareOvCachedOSet = null;
+        let squareOvCachedDSet = null;
 
         function getPrimeExplorerPerf() {
           const hr = pePerf.hitBinReuse;
@@ -1173,16 +1300,64 @@
           el.style.top = `${top}px`;
         }
 
+        function isFiniteNum(x) {
+          return typeof x === "number" && Number.isFinite(x);
+        }
+
+        function sanitizeViewStateClamp() {
+          if (!isFiniteNum(viewZoom) || viewZoom <= 0) viewZoom = 1;
+          viewZoom = clamp(viewZoom, ZOOM_MIN, ZOOM_MAX);
+          if (!isFiniteNum(viewPanX)) viewPanX = 0;
+          if (!isFiniteNum(viewPanY)) viewPanY = 0;
+          viewPanX = clamp(viewPanX, -VIEW_PAN_MAX_ABS, VIEW_PAN_MAX_ABS);
+          viewPanY = clamp(viewPanY, -VIEW_PAN_MAX_ABS, VIEW_PAN_MAX_ABS);
+        }
+
+        /** Clears manual pan/zoom and pending wheel anchor (identity fit for current data on next draw). */
+        function resetViewToFit() {
+          viewZoom = 1;
+          viewPanX = 0;
+          viewPanY = 0;
+          pendingCursorPan = null;
+        }
+
+        function applyPendingPanIfValid(baseWorldToCanvas) {
+          if (!pendingCursorPan) return;
+          const pc = pendingCursorPan;
+          if (!isFiniteNum(pc.mx) || !isFiniteNum(pc.my) || !isFiniteNum(pc.worldX) || !isFiniteNum(pc.worldY)) {
+            pendingCursorPan = null;
+            return;
+          }
+          const p0 = baseWorldToCanvas(pc.worldX, pc.worldY);
+          if (!isFiniteNum(p0.x) || !isFiniteNum(p0.y)) {
+            pendingCursorPan = null;
+            return;
+          }
+          viewPanX = pc.mx - p0.x;
+          viewPanY = pc.my - p0.y;
+          pendingCursorPan = null;
+          sanitizeViewStateClamp();
+        }
+
         function canvasInnerToWorldFromLast(ix, iy) {
           const v = viewLast;
           if (!v || !v.ready) return null;
+          if (!isFiniteNum(ix) || !isFiniteNum(iy)) return null;
           if (v.type === "polar") {
-            return { x: (ix - v.cx) / v.scale, y: -(iy - v.cy) / v.scale };
+            const sc = v.scale;
+            if (!isFiniteNum(sc) || sc === 0) return null;
+            const wx = (ix - v.cx) / sc;
+            const wy = -(iy - v.cy) / sc;
+            if (!isFiniteNum(wx) || !isFiniteNum(wy)) return null;
+            return { x: wx, y: wy };
           }
-          return {
-            x: ((ix - v.cx) * v.cell) / v.latticeS,
-            y: (-(iy - v.cy) * v.cell) / v.latticeS,
-          };
+          const ls = v.latticeS;
+          const c = v.cell;
+          if (!isFiniteNum(ls) || ls === 0 || !isFiniteNum(c) || c === 0) return null;
+          const wx = ((ix - v.cx) * c) / ls;
+          const wy = (-(iy - v.cy) * c) / ls;
+          if (!isFiniteNum(wx) || !isFiniteNum(wy)) return null;
+          return { x: wx, y: wy };
         }
 
         function nearestHitPoint(clientX, clientY) {
@@ -1368,6 +1543,27 @@
             els.vizMount.innerHTML = "";
             els.vizMount.appendChild(canvas);
             ctx = canvas.getContext("2d");
+            canvas.setAttribute("tabindex", "0");
+            canvas.title =
+              "Click to focus the plot. With square spiral duplicate layer on, WASD moves the duplicate by ±1 lattice step.";
+            canvas.addEventListener("keydown", (e) => {
+              if (!els.plotMode || els.plotMode.value !== "square") return;
+              if (!els.ssOverlayShow || !els.ssOverlayShow.checked || els.ssOverlayShow.disabled) return;
+              const tag = (e.target && e.target.tagName) || "";
+              if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+              if (document.activeElement !== canvas) return;
+              const k = e.key;
+              if (k !== "w" && k !== "W" && k !== "a" && k !== "A" && k !== "s" && k !== "S" && k !== "d" && k !== "D") {
+                return;
+              }
+              e.preventDefault();
+              const kk = k.toLowerCase();
+              if (kk === "w") ssOvDy += 1;
+              else if (kk === "s") ssOvDy -= 1;
+              else if (kk === "a") ssOvDx -= 1;
+              else if (kk === "d") ssOvDx += 1;
+              scheduleViewRedraw();
+            });
             function onPanDragMove(e) {
               if (!panDrag) return;
               viewPanX = panDrag.origPanX + (e.clientX - panDrag.startClientX);
@@ -1389,13 +1585,15 @@
                 const mx = e.clientX - rect.left;
                 const my = e.clientY - rect.top;
                 const factor = Math.exp(-e.deltaY * 0.0015);
+                sanitizeViewStateClamp();
                 const newZoom = clamp(viewZoom * factor, ZOOM_MIN, ZOOM_MAX);
                 if (newZoom === viewZoom) return;
                 const ix = mx - viewPanX;
                 const iy = my - viewPanY;
                 const world = canvasInnerToWorldFromLast(ix, iy);
                 viewZoom = newZoom;
-                if (world) {
+                sanitizeViewStateClamp();
+                if (world && isFiniteNum(world.x) && isFiniteNum(world.y)) {
                   pendingCursorPan = { mx, my, worldX: world.x, worldY: world.y };
                 }
                 scheduleViewRedraw();
@@ -1406,6 +1604,15 @@
             canvas.addEventListener("mousedown", (e) => {
               if (e.button !== 0) return;
               e.preventDefault();
+              if (
+                els.plotMode &&
+                els.plotMode.value === "square" &&
+                els.ssOverlayShow &&
+                els.ssOverlayShow.checked &&
+                !els.ssOverlayShow.disabled
+              ) {
+                canvas.focus({ preventScroll: true });
+              }
               hideHoverTooltip();
               panDrag = {
                 startClientX: e.clientX,
@@ -1433,6 +1640,7 @@
                   const d = touchDistance(e.touches[0], e.touches[1]);
                   const ratio = d / pinchStartDist;
                   viewZoom = clamp(pinchStartZoom * ratio, ZOOM_MIN, ZOOM_MAX);
+                  sanitizeViewStateClamp();
                   scheduleViewRedraw();
                 }
               },
@@ -1506,6 +1714,8 @@
             els.rwCollisionPersist,
             els.rwCollisionOpposite,
             els.rwCollisionTerminate,
+            els.rwTurnMemoryBacktrack,
+            els.rwTurnMemoryDepth,
             els.rwShowStart,
             els.rwShowEnd,
             els.rwHighlightPrimeTurns,
@@ -1513,6 +1723,9 @@
             els.rwColorTriggers,
             els.primeStackDepthGroup,
             els.renderTier,
+            els.ssOverlayShow,
+            els.ssOverlayOverlapOnly,
+            els.ssOverlayFlip,
           ].forEach((el) => {
             if (el) {
               el.addEventListener("input", rerender);
@@ -1522,7 +1735,15 @@
 
           if (els.plotMode) {
             els.plotMode.addEventListener("change", () => {
+              resetViewToFit();
               syncModePanels();
+              renderAll();
+            });
+          }
+
+          if (els.resetViewBtn) {
+            els.resetViewBtn.addEventListener("click", () => {
+              resetViewToFit();
               renderAll();
             });
           }
@@ -1539,6 +1760,19 @@
               pageShell.setAttribute("data-layout", next);
               layoutToggle.textContent = `layout: ${next}`;
               renderAll();
+            });
+          }
+
+          if (els.ssRotLeft) {
+            els.ssRotLeft.addEventListener("click", () => {
+              ssOvRotQ = (ssOvRotQ + 3) % 4;
+              scheduleViewRedraw();
+            });
+          }
+          if (els.ssRotRight) {
+            els.ssRotRight.addEventListener("click", () => {
+              ssOvRotQ = (ssOvRotQ + 1) % 4;
+              scheduleViewRedraw();
             });
           }
         }
@@ -1650,6 +1884,20 @@
         let viewRedrawRaf = false;
         function scheduleViewRedraw() {
           if (viewRedrawRaf) return;
+          const N = clamp(Math.floor(Number(els.maxN && els.maxN.value) || 1), 1, N_MAX);
+          const plotMode = els.plotMode ? els.plotMode.value : "polar";
+          const rectForAggKey = els.vizMount ? els.vizMount.getBoundingClientRect() : { width: 400 };
+          const cssWKey = Math.max(200, Math.floor(rectForAggKey.width || 400));
+          const innerWKey = Math.max(1, cssWKey - FIT_PADDING * 2);
+          const nextSuffix = aggregateCacheExtraForWorker(N, plotMode, innerWKey);
+          if (nextSuffix && nextSuffix !== lastRenderedAggregateSuffix) {
+            viewRedrawRaf = true;
+            requestAnimationFrame(function () {
+              viewRedrawRaf = false;
+              renderAll();
+            });
+            return;
+          }
           viewRedrawRaf = true;
           requestAnimationFrame(function onViewRaf() {
             viewRedrawRaf = false;
@@ -1847,6 +2095,62 @@
               gx[i] = col;
               gy[i] = sh[col];
             }
+          }
+        }
+
+        /**
+         * Duplicate overlay transform order: flip L/R → quarter-turns CCW about origin → integer translate.
+         * Flip: (x,y) → (−x, y). Rotation q ∈ {0,1,2,3} is q × 90° CCW: (x,y) → (−y, x) per step.
+         */
+        function transformSquareDupLattice(x, y, flipLR, rotQ, dx, dy) {
+          let ax = x | 0;
+          let ay = y | 0;
+          if (flipLR) ax = -ax;
+          let q = ((rotQ % 4) + 4) % 4;
+          for (let i = 0; i < q; i++) {
+            const nx = -ay;
+            const ny = ax;
+            ax = nx;
+            ay = ny;
+          }
+          return { x: ax + (dx | 0), y: ay + (dy | 0) };
+        }
+
+        function buildSquareDupLatticeKeySet(gx, gy, len, flipLR, rotQ, dx, dy) {
+          const D = new Set();
+          for (let i = 0; i < len; i++) {
+            const t = transformSquareDupLattice(gx[i], gy[i], flipLR, rotQ, dx, dy);
+            D.add(t.x + "," + t.y);
+          }
+          return D;
+        }
+
+        function buildSquareOrigLatticeKeySet(gx, gy, len) {
+          const O = new Set();
+          for (let i = 0; i < len; i++) {
+            O.add(gx[i] + "," + gy[i]);
+          }
+          return O;
+        }
+
+        function ensureSquareOverlayPrimeLattice(Sw, cell, cacheKey) {
+          if (cacheKey && squareOvLatticeCacheKey === cacheKey && squareOvPrimeGx && squareOvPrimeLen > 0) {
+            return;
+          }
+          squareOvLatticeCacheKey = cacheKey || "";
+          let count = 0;
+          for (let i = 0; i < Sw.count; i++) {
+            if (Sw.kind[i] === 1) count++;
+          }
+          squareOvPrimeLen = count;
+          squareOvPrimeGx = new Int32Array(Math.max(0, count));
+          squareOvPrimeGy = new Int32Array(Math.max(0, count));
+          let j = 0;
+          for (let i = 0; i < Sw.count; i++) {
+            if (Sw.kind[i] !== 1) continue;
+            squareOvPrimeGx[j] = Math.round(Sw.wx[i] / cell);
+            squareOvPrimeGy[j] = Math.round(Sw.wy[i] / cell);
+            j++;
           }
         }
 
@@ -2122,6 +2426,8 @@
             collisionPersist: els.rwCollisionPersist ? els.rwCollisionPersist.checked : true,
             collisionOpposite: els.rwCollisionOpposite ? els.rwCollisionOpposite.checked : false,
             terminateOnDoubleCollision: els.rwCollisionTerminate ? els.rwCollisionTerminate.checked : true,
+            turnMemoryBacktrack: els.rwTurnMemoryBacktrack ? els.rwTurnMemoryBacktrack.checked : false,
+            turnMemoryDepth: clamp(Math.floor(Number(els.rwTurnMemoryDepth && els.rwTurnMemoryDepth.value) || 3), 1, 20),
             showStart: els.rwShowStart ? els.rwShowStart.checked : false,
             showEnd: els.rwShowEnd ? els.rwShowEnd.checked : false,
             highlightPrimeTurns: els.rwHighlightPrimeTurns ? els.rwHighlightPrimeTurns.checked : false,
@@ -2133,7 +2439,15 @@
         function latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom) {
           const gw = Math.max(gHalfW, 0.5);
           const gh = Math.max(gHalfH, 0.5);
-          return cell * viewZoom * Math.min(innerW / (2 * gw), innerH / (2 * gh));
+          const c = Number(cell);
+          const cellSafe = Number.isFinite(c) && c > 0 ? c : 1;
+          const vz = Number.isFinite(viewZoom) ? clamp(viewZoom, ZOOM_MIN, ZOOM_MAX) : 1;
+          const iw = Math.max(1, innerW);
+          const ih = Math.max(1, innerH);
+          const m = Math.min(iw / (2 * gw), ih / (2 * gh));
+          const out = cellSafe * vz * m;
+          if (!Number.isFinite(out) || out <= 0) return 1e-6;
+          return out;
         }
 
         function drawLatticeAlignedGrid(ctx, gridColor, gHalfW, gHalfH, cell, pad, worldToCanvas) {
@@ -2175,6 +2489,64 @@
           let preferRight = false;
           let currentN = 1;
           let terminatedEarly = false;
+          const memDepth = cfg.turnMemoryBacktrack ? clamp(cfg.turnMemoryDepth | 0, 1, 20) : 0;
+          const decisionStack = [];
+          let retryTriggerAlt = null;
+          let retryCollisionAlt = null;
+
+          function cloneWalkerCore() {
+            return {
+              path: path.map((p) => ({ x: p.x, y: p.y })),
+              visited: new Set(visited),
+              segments: segments.map((s) => ({ x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2 })),
+              segmentPaintKeys: segmentPaintKeys.slice(),
+              primeTurnHighlights: primeTurnHighlights.map((p) => ({ x: p.x, y: p.y })),
+              fallbackCommittedVertices: fallbackCommittedVertices.map((p) => ({ x: p.x, y: p.y })),
+              h,
+              preferRight,
+              currentN,
+            };
+          }
+
+          function restoreWalkerCore(s) {
+            path.length = 0;
+            for (const p of s.path) path.push({ x: p.x, y: p.y });
+            visited.clear();
+            for (const k of s.visited) visited.add(k);
+            segments.length = 0;
+            for (const seg of s.segments) segments.push({
+              x1: seg.x1,
+              y1: seg.y1,
+              x2: seg.x2,
+              y2: seg.y2,
+            });
+            segmentPaintKeys.length = 0;
+            for (let i = 0; i < s.segmentPaintKeys.length; i++) {
+              segmentPaintKeys.push(s.segmentPaintKeys[i]);
+            }
+            primeTurnHighlights.length = 0;
+            for (const p of s.primeTurnHighlights) primeTurnHighlights.push({ x: p.x, y: p.y });
+            fallbackCommittedVertices.length = 0;
+            for (const p of s.fallbackCommittedVertices) fallbackCommittedVertices.push({ x: p.x, y: p.y });
+            h = s.h;
+            preferRight = s.preferRight;
+            currentN = s.currentN;
+          }
+
+          function tryBacktrackFromDeadEnd() {
+            if (!memDepth || decisionStack.length === 0) return false;
+            const lo = Math.max(0, decisionStack.length - memDepth);
+            for (let si = decisionStack.length - 1; si >= lo; si--) {
+              const dec = decisionStack[si];
+              if (dec.taken >= dec.maxAlts - 1) continue;
+              restoreWalkerCore(dec.state);
+              decisionStack.length = si;
+              retryTriggerAlt = dec.kind === "trigger" ? dec.taken + 1 : null;
+              retryCollisionAlt = dec.kind === "collision" ? dec.taken + 1 : null;
+              return true;
+            }
+            return false;
+          }
 
           if (N <= 1) {
             return {
@@ -2189,13 +2561,22 @@
           }
 
           while (currentN < N) {
+            const stateAtStart = memDepth ? cloneWalkerCore() : null;
             const n = currentN;
             const pos = path[path.length - 1];
+            const prSnap = preferRight;
 
             const trig = evalRuleWalkerTriggers(n, cfg, isPrimeArr, factorResult);
+            const h0 = trig.turn ? ruleWalkerTurn(h, prSnap) : h;
+            const h1 = trig.turn ? ruleWalkerTurn(h, !prSnap) : h;
+            const twoTriggerChoices = !!(trig.turn && h0 !== h1);
+
             let stepHeading = h;
+            let triggerBranchIdx = 0;
             if (trig.turn) {
-              stepHeading = ruleWalkerTurn(h, preferRight);
+              const useAlt1 = twoTriggerChoices && retryTriggerAlt === 1;
+              stepHeading = ruleWalkerTurn(h, useAlt1 ? !prSnap : prSnap);
+              triggerBranchIdx = useAlt1 ? 1 : 0;
               if (cfg.switchOnPrimeTrigger && trig.kinds.has("prime")) {
                 preferRight = !preferRight;
               }
@@ -2204,20 +2585,24 @@
               }
             }
 
-            if (cfg.highlightPrimeTurns && trig.kinds.has("prime") && trig.turn) {
-              primeTurnHighlights.push({ x: pos.x, y: pos.y });
-            }
-
             const paintKey = trig.turn ? pickTriggerPaintKey(trig.kinds) : "none";
 
             let nx = pos.x + ruleWalkerDir(stepHeading).dx;
             let ny = pos.y + ruleWalkerDir(stepHeading).dy;
             let exitHeading = stepHeading;
-            let ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
+            let ok =
+              retryCollisionAlt === null
+                ? ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg)
+                : false;
             let usedFallback = false;
+            let collisionOutcomeIdx = 0;
+            const collisionMaxAlts = cfg.collisionOpposite ? 3 : 2;
 
             if (!ok) {
               if (!cfg.collisionTurn) {
+                if (memDepth && tryBacktrackFromDeadEnd()) {
+                  continue;
+                }
                 terminatedEarly = true;
                 break;
               }
@@ -2230,16 +2615,20 @@
                 }
               }
               const headingFB = ruleWalkerTurn(stepHeading, prefForFallback);
-              nx = pos.x + ruleWalkerDir(headingFB).dx;
-              ny = pos.y + ruleWalkerDir(headingFB).dy;
-              exitHeading = headingFB;
-              ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
-              if (cfg.collisionSwitch && !cfg.collisionPersist) {
-                preferRight = prefBefore;
+              if (retryCollisionAlt === null || retryCollisionAlt === 1) {
+                nx = pos.x + ruleWalkerDir(headingFB).dx;
+                ny = pos.y + ruleWalkerDir(headingFB).dy;
+                exitHeading = headingFB;
+                ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
+                if (cfg.collisionSwitch && !cfg.collisionPersist) {
+                  preferRight = prefBefore;
+                }
+                if (ok) {
+                  usedFallback = true;
+                  collisionOutcomeIdx = 1;
+                }
               }
-              if (ok) {
-                usedFallback = true;
-              } else if (cfg.collisionOpposite) {
+              if (!ok && cfg.collisionOpposite && (retryCollisionAlt === null || retryCollisionAlt === 2)) {
                 const headingOpp = ruleWalkerTurn(stepHeading, !prefForFallback);
                 nx = pos.x + ruleWalkerDir(headingOpp).dx;
                 ny = pos.y + ruleWalkerDir(headingOpp).dy;
@@ -2247,6 +2636,7 @@
                 ok = ruleWalkerCandidateValid(pos.x, pos.y, nx, ny, visited, segments, cfg);
                 if (ok) {
                   usedFallback = true;
+                  collisionOutcomeIdx = 2;
                 }
               }
 
@@ -2254,9 +2644,18 @@
                 if (cfg.collisionPersist && cfg.collisionSwitch) {
                   preferRight = prefBefore;
                 }
+                if (memDepth && tryBacktrackFromDeadEnd()) {
+                  continue;
+                }
                 terminatedEarly = true;
                 break;
               }
+            } else {
+              collisionOutcomeIdx = 0;
+            }
+
+            if (cfg.highlightPrimeTurns && trig.kinds.has("prime") && trig.turn) {
+              primeTurnHighlights.push({ x: pos.x, y: pos.y });
             }
 
             segments.push({ x1: pos.x, y1: pos.y, x2: nx, y2: ny });
@@ -2268,6 +2667,29 @@
             }
             h = exitHeading;
             currentN++;
+
+            retryTriggerAlt = null;
+            retryCollisionAlt = null;
+
+            if (memDepth && stateAtStart) {
+              if (cfg.collisionTurn && collisionMaxAlts > 1 && collisionOutcomeIdx > 0) {
+                decisionStack.push({
+                  kind: "collision",
+                  state: stateAtStart,
+                  taken: collisionOutcomeIdx,
+                  maxAlts: collisionMaxAlts,
+                });
+                while (decisionStack.length > memDepth) decisionStack.shift();
+              } else if (twoTriggerChoices) {
+                decisionStack.push({
+                  kind: "trigger",
+                  state: stateAtStart,
+                  taken: triggerBranchIdx,
+                  maxAlts: 2,
+                });
+                while (decisionStack.length > memDepth) decisionStack.shift();
+              }
+            }
           }
 
           return {
@@ -2293,8 +2715,10 @@
           factorResult,
           useFilter,
           primeStackGrouped,
-          dataTierKey
+          dataTierKey,
+          aggregateExtra
         ) {
+          const agg = typeof aggregateExtra === "string" ? aggregateExtra : "";
           return [
             N,
             plotMode,
@@ -2307,7 +2731,7 @@
             useFilter,
             factorEffectiveSignature(factorResult),
             plotMode === "prime-stack" ? String(primeStackGrouped ? 1 : 0) : "-",
-            dataTierKey === "ag" ? "ag" : "ex",
+            dataTierKey === "ag" ? "ag" + (agg ? "|" + agg : "") : "ex",
           ].join("|");
         }
 
@@ -2322,13 +2746,43 @@
           if (userSel === "aggregate") {
             return { tier: "aggregate", label: "Aggregate", dataTierKey: "ag" };
           }
-          if (N > 120000) {
+          if (N > 120000 && plotMode !== "square") {
             return { tier: "aggregate", label: "Auto → aggregate (large N)", dataTierKey: "ag" };
           }
-          if (N > 45000) {
+          if (N > 45000 && plotMode !== "square") {
             return { tier: "aggregate", label: "Auto → aggregate (dense range)", dataTierKey: "ag" };
           }
+          if (plotMode === "square" && N > 220000) {
+            return { tier: "aggregate", label: "Auto → aggregate (square range)", dataTierKey: "ag" };
+          }
           return { tier: "exact", label: "Auto → exact", dataTierKey: "ex" };
+        }
+
+        function aggregateViewSlot(viewZoom) {
+          const z = clamp(viewZoom, ZOOM_MIN, ZOOM_MAX);
+          return Math.min(36, Math.max(0, Math.round(Math.log2(z + 1e-9) * 4)));
+        }
+
+        function computeAggregateGridForView(innerW, viewZoom) {
+          const w = Math.max(120, innerW);
+          const z = clamp(viewZoom, ZOOM_MIN, ZOOM_MAX);
+          const g = Math.round(200 * Math.pow(z, 0.38) * Math.pow(w / 800, 0.12));
+          return Math.max(112, Math.min(640, g));
+        }
+
+        function aggregateCacheExtraForWorker(N, plotMode, innerW) {
+          const userRenderSel = els.renderTier ? els.renderTier.value : "auto";
+          const tierResolved = resolveRenderTier(userRenderSel, N, plotMode);
+          if (tierResolved.dataTierKey !== "ag") return "";
+          const agGrid = computeAggregateGridForView(innerW, viewZoom);
+          const zSlot = aggregateViewSlot(viewZoom);
+          let extra = "g" + agGrid + "|z" + zSlot;
+          if (plotMode === "square") {
+            const show = els.ssOverlayShow && els.ssOverlayShow.checked;
+            const flip = els.ssOverlayFlip && els.ssOverlayFlip.checked ? 1 : 0;
+            extra += "|ov" + (show ? 1 : 0) + "|f" + flip + "|r" + ssOvRotQ + "|x" + ssOvDx + "|y" + ssOvDy;
+          }
+          return extra;
         }
 
         function spiralNeedsWorker(tierResolved, N) {
@@ -2364,7 +2818,8 @@
             factorResult,
             useFilter,
             !!primeStackGroupedDepth,
-            dtKey
+            dtKey,
+            ""
           );
           if (spiralWorldKey === key && spiralWorld.wx && spiralWorld.wx.length >= spiralWorld.count) {
             return { rebuilt: false, ms: 0 };
@@ -2492,6 +2947,12 @@
             worldMinY,
             worldMaxY,
           } = agg;
+          const oBins = agg.squareOvAgg && agg.squareOvAgg.origPrimeBins;
+          const dBins = agg.squareOvAgg && agg.squareOvAgg.dupPrimeBins;
+          const dupLayerOn = els.ssOverlayShow && els.ssOverlayShow.checked;
+          const overlapOnly =
+            dupLayerOn && els.ssOverlayOverlapOnly && els.ssOverlayOverlapOnly.checked;
+          const overlayOrigDupHalf = dupLayerOn && !overlapOnly;
           const rx = Math.max(worldMaxX - worldMinX, 1e-12);
           const ry = Math.max(worldMaxY - worldMinY, 1e-12);
           const cw = rx / gridW;
@@ -2501,7 +2962,10 @@
               const idx = iy * gridW + ix;
               const pc = primeBins[idx];
               const npc = nonPrimeBins[idx];
-              if (pc === 0 && npc === 0) continue;
+              const o0 = oBins ? oBins[idx] | 0 : 0;
+              const d0 = dBins ? dBins[idx] | 0 : 0;
+              const overlayHit = oBins && dBins && (o0 > 0 || d0 > 0);
+              if (pc === 0 && npc === 0 && !overlayHit) continue;
               const wx0 = worldMinX + ix * cw;
               const wy0 = worldMinY + iy * ch;
               const wx1 = wx0 + cw;
@@ -2517,9 +2981,27 @@
               const ymin = Math.min(ys[0], ys[1], ys[2], ys[3]);
               const ymax = Math.max(ys[0], ys[1], ys[2], ys[3]);
               let fill;
-              if (pc > 0 && npc === 0) fill = primeColor;
-              else if (pc > 0 && npc > 0) fill = mixedBucketColor;
-              else fill = compositeFill;
+              if (oBins && dBins) {
+                const o = o0;
+                const d = d0;
+                if (overlapOnly) {
+                  if (o > 0 && d > 0) fill = SQ_OV_OVERLAP;
+                  else {
+                    if (pc > 0 && npc === 0) fill = primeColor;
+                    else if (pc > 0 && npc > 0) fill = mixedBucketColor;
+                    else fill = compositeFill;
+                  }
+                } else if (o > 0 && d > 0) fill = SQ_OV_OVERLAP;
+                else if (o > 0) fill = overlayOrigDupHalf ? hexToRgba(SQ_OV_ORIGINAL, 0.5) : SQ_OV_ORIGINAL;
+                else if (d > 0) fill = overlayOrigDupHalf ? hexToRgba(SQ_OV_DUPLICATE, 0.5) : SQ_OV_DUPLICATE;
+                else if (pc > 0 && npc === 0) fill = primeColor;
+                else if (pc > 0 && npc > 0) fill = mixedBucketColor;
+                else fill = compositeFill;
+              } else {
+                if (pc > 0 && npc === 0) fill = primeColor;
+                else if (pc > 0 && npc > 0) fill = mixedBucketColor;
+                else fill = compositeFill;
+              }
               ctx.fillStyle = fill;
               ctx.fillRect(xmin, ymin, Math.max(1, xmax - xmin), Math.max(1, ymax - ymin));
             }
@@ -2577,6 +3059,13 @@
                 worldMaxX: msg.worldMaxX,
                 worldMinY: msg.worldMinY,
                 worldMaxY: msg.worldMaxY,
+                squareOvAgg:
+                  msg.squareOverlayAggregate && msg.squareOvOrigPrimeBins && msg.squareOvDupPrimeBins
+                    ? {
+                        origPrimeBins: msg.squareOvOrigPrimeBins,
+                        dupPrimeBins: msg.squareOvDupPrimeBins,
+                      }
+                    : null,
               };
             } else {
               spiralWorld.count = msg.count | 0;
@@ -2638,12 +3127,16 @@
             rwCfg.collisionPersist,
             rwCfg.collisionOpposite,
             rwCfg.terminateOnDoubleCollision,
+            rwCfg.turnMemoryBacktrack,
+            rwCfg.turnMemoryDepth,
           ].join("|");
         }
 
         function renderAll(opts) {
           ensureCanvas();
           if (!canvas || !ctx || !els.equationSummary) return;
+
+          sanitizeViewStateClamp();
 
           const viewOnly = !!(opts && opts.viewOnly);
           const myGen = ++renderGeneration;
@@ -2746,7 +3239,11 @@
                 N > N_RULE_WALKER_MAX
                   ? ` &nbsp;·&nbsp; <em>N capped at ${N_RULE_WALKER_MAX} for rule walker.</em>`
                   : "";
-              els.ruleWalkerReadout.innerHTML = `<strong>Final integer:</strong> ${rw.finalN} &nbsp;·&nbsp; <strong>Early stop:</strong> ${term}${plb}${capNote}`;
+              const memNote =
+                rwCfg.turnMemoryBacktrack
+                  ? ` &nbsp;·&nbsp; <strong>Turn memory:</strong> on (depth ${rwCfg.turnMemoryDepth}) — dead ends may backtrack through up to ${rwCfg.turnMemoryDepth} recent turn/collision decisions.`
+                  : "";
+              els.ruleWalkerReadout.innerHTML = `<strong>Final integer:</strong> ${rw.finalN} &nbsp;·&nbsp; <strong>Early stop:</strong> ${term}${plb}${capNote}${memNote}`;
             }
 
             const rwDrawT0 = performance.now();
@@ -2781,7 +3278,11 @@
               gHalfW = Math.max(gHalfW, Math.abs(rw.path[i].x));
               gHalfH = Math.max(gHalfH, Math.abs(rw.path[i].y));
             }
-            const latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            let latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            if (!Number.isFinite(latticeS) || latticeS <= 0) {
+              resetViewToFit();
+              latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            }
             const worldHalfW = gHalfW * cell;
             const worldHalfH = gHalfH * cell;
             function baseWorldToCanvasRw(wx, wy) {
@@ -2790,13 +3291,7 @@
                 y: ccy - (wy / cell) * latticeS,
               };
             }
-            if (pendingCursorPan) {
-              const pc = pendingCursorPan;
-              const p0 = baseWorldToCanvasRw(pc.worldX, pc.worldY);
-              viewPanX = pc.mx - p0.x;
-              viewPanY = pc.my - p0.y;
-              pendingCursorPan = null;
-            }
+            applyPendingPanIfValid(baseWorldToCanvasRw);
             function worldToCanvas(wx, wy) {
               const p = baseWorldToCanvasRw(wx, wy);
               return { x: p.x + viewPanX, y: p.y + viewPanY };
@@ -2952,8 +3447,20 @@
             window.mathExplorer.getPerf = getPrimeExplorerPerf;
             window.mathExplorer.resetPerfCounters = resetPrimeExplorerPerfCounters;
             window.mathExplorer.rerender = renderAll;
+            window.mathExplorer.resetView = () => {
+              resetViewToFit();
+              renderAll();
+            };
             return;
           }
+
+          const rectForAggKey = els.vizMount ? els.vizMount.getBoundingClientRect() : { width: 400 };
+          const cssWKey = Math.max(200, Math.floor(rectForAggKey.width || 400));
+          const innerWKey = Math.max(1, cssWKey - FIT_PADDING * 2);
+          const aggregateKeyExtra =
+            tierResolved.dataTierKey === "ag"
+              ? aggregateCacheExtraForWorker(N, plotMode, innerWKey)
+              : "";
 
           const desiredSpiralKey =
             plotMode === "polar" || plotMode === "square" || plotMode === "prime-stack"
@@ -2969,7 +3476,8 @@
                   factorResult,
                   useFilter,
                   primeStackGroupedDepth,
-                  tierResolved.dataTierKey
+                  tierResolved.dataTierKey,
+                  aggregateKeyExtra
                 )
               : "";
 
@@ -3006,9 +3514,15 @@
                       factorPrimes,
                       primeStackGroupedDepth,
                       outputMode: tierResolved.tier === "aggregate" ? "aggregate" : "exact",
-                      aggregateGrid: AGGREGATE_GRID_SIZE,
+                      aggregateGrid: computeAggregateGridForView(innerWKey, viewZoom),
                       includePolarGuide: N <= POLAR_GUIDE_MAX_N,
                       polarGuideMaxN: POLAR_GUIDE_MAX_N,
+                      includeSquareOverlayAgg:
+                        plotMode === "square" && els.ssOverlayShow && els.ssOverlayShow.checked,
+                      squareOverlayFlipLR: !!(els.ssOverlayFlip && els.ssOverlayFlip.checked),
+                      squareOverlayRotQ: ssOvRotQ,
+                      squareOverlayDx: ssOvDx,
+                      squareOverlayDy: ssOvDy,
                     });
                   }
                 } else {
@@ -3085,6 +3599,10 @@
             worldHalfH = a * rTildeMax * radialSpacing;
             const baseScale = Math.min(innerW / (2 * rTildeMax), innerH / (2 * rTildeMax));
             scale = baseScale * viewZoom;
+            if (!Number.isFinite(scale) || scale <= 0) {
+              resetViewToFit();
+              scale = baseScale * viewZoom;
+            }
             function baseWorldToCanvasPolar(x, y) {
               return {
                 x: cx + x * scale,
@@ -3092,13 +3610,7 @@
               };
             }
             baseWorldToCanvas = baseWorldToCanvasPolar;
-            if (pendingCursorPan) {
-              const pc = pendingCursorPan;
-              const p0 = baseWorldToCanvasPolar(pc.worldX, pc.worldY);
-              viewPanX = pc.mx - p0.x;
-              viewPanY = pc.my - p0.y;
-              pendingCursorPan = null;
-            }
+            applyPendingPanIfValid(baseWorldToCanvasPolar);
             worldToCanvas = function worldToCanvasPolarPan(x, y) {
               const p = baseWorldToCanvasPolar(x, y);
               return { x: p.x + viewPanX, y: p.y + viewPanY };
@@ -3107,7 +3619,11 @@
           } else if (plotMode === "square" || plotMode === "prime-stack") {
             gHalfW = Math.max(1e-9, Sw.gHalfW);
             gHalfH = Math.max(1e-9, Sw.gHalfH);
-            const latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            let latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            if (!Number.isFinite(latticeS) || latticeS <= 0) {
+              resetViewToFit();
+              latticeS = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
+            }
             worldHalfW = gHalfW * cell;
             worldHalfH = gHalfH * cell;
             function baseWorldToCanvasSq(wx, wy) {
@@ -3117,13 +3633,7 @@
               };
             }
             baseWorldToCanvas = baseWorldToCanvasSq;
-            if (pendingCursorPan) {
-              const pc = pendingCursorPan;
-              const p0 = baseWorldToCanvasSq(pc.worldX, pc.worldY);
-              viewPanX = pc.mx - p0.x;
-              viewPanY = pc.my - p0.y;
-              pendingCursorPan = null;
-            }
+            applyPendingPanIfValid(baseWorldToCanvasSq);
             worldToCanvas = function worldToCanvasSqPan(wx, wy) {
               const p = baseWorldToCanvasSq(wx, wy);
               return { x: p.x + viewPanX, y: p.y + viewPanY };
@@ -3230,6 +3740,7 @@
 
           const mixedBucketColor = "#eab308";
           let drewAggregateLayer = false;
+          let useMerged = false;
           if (Sw.dataTier === "aggregate" && Sw.aggregate) {
             drawAggregateWorldGrid(ctx, Sw.aggregate, worldToCanvas, primeColor, mixedBucketColor, compositeFill);
             lastHitTest.mode = "aggregate";
@@ -3248,26 +3759,105 @@
           }
 
           if (!drewAggregateLayer) {
-          const mergeBucketPx = Math.max(4, Math.ceil(pointRadius * 2.2));
-          /** Crude screen fill estimate; merged mode was flipping near ~N≈1500 at 0.12 on typical views. */
-          const MERGE_FILL_RATIO_THRESHOLD = 0.17;
+          const mergeBucketPx = Math.max(
+            2,
+            Math.min(Math.ceil(pointRadius * 1.08 + 0.5), Math.ceil(pointRadius * 2.35))
+          );
+          /** Screen fill estimate; thresholds favor unmerged / exact until the view is genuinely crowded. */
+          const MERGE_FILL_RATIO_THRESHOLD = 0.34;
           const pxArea = innerW * innerH + 1;
           const mergeFillRatio =
             pointCount > 0 ? (pointCount * 4 * pointRadius * pointRadius) / pxArea : 0;
-          let useMerged = false;
+          useMerged = false;
           if (plotMode === "polar") {
             useMerged =
               pointCount > 0 &&
-              (pointCount > 8000 ||
-                mergeFillRatio > MERGE_FILL_RATIO_THRESHOLD ||
-                scale < 2.6 * pointRadius);
+              (scale < 0.75 * pointRadius ||
+                (mergeFillRatio > MERGE_FILL_RATIO_THRESHOLD && scale < 1.45 * pointRadius) ||
+                (pointCount > 45000 && mergeFillRatio > 0.18 && scale < 2.2 * pointRadius));
           } else {
             const latticeSVis = latticePixelScalePerGridStep(innerW, innerH, gHalfW, gHalfH, cell, viewZoom);
             useMerged =
               pointCount > 0 &&
-              (pointCount > 8000 ||
-                mergeFillRatio > MERGE_FILL_RATIO_THRESHOLD ||
-                latticeSVis < 2.6 * pointRadius);
+              (latticeSVis < 0.78 * pointRadius ||
+                (mergeFillRatio > MERGE_FILL_RATIO_THRESHOLD && latticeSVis < 1.25 * pointRadius) ||
+                (pointCount > 45000 && mergeFillRatio > 0.18 && latticeSVis < 1.85 * pointRadius));
+          }
+
+          let squareOvOSet = null;
+          let squareOvDSet = null;
+          let squareOverlayExactActive = false;
+          if (
+            plotMode === "square" &&
+            els.ssOverlayShow &&
+            els.ssOverlayShow.checked &&
+            !drewAggregateLayer &&
+            Sw.dataTier === "exact" &&
+            Sw.wx &&
+            pointCount > 0 &&
+            !useMerged
+          ) {
+            ensureSquareOverlayPrimeLattice(Sw, cell, spiralWorldAppliedDataKey);
+            if (squareOvPrimeLen > 0) {
+              const flipLR = !!(els.ssOverlayFlip && els.ssOverlayFlip.checked);
+              const ovSig = [
+                spiralWorldAppliedDataKey,
+                flipLR ? "1" : "0",
+                ssOvRotQ,
+                ssOvDx,
+                ssOvDy,
+              ].join("|");
+              if (ovSig === squareOvSetsSig && squareOvCachedOSet && squareOvCachedDSet) {
+                squareOvOSet = squareOvCachedOSet;
+                squareOvDSet = squareOvCachedDSet;
+              } else {
+                squareOvOSet = buildSquareOrigLatticeKeySet(squareOvPrimeGx, squareOvPrimeGy, squareOvPrimeLen);
+                squareOvDSet = buildSquareDupLatticeKeySet(
+                  squareOvPrimeGx,
+                  squareOvPrimeGy,
+                  squareOvPrimeLen,
+                  flipLR,
+                  ssOvRotQ,
+                  ssOvDx,
+                  ssOvDy
+                );
+                squareOvSetsSig = ovSig;
+                squareOvCachedOSet = squareOvOSet;
+                squareOvCachedDSet = squareOvDSet;
+              }
+              squareOverlayExactActive = true;
+            }
+          }
+
+          if (els.ssDupReadout) {
+            els.ssDupReadout.textContent = `translation (dx, dy) = (${ssOvDx}, ${ssOvDy})`;
+          }
+          if (els.ssRotReadout) {
+            const ang = [0, 90, 180, 270][((ssOvRotQ % 4) + 4) % 4];
+            els.ssRotReadout.textContent = ang + "°";
+          }
+          if (els.ssOverlayShow) {
+            const overlayTierOk =
+              Sw.dataTier === "exact" || Sw.dataTier === "aggregate";
+            const canSquareDup =
+              plotMode === "square" && overlayTierOk && !useMerged;
+            const disChild =
+              !canSquareDup ||
+              !els.ssOverlayShow.checked ||
+              useMerged;
+            [els.ssOverlayShow, els.ssOverlayOverlapOnly, els.ssOverlayFlip, els.ssRotLeft, els.ssRotRight].forEach((el) => {
+              if (!el) return;
+              if (el === els.ssOverlayShow) {
+                el.disabled = plotMode !== "square" || useMerged || !overlayTierOk;
+                el.title = useMerged
+                  ? "Unavailable in merged screen-bucket mode; zoom in or reduce density."
+                  : Sw.dataTier === "aggregate" && els.ssOverlayShow && els.ssOverlayShow.checked
+                    ? "Aggregate duplicate overlay: bucket-level colors (green = both prime distributions in cell)."
+                    : "";
+              } else {
+                el.disabled = disChild;
+              }
+            });
           }
 
           let psGroupedDrawOrder = null;
@@ -3323,20 +3913,82 @@
                 else if (b.pc > 0 && b.npc > 0) fill = mixedBucketColor;
                 else fill = compositeFill;
                 ctx.fillStyle = fill;
-                ctx.fillRect(b.cx - mergeBucketPx * 0.45, b.cy - mergeBucketPx * 0.45, mergeBucketPx * 0.9, mergeBucketPx * 0.9);
+                const mHalf = Math.max(pointRadius * 0.85, mergeBucketPx * 0.32);
+                ctx.fillRect(b.cx - mHalf, b.cy - mHalf, mHalf * 2, mHalf * 2);
               }
             }
             ctx.restore();
           } else {
+            const dupLayerOnDraw =
+              plotMode === "square" &&
+              squareOverlayExactActive &&
+              els.ssOverlayShow &&
+              els.ssOverlayShow.checked;
+            const ssOverlapOnly =
+              dupLayerOnDraw && els.ssOverlayOverlapOnly && els.ssOverlayOverlapOnly.checked;
+
             for (let oi = 0; oi < pointCount; oi++) {
               const pi = psGroupedDrawOrder ? psGroupedDrawOrder[oi] : oi;
               const c = worldToCanvas(Sw.wx[pi], Sw.wy[pi]);
               const rDraw = pointRadius;
-              const fill = Sw.kind[pi] === 1 ? primeColor : compositeFill;
+              let fill = compositeFill;
+              if (Sw.kind[pi] === 1) {
+                if (plotMode === "square" && squareOverlayExactActive && squareOvOSet && squareOvDSet) {
+                  const gkx = Math.round(Sw.wx[pi] / cell);
+                  const gky = Math.round(Sw.wy[pi] / cell);
+                  const key = gkx + "," + gky;
+                  const isOverlap = squareOvDSet.has(key);
+                  if (ssOverlapOnly) {
+                    if (!isOverlap) continue;
+                    fill = SQ_OV_OVERLAP;
+                  } else {
+                    fill = isOverlap ? SQ_OV_OVERLAP : SQ_OV_ORIGINAL;
+                  }
+                } else {
+                  fill = primeColor;
+                }
+              }
+              ctx.save();
+              if (
+                dupLayerOnDraw &&
+                Sw.kind[pi] === 1 &&
+                plotMode === "square" &&
+                squareOverlayExactActive &&
+                squareOvOSet &&
+                squareOvDSet
+              ) {
+                if (fill === SQ_OV_ORIGINAL) ctx.globalAlpha = 0.5;
+                else ctx.globalAlpha = 1;
+              } else {
+                ctx.globalAlpha = 1;
+              }
               ctx.fillStyle = fill;
               ctx.beginPath();
               ctx.arc(c.x, c.y, rDraw, 0, Math.PI * 2);
               ctx.fill();
+              ctx.restore();
+            }
+            if (
+              plotMode === "square" &&
+              squareOverlayExactActive &&
+              squareOvDSet &&
+              squareOvOSet &&
+              !ssOverlapOnly
+            ) {
+              for (const key of squareOvDSet) {
+                if (squareOvOSet.has(key)) continue;
+                const comma = key.indexOf(",");
+                const gkx = Number(key.slice(0, comma));
+                const gky = Number(key.slice(comma + 1));
+                const c = worldToCanvas(gkx * cell, gky * cell);
+                ctx.save();
+                ctx.globalAlpha = dupLayerOnDraw ? 0.5 : 1;
+                ctx.fillStyle = SQ_OV_DUPLICATE;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, pointRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
             }
           }
 
@@ -3367,7 +4019,8 @@
                 factorResult,
                 useFilter,
                 primeStackGroupedDepth,
-                spiralWorld.dataTier === "aggregate" ? "ag" : "ex"
+                spiralWorld.dataTier === "aggregate" ? "ag" : "ex",
+                ""
               ),
               Math.round(innerW),
               Math.round(innerH),
@@ -3455,6 +4108,7 @@
               : `<br /><strong>Render:</strong> ${tierResolved.label}. Exact points preserve per-integer identity for hover/tap.`;
 
           if (!viewOnly) {
+            lastRenderedAggregateSuffix = aggregateCacheExtraForWorker(N, plotMode, innerW) || "";
             if (plotMode === "polar") {
               const dThetaStr = (2 * Math.PI / m).toFixed(6);
               const mLine = deriveMActive
@@ -3488,12 +4142,21 @@
             `;
               }
             } else {
+              const sqDupNote =
+                spiralWorld.dataTier === "aggregate"
+                  ? els.ssOverlayShow && els.ssOverlayShow.checked && spiralWorld.aggregate && spiralWorld.aggregate.squareOvAgg
+                    ? ` <strong>Duplicate layer (aggregate):</strong> bucket-level coloring for primes — green where both original and transformed prime mass land in the same bucket (not per-lattice identity). Flip / rotation / translate match the exact-mode transform.`
+                    : ""
+                  : els.ssOverlayShow && els.ssOverlayShow.checked
+                    ? ` <strong>Duplicate layer:</strong> same prime lattice; transform order is flip <code>(x,y)→(−x,y)</code> if enabled, then 90° steps about the origin, then integer translation. Overlap uses exact lattice equality only — red = original prime only, yellow = duplicate-only cell, green = both. Focus the plot and use WASD for ±1 lattice steps.`
+                    : "";
               els.equationSummary.innerHTML = `
               <strong>Square spiral.</strong> Integer n maps to lattice steps from the center; world position scales by cell spacing s = ${cell.toFixed(3)}:
               (x, y)_world = s · (x, y)_lattice.
               <br />
               <strong>Display:</strong> ${visLabel}. ${filterNote}.
               ${renderFoot}
+              ${sqDupNote}
             `;
             }
           }
@@ -3511,6 +4174,10 @@
           window.mathExplorer.getPerf = getPrimeExplorerPerf;
           window.mathExplorer.resetPerfCounters = resetPrimeExplorerPerfCounters;
           window.mathExplorer.rerender = renderAll;
+          window.mathExplorer.resetView = () => {
+            resetViewToFit();
+            renderAll();
+          };
         }
 
         function niceStep(span) {
@@ -3531,7 +4198,7 @@
         let resizeTimer = null;
         window.addEventListener("resize", () => {
           if (resizeTimer) clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(() => renderAll({ viewOnly: true }), 80);
+          resizeTimer = setTimeout(() => renderAll(), 80);
         });
       }
     })();

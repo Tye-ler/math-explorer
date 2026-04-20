@@ -55,6 +55,21 @@
   }
 
   /** O(N) lattice coords for classic square spiral, 1…N. */
+  /** Must match index.html `transformSquareDupLattice` (flip → q×90° CCW → translate). */
+  function transformSquareDupLattice(x, y, flipLR, rotQ, dx, dy) {
+    let ax = x | 0;
+    let ay = y | 0;
+    if (flipLR) ax = -ax;
+    let q = ((rotQ % 4) + 4) % 4;
+    for (let i = 0; i < q; i++) {
+      const nx = -ay;
+      const ny = ax;
+      ax = nx;
+      ay = ny;
+    }
+    return { x: ax + (dx | 0), y: ay + (dy | 0) };
+  }
+
   function fillSquareSpiralLattice(N, gx, gy) {
     gx[1] = 0;
     gy[1] = 0;
@@ -206,6 +221,14 @@
     const primeStackGroupedDepth = !!msg.primeStackGroupedDepth;
     const outputMode = msg.outputMode === "aggregate" ? "aggregate" : "exact";
     const aggGrid = Math.max(64, Math.min(640, Math.floor(msg.aggregateGrid) || AGG_GRID_DEFAULT));
+    const includeSquareOverlayAgg =
+      plotMode === "square" &&
+      outputMode === "aggregate" &&
+      !!msg.includeSquareOverlayAgg;
+    const sqFlip = !!msg.squareOverlayFlipLR;
+    const sqRotQ = (((msg.squareOverlayRotQ | 0) % 4) + 4) % 4;
+    const sqDx = msg.squareOverlayDx | 0;
+    const sqDy = msg.squareOverlayDy | 0;
 
     try {
       const isP = sieveToUint8(N);
@@ -318,32 +341,64 @@
           }
         }
 
+        let sqOvOrigPrime = null;
+        let sqOvDupPrime = null;
+        if (includeSquareOverlayAgg && sqGx && any) {
+          sqOvOrigPrime = new Int32Array(gridW * gridH);
+          sqOvDupPrime = new Int32Array(gridW * gridH);
+          const rx0 = Math.max(maxX - minX, 1e-12);
+          const ry0 = Math.max(maxY - minY, 1e-12);
+          for (let n = 1; n <= N; n++) {
+            const kind = classify(n, isP);
+            if (kind !== "prime") continue;
+            if (!shouldShowInteger(n, kind, visibility, factorPrimes, useFilter)) continue;
+            const gxn = sqGx[n];
+            const gyn = sqGy[n];
+            const wwx = gxn * cell;
+            const wwy = gyn * cell;
+            const ixO = Math.min(gridW - 1, Math.max(0, Math.floor(((wwx - minX) / rx0) * gridW)));
+            const iyO = Math.min(gridH - 1, Math.max(0, Math.floor(((wwy - minY) / ry0) * gridH)));
+            sqOvOrigPrime[iyO * gridW + ixO]++;
+
+            const t = transformSquareDupLattice(gxn, gyn, sqFlip, sqRotQ, sqDx, sqDy);
+            const dwx = t.x * cell;
+            const dwy = t.y * cell;
+            const ixD = Math.min(gridW - 1, Math.max(0, Math.floor(((dwx - minX) / rx0) * gridW)));
+            const iyD = Math.min(gridH - 1, Math.max(0, Math.floor(((dwy - minY) / ry0) * gridH)));
+            sqOvDupPrime[iyD * gridW + ixD]++;
+          }
+        }
+
         const transfer = [primeBins.buffer, nonPrimeBins.buffer, isP.buffer];
-        self.postMessage(
-          {
-            jobId,
-            clientDataKey,
-            N,
-            ok: true,
-            outputMode: "aggregate",
-            count: cnt,
-            survivor,
-            isPrime: isP,
-            gridW,
-            gridH,
-            primeBins,
-            nonPrimeBins,
-            worldMinX: any ? minX : 0,
-            worldMaxX: any ? maxX : 0,
-            worldMinY: any ? minY : 0,
-            worldMaxY: any ? maxY : 0,
-            gHalfW,
-            gHalfH,
-            plotMode,
-            polarGuideN: 0,
-          },
-          transfer
-        );
+        if (sqOvOrigPrime) transfer.push(sqOvOrigPrime.buffer, sqOvDupPrime.buffer);
+        const aggPayload = {
+          jobId,
+          clientDataKey,
+          N,
+          ok: true,
+          outputMode: "aggregate",
+          count: cnt,
+          survivor,
+          isPrime: isP,
+          gridW,
+          gridH,
+          primeBins,
+          nonPrimeBins,
+          worldMinX: any ? minX : 0,
+          worldMaxX: any ? maxX : 0,
+          worldMinY: any ? minY : 0,
+          worldMaxY: any ? maxY : 0,
+          gHalfW,
+          gHalfH,
+          plotMode,
+          polarGuideN: 0,
+          squareOverlayAggregate: !!(sqOvOrigPrime && sqOvDupPrime),
+        };
+        if (sqOvOrigPrime) {
+          aggPayload.squareOvOrigPrimeBins = sqOvOrigPrime;
+          aggPayload.squareOvDupPrimeBins = sqOvDupPrime;
+        }
+        self.postMessage(aggPayload, transfer);
         return;
       }
 
