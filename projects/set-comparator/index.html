@@ -1,0 +1,3481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Theory Explorer</title>
+  <style>
+    :root {
+      --ta-site-header-height: 3.25rem;
+      --ta-site-header-height-stacked: 5.2rem;
+      --max-width: 960px;
+      --space-1: 0.5rem;
+      --space-2: 0.75rem;
+      --space-3: 1.25rem;
+      --space-4: 1.75rem;
+      --accent: #86e1ff;
+    }
+
+    :root,
+    :root[data-theme="dark"] {
+      --bg-start: #171717;
+      --bg-end: #1d1d1d;
+      --text: #d7d7d7;
+      --muted: #969696;
+      --line: rgba(255, 255, 255, 0.1);
+      --line-strong: rgba(255, 255, 255, 0.16);
+      --control-text: #aaaaaa;
+      --control-text-hover: #e0e0e0;
+      --menu-bg: #262626;
+      --accent: #86e1ff;
+
+      --viz-bg: #1f1f1f;
+      --viz-frame: rgba(255, 255, 255, 0.14);
+      --viz-grid: rgba(255, 255, 255, 0.08);
+      --viz-axis: rgba(255, 255, 255, 0.24);
+      --viz-text: #cdcdcd;
+      --viz-primary: #5f8fe8;
+      --viz-secondary: #7f69ba;
+      --viz-highlight: #e1e1e1;
+      --viz-point: #5f8fe8;
+
+      --surface: rgba(38, 38, 38, 0.94);
+      --surface2: #1f1f1f;
+      --border: var(--line);
+      --border2: var(--line-strong);
+      --accent2: var(--viz-primary);
+      --green: #6ee7a8;
+      --purple: #c9a8f0;
+      --red: #f48a8a;
+      --teal: #7dd3c8;
+      --dim: #8a8a8a;
+      --warn: #f0c14a;
+
+      --venn-fill-0: rgba(95, 143, 232, 0.38);
+      --venn-fill-1: rgba(244, 138, 138, 0.38);
+      --venn-fill-2: rgba(110, 231, 168, 0.38);
+      --venn-fill-3: rgba(201, 168, 240, 0.38);
+      --venn-fill-4: rgba(251, 168, 96, 0.38);
+      --venn-stroke-0: #5f8fe8;
+      --venn-stroke-1: #f48a8a;
+      --venn-stroke-2: #6ee7a8;
+      --venn-stroke-3: #c9a8f0;
+      --venn-stroke-4: #fba860;
+      --venn-legend-0: rgba(95, 143, 232, 0.75);
+      --venn-legend-1: rgba(244, 138, 138, 0.75);
+      --venn-legend-2: rgba(110, 231, 168, 0.75);
+      --venn-legend-3: rgba(201, 168, 240, 0.75);
+      --venn-legend-4: rgba(251, 168, 96, 0.75);
+      --venn-ix-legend: rgba(127, 105, 186, 0.78);
+    }
+
+    :root[data-theme="light"] {
+      --bg-start: #f7f7f5;
+      --bg-end: #efefec;
+      --text: #222222;
+      --muted: #666666;
+      --line: rgba(0, 0, 0, 0.08);
+      --line-strong: rgba(0, 0, 0, 0.14);
+      --control-text: #4f4f4f;
+      --control-text-hover: #1f1f1f;
+      --menu-bg: #e8e8e4;
+      --accent: #4a7bd1;
+
+      --viz-bg: #ffffff;
+      --viz-frame: rgba(0, 0, 0, 0.1);
+      --viz-grid: rgba(0, 0, 0, 0.05);
+      --viz-axis: rgba(0, 0, 0, 0.18);
+      --viz-text: #2a2a2a;
+      --viz-primary: #2f6fed;
+      --viz-secondary: #8c5bd6;
+      --viz-highlight: #111111;
+      --viz-point: #2f6fed;
+
+      --surface: rgba(255, 255, 255, 0.92);
+      --surface2: #ffffff;
+      --border: var(--line);
+      --border2: var(--line-strong);
+      --accent2: var(--viz-primary);
+      --green: #1d8f4a;
+      --purple: #6b4f9e;
+      --red: #c43c3c;
+      --teal: #117a6b;
+      --dim: #6f6f6f;
+      --warn: #b8860b;
+
+      --venn-fill-0: rgba(47, 111, 237, 0.28);
+      --venn-fill-1: rgba(196, 60, 60, 0.26);
+      --venn-fill-2: rgba(29, 143, 74, 0.26);
+      --venn-fill-3: rgba(140, 91, 214, 0.26);
+      --venn-fill-4: rgba(210, 125, 45, 0.28);
+      --venn-stroke-0: #2f6fed;
+      --venn-stroke-1: #c43c3c;
+      --venn-stroke-2: #1d8f4a;
+      --venn-stroke-3: #8c5bd6;
+      --venn-stroke-4: #d27d2d;
+      --venn-legend-0: rgba(47, 111, 237, 0.8);
+      --venn-legend-1: rgba(196, 60, 60, 0.8);
+      --venn-legend-2: rgba(29, 143, 74, 0.8);
+      --venn-legend-3: rgba(140, 91, 214, 0.8);
+      --venn-legend-4: rgba(210, 125, 45, 0.8);
+      --venn-ix-legend: rgba(140, 91, 214, 0.78);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      color-scheme: dark light;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text);
+      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .ta-site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: block;
+      padding: 0;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(10, 15, 26, 0.58);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .ta-site-header {
+        background: rgba(10, 15, 26, 0.92);
+      }
+    }
+
+    .ta-site-nav {
+      width: min(100% - 2rem, 1120px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .ta-site-nav-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    .ta-site-brand {
+      color: #eef2f7;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .ta-site-links {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .ta-site-link {
+      color: #9aa7ba;
+      text-decoration: none;
+      line-height: 1.2;
+      transition: color 0.25s ease, opacity 0.25s ease;
+    }
+
+    .ta-site-link:hover,
+    .ta-site-link:focus-visible,
+    .ta-site-link[aria-current="page"] {
+      color: #eef2f7;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      padding: 4px 10px;
+      text-align: center;
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.2;
+      background: none;
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      color: var(--control-text);
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    .ta-site-brand:focus-visible,
+    .ta-site-link:focus-visible,
+    .theme-toggle:focus-visible,
+    .tab-btn:focus-visible,
+    .btn:focus-visible,
+    .btn-ghost:focus-visible,
+    .form-input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible,
+    .hint-chip:focus-visible,
+    .del-btn:focus-visible,
+    .op-btn:focus-visible,
+    .kb-key:focus-visible,
+    .kb-toggle-btn:focus-visible,
+    details.lang-contract summary:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ===== APP HEADER (sticky under site chrome) ===== */
+    header:not(.ta-site-header) {
+      padding: var(--space-2) var(--space-4);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: color-mix(in srgb, var(--menu-bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: sticky;
+      top: var(--ta-site-header-height);
+      z-index: 50;
+    }
+
+    .logo {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.03em;
+    }
+
+    .logo-sub {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 400;
+      font-style: normal;
+      color: var(--muted);
+      margin-left: 10px;
+    }
+
+    .header-sets-preview {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header-set-pill {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-family: inherit;
+      font-size: 11px;
+      color: var(--accent2);
+    }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      padding: 0 var(--space-4);
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px 9px;
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .tab-btn:hover { color: var(--control-text-hover); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ===== MAIN ===== */
+    .main {
+      flex: 1;
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: var(--space-4) var(--space-4);
+      overflow-y: auto;
+      padding-bottom: 260px;
+    }
+
+    .tab-content { display: none; max-width: 100%; margin: 0 auto; animation: fadeIn 0.18s ease; }
+    .tab-content.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+
+    .card-title {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ===== INPUTS ===== */
+    .expr-area {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--text);
+      min-height: 90px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s ease;
+      line-height: 1.5;
+      caret-color: var(--accent);
+    }
+
+    .expr-area:focus {
+      border-color: var(--accent);
+    }
+
+    .form-label { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 6px; display: block; }
+
+    .form-input {
+      background: var(--surface2);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s ease, color 0.15s ease;
+      caret-color: var(--accent);
+    }
+
+    .form-input:focus { border-color: var(--accent); }
+
+    .form-input:hover:not(:focus) {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    select.form-input {
+      cursor: pointer;
+      color: var(--control-text);
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23969696' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 16px;
+      padding-right: 32px;
+      appearance: none;
+    }
+
+    :root[data-theme="light"] select.form-input {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      background: transparent;
+      color: var(--control-text-hover);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      padding: 6px 18px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .btn:active { opacity: 0.92; }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--control-text);
+      border: 1px solid var(--line-strong);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+    .btn-ghost:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+      background: var(--surface2);
+    }
+
+    .form-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 0; flex-wrap: wrap; }
+    .form-group { flex: 1; }
+    .is-hidden { display: none !important; }
+    .small-note {
+      color: var(--muted);
+      font-size: 13px;
+      font-style: italic;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+    .mode-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .equation-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .venn-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .comparison-summary {
+      margin-top: 14px;
+      padding: var(--space-2) var(--space-3);
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--menu-bg) 70%, transparent);
+      font-size: 12px;
+      line-height: 1.45;
+      text-align: left;
+    }
+    .comparison-summary.mode-exact { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
+    .comparison-summary.mode-sample { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+    .comparison-summary.mode-symbolic { border-color: color-mix(in srgb, var(--accent2) 45%, var(--line)); }
+    .comparison-summary h4 {
+      margin: 0 0 8px 0;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-weight: 600;
+    }
+    .comparison-summary ul { margin: 0; padding-left: 1.1rem; }
+    .comparison-summary li { margin: 5px 0; color: var(--text); }
+
+    /* ===== SET LIST ===== */
+    .set-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 11px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.15s;
+    }
+    .set-item:hover { border-color: var(--border2); }
+    .set-item.set-item-builtin { align-items: flex-start; }
+    .set-item.set-item-derived { align-items: flex-start; flex-wrap: wrap; }
+
+    .ctor-tag {
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--border2);
+      color: var(--dim);
+      white-space: nowrap;
+    }
+    .ctor-tag.ctor-system { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 35%, var(--line)); }
+    .ctor-tag.ctor-roster { color: var(--green); border-color: color-mix(in srgb, var(--green) 35%, var(--line)); }
+    .ctor-tag.ctor-derived { color: var(--purple); border-color: color-mix(in srgb, var(--purple) 35%, var(--line)); }
+
+    .set-domain-line {
+      width: 100%;
+      flex-basis: 100%;
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.35;
+      padding-left: 46px;
+      margin-top: 2px;
+    }
+
+    .set-name-tag {
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--accent2);
+      font-weight: 600;
+      min-width: 36px;
+    }
+
+    .set-equals { color: var(--dim); font-size: 14px; }
+
+    .set-elems {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge {
+      background: color-mix(in srgb, var(--accent2) 12%, transparent);
+      color: var(--accent2);
+      border: 1px solid color-mix(in srgb, var(--accent2) 28%, var(--line));
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-family: inherit;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .del-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 3px 8px;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .del-btn:hover { color: var(--red); border-color: var(--red); }
+
+    /* ===== OPERATIONS ===== */
+    .op-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .op-btn {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 10px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .op-btn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface2)); }
+    .op-btn.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface2)); }
+
+    .op-sym {
+      font-family: inherit;
+      font-size: 18px;
+      color: var(--accent);
+      display: block;
+      line-height: 1.3;
+    }
+    .op-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      display: block;
+      line-height: 1.3;
+    }
+
+    /* ===== RESULT BOX ===== */
+    .result-box {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: var(--space-3);
+      font-family: inherit;
+    }
+    .result-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .result-val { font-size: 19px; color: var(--green); word-break: break-all; }
+
+    /* ===== VENN ===== */
+    .venn-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    canvas#venn {
+      border-radius: 4px;
+      border: 1px dashed var(--viz-frame);
+      background: var(--viz-bg);
+      display: block;
+      max-width: 100%;
+    }
+
+    .venn-legend { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+    .legend-sw { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ===== POWER SET ===== */
+    .ps-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+    .ps-item {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+      transition: border-color 0.15s;
+    }
+    .ps-item:hover { border-color: var(--accent2); }
+    .ps-item.empty-set { color: var(--muted); }
+
+    /* ===== EVAL OUTPUT ===== */
+    .eval-out {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: var(--space-3);
+      font-family: inherit;
+      font-size: 16px;
+      min-height: 90px;
+    }
+    .eval-true  { color: var(--green); }
+    .eval-false { color: var(--red); }
+    .eval-set   { color: var(--accent2); }
+
+    .truth-kind-pill {
+      display: inline-block;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--dim);
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      padding: 2px 10px;
+      margin-bottom: 8px;
+      background: color-mix(in srgb, var(--menu-bg) 65%, transparent);
+    }
+    .truth-kind-pill.kind-boolean { color: var(--teal); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); }
+    .truth-kind-pill.kind-exact { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); }
+    .truth-kind-pill.kind-semantic { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 40%, var(--line)); }
+    .truth-kind-pill.kind-derived { color: var(--purple); border-color: color-mix(in srgb, var(--purple) 40%, var(--line)); }
+    .truth-kind-pill.kind-symbolic { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+    .truth-kind-pill.kind-sample { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+    .truth-kind-pill.kind-unsupported { color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--line)); }
+
+    .semantic-set-core {
+      font-family: inherit;
+      font-weight: 600;
+      color: var(--accent2);
+    }
+    .sample-preview-inline {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .set-item .set-elems.is-multiline {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+
+    .lang-contract {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .lang-contract summary {
+      cursor: pointer;
+      color: var(--accent2);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .lang-contract ul { margin: 8px 0 0 1.1rem; padding: 0; }
+    .lang-contract li { margin: 4px 0; }
+
+    .result-semantics-note {
+      font-size: 12px;
+      margin-top: 6px;
+      font-family: inherit;
+      color: var(--dim);
+    }
+    .result-semantics-note.extensional { color: var(--green); }
+    .result-semantics-note.sample { color: var(--warn); }
+    .result-semantics-note.intensional { color: var(--purple); }
+    .result-semantics-note.symbolic { color: var(--accent); }
+    .eval-err   { color: var(--red); font-style: italic; }
+
+    .hint-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .hint-chip {
+      background: var(--surface2);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 3px 11px;
+      font-family: inherit;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .hint-chip:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ===== KEYBOARD ===== */
+    #kb-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: color-mix(in srgb, var(--menu-bg) 96%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line-strong);
+      padding: 10px 16px 14px;
+      z-index: 100;
+      transition: transform 0.25s ease;
+    }
+
+    #kb-panel.collapsed { transform: translateY(calc(100% - 42px)); }
+
+    .kb-topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .kb-title {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .kb-toggle-btn {
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      color: var(--control-text);
+      font-size: 11px;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease;
+      font-family: inherit;
+    }
+    .kb-toggle-btn:hover {
+      border-color: var(--control-text-hover);
+      color: var(--control-text-hover);
+    }
+
+    .kb-hint {
+      font-family: inherit;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--dim);
+    }
+
+    .kb-groups { display: flex; gap: 14px; flex-wrap: wrap; }
+    .kb-group { flex: 1; min-width: 110px; }
+    .kb-group-label {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .kb-keys { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .kb-key {
+      background: var(--surface2);
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+      padding: 5px 7px;
+      min-width: 42px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.12s ease, background 0.12s ease;
+      position: relative;
+    }
+    .kb-key:hover {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
+    }
+    .kb-key:active { opacity: 0.9; }
+
+    .kb-sym {
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      display: block;
+      line-height: 1.2;
+    }
+    .kb-sc {
+      font-size: 8px;
+      color: var(--dim);
+      display: block;
+      margin-top: 1px;
+      line-height: 1;
+    }
+
+    /* Tooltip */
+    .kb-key[data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%; transform: translateX(-50%);
+      background: var(--menu-bg);
+      color: var(--text);
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      border: 1px solid var(--line-strong);
+      font-family: inherit;
+    }
+
+    /* Flash feedback (inserted symbol) */
+    @keyframes flashBorder {
+      0%,100% { border-color: var(--line-strong); }
+      50% { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+    }
+    .flash { animation: flashBorder 0.35s ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tab-content { animation: none; }
+      #kb-panel { transition: none; }
+      .flash { animation: none; }
+    }
+
+    @media (max-width: 640px) {
+      .ta-site-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .ta-site-nav-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+
+      header:not(.ta-site-header) {
+        top: var(--ta-site-header-height-stacked);
+      }
+
+      .ta-site-header {
+        top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header class="ta-site-header" aria-label="Site header">
+  <div class="ta-site-nav">
+    <a class="ta-site-brand" href="../">Tyeler Ahern</a>
+    <div class="ta-site-nav-right">
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Cycle theme mode" title="Cycle theme mode">theme: auto</button>
+      <nav class="ta-site-links" aria-label="Site navigation">
+        <a class="ta-site-link" href="../">Home</a>
+        <a class="ta-site-link" href="../#projects">Projects</a>
+        <a class="ta-site-link" href="https://github.com/Tye-ler" target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<header>
+  <div class="logo">
+    Set Theory Explorer
+    <span class="logo-sub">ℕ  ℤ  ℚ  ℝ  ℂ</span>
+  </div>
+  <div class="header-sets-preview" id="header-sets"></div>
+</header>
+
+<div class="tabs" id="tabs-bar">
+  <button class="tab-btn active" data-tab="sets">Set Builder</button>
+  <button class="tab-btn" data-tab="operations">Operations</button>
+  <button class="tab-btn" data-tab="expression">Expression</button>
+  <button class="tab-btn" data-tab="powerset">Power Set</button>
+</div>
+
+<div class="main">
+
+  <!-- ===== EXPRESSION TAB ===== -->
+  <div id="tab-expression" class="tab-content">
+    <div class="card">
+      <div class="card-title">Set expression evaluator</div>
+      <details class="lang-contract" id="expr-lang-contract">
+        <summary>Supported expression language (this page)</summary>
+        <p style="margin-top:8px">The Expression and Operations tabs share one evaluator. Allowed inputs are exactly those described here; anything else should fail with a clear message.</p>
+        <ul>
+          <li><strong>Atoms:</strong> named sets (letters/identifiers), built-ins ℕ ℤ ℚ ℝ ℂ, empty set ∅, explicit rosters <code>{…}</code>, power set <code>𝒫(S)</code> only when <code>S</code> resolves to an <strong>exact finite extensional</strong> set (same rule as the Power Set tab).</li>
+          <li><strong>Operators (binary):</strong> ∪ ∩ ∖ △ — parentheses allowed for grouping.</li>
+          <li><strong>Relations:</strong> ∈ ∉ ⊆ ⊂ ⊇ ⊃ = ≠ between two set expressions (after normalization).</li>
+          <li><strong>Quantifiers (single form):</strong> <code>∀ x ∈ &lt;domain&gt;, x ∈ &lt;target&gt;</code> and <code>∃ x ∈ &lt;domain&gt;, x ∈ &lt;target&gt;</code> with a comma at top level separating domain and target.</li>
+        </ul>
+        <p style="margin-top:8px;font-style:italic">Not supported: general first-order logic, ∧ ∨ → between formulas, set-builder notation inside expressions, or custom predicates beyond the Set Builder’s stored rules for derived sets.</p>
+      </details>
+      <textarea id="expr-input" class="expr-area"
+        placeholder="Type or pick chips below — e.g. A ∪ B, 2 ∈ ℤ, A ⊆ B, {1,2,3} ∩ {2,3,4}"
+        rows="3"></textarea>
+      <div class="hint-chips" id="expr-hint-chips">
+        <span class="hint-chip" data-expr="A ∪ B">A ∪ B</span>
+        <span class="hint-chip" data-expr="A ∩ B">A ∩ B</span>
+        <span class="hint-chip" data-expr="A ⊆ B">A ⊆ B</span>
+        <span class="hint-chip" data-expr="A ⊂ B">A ⊂ B</span>
+        <span class="hint-chip" data-expr="3 ∈ ℤ">3 ∈ ℤ</span>
+        <span class="hint-chip" data-expr="0.5 ∈ ℚ">0.5 ∈ ℚ</span>
+        <span class="hint-chip" data-expr="0 ∈ ℕ">0 ∈ ℕ</span>
+        <span class="hint-chip" data-expr="𝒫(A)">𝒫(A)</span>
+        <span class="hint-chip" data-expr="{1, 2, 3} ∩ {2, 3, 4}">{1,2,3} ∩ {2,3,4}</span>
+        <span class="hint-chip" data-expr="A ∪ B = B ∪ A">Commutativity</span>
+        <span class="hint-chip" data-expr="∀ x ∈ A, x ∈ B">∀ statement</span>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn" id="eval-btn">Evaluate</button>
+        <button class="btn btn-ghost" id="clear-btn">Clear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Result</div>
+      <details class="lang-contract" id="expr-result-guide">
+        <summary>How to read results</summary>
+        <ul style="margin-top:8px">
+          <li><strong>Extensional (finite roster):</strong> the value is exactly the listed members; counts refer to that roster unless labeled otherwise.</li>
+          <li><strong>Semantic (ℕ, ℤ, …):</strong> the set is infinite standard notation; ∈ and relations use built-in rules, not an exhaustive display.</li>
+          <li><strong>Sample / bounded listing (yellow cues):</strong> only a finite window is shown — not a proof about the whole derived or infinite set.</li>
+          <li><strong>Symbolic:</strong> kept as an unevaluated expression, or the question is not decided in this evaluator.</li>
+          <li><strong>Unsupported / error:</strong> outside the documented language or violates domain rules (expand “Supported expression language” above).</li>
+        </ul>
+      </details>
+      <div id="eval-output" class="eval-out">
+        <span style="color:var(--muted); font-style:italic">
+          Enter an expression above, then Evaluate (Ctrl+Enter). Expand “How to read results” if the tags are unfamiliar.
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SET BUILDER TAB ===== -->
+  <div id="tab-sets" class="tab-content active">
+    <div class="card">
+      <div class="card-title">Define a New Set</div>
+      <div class="mode-row">
+        <label class="form-label" for="set-mode" style="margin-bottom:0">Mode</label>
+        <select id="set-mode" class="form-input" style="max-width:280px">
+          <option value="roster">Finite roster — list elements exactly</option>
+          <option value="derived">Rule-defined — {x ∈ base | rule on x}</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:0 0 90px">
+          <label class="form-label">Name</label>
+          <input id="set-name" class="form-input" placeholder="A" maxlength="4">
+        </div>
+        <div class="form-group" id="roster-fields">
+          <label class="form-label">Elements (comma-separated, or leave blank for ∅)</label>
+          <input id="set-elems" class="form-input" placeholder="1, 2, 3, hello, ...">
+        </div>
+        <div class="form-group is-hidden" id="derived-base-field" style="flex:0 0 190px">
+          <label class="form-label">Base Set</label>
+          <select id="derived-base" class="form-input"></select>
+        </div>
+        <div class="form-group is-hidden" id="derived-rule-field">
+          <label class="form-label">Rule for x</label>
+          <input id="set-rule" class="form-input" placeholder="even  ·  x > 3  ·  x % 5 = 1  ·  x % 3 ≠ 0">
+        </div>
+        <div style="flex:0">
+          <button class="btn" id="add-set-btn">Add Set</button>
+        </div>
+      </div>
+      <details class="lang-contract is-hidden" id="derived-contract-details">
+        <summary>Supported rule grammar (derived sets only)</summary>
+        <ul style="margin-top:8px">
+          <li><strong>Primitives:</strong> <code>even</code>, <code>odd</code></li>
+          <li><strong>Modular:</strong> <code>x % m = k</code>, <code>x % m ≠ k</code> (integers m, k; m ≠ 0)</li>
+          <li><strong>Compare x to a constant:</strong> <code>x &lt; n</code>, <code>x &gt; n</code>, <code>x &lt;= n</code>, <code>x &gt;= n</code>, <code>x = n</code>, <code>x ≠ n</code> (also <code>==</code> / <code>!=</code>)</li>
+          <li><strong>Combine:</strong> <code>and</code> / <code>or</code> / <code>∧</code> / <code>∨</code> between clauses (no nested arbitrary logic beyond that).</li>
+        </ul>
+        <p style="margin-top:8px;font-style:italic">Anything else is rejected at save time with a clear error.</p>
+      </details>
+      <div class="small-note" id="set-builder-help">Finite roster mode: the set is exactly the comma-separated elements you list (or ∅ if empty). Switch mode for rule-defined subsets.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Defined sets</div>
+      <details class="lang-contract" id="set-list-guide">
+        <summary>Tags in the list</summary>
+        <ul style="margin-top:8px">
+          <li><strong>semantic:</strong> built-in ℕ, ℤ, … — infinite; sample line is illustrative only.</li>
+          <li><strong>roster:</strong> your listed elements are the whole set (extensional).</li>
+          <li><strong>rule:</strong> {x ∈ base | …}; domain/projection lines say how listings and ∈ behave.</li>
+        </ul>
+      </details>
+      <div id="sets-list">
+        <div style="color:var(--muted); font-style:italic; font-size:14px;">No sets defined. Add one above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== OPERATIONS TAB ===== -->
+  <div id="tab-operations" class="tab-content">
+    <div class="card">
+      <div class="card-title">Set expression workspace</div>
+      <details class="lang-contract" id="op-lang-contract">
+        <summary>Supported expression language (same as Expression tab)</summary>
+        <p style="margin-top:8px">Operations uses the <strong>same parser and evaluator</strong> as the Expression tab; buttons only insert text. See the Expression tab for the full contract, or expand this box there.</p>
+        <ul>
+          <li><strong>Atoms:</strong> named sets, ℕ ℤ ℚ ℝ ℂ, ∅, <code>{…}</code>, <code>𝒫(S)</code> only when <code>S</code> has an exact finite extensional listing (same rule as the Power Set tab).</li>
+          <li><strong>Operators:</strong> ∪ ∩ ∖ △</li>
+          <li><strong>Relations:</strong> ∈ ∉ ⊆ ⊂ ⊇ ⊃ = ≠</li>
+          <li><strong>Quantifiers:</strong> ∀ / ∃ with the comma-separated domain,target pattern.</li>
+        </ul>
+      </details>
+      <textarea id="op-equation" class="expr-area" rows="3" placeholder="Set expression, e.g. (A ∪ B) ∩ C or 𝒫(A)"></textarea>
+      <div class="hint-chips" id="op-equation-snippets" aria-label="Quick expressions"></div>
+      <div class="equation-actions">
+        <button class="btn" id="compute-btn">Evaluate</button>
+        <button class="btn btn-ghost" id="op-clear-btn">Clear</button>
+      </div>
+      <div class="small-note">Symbols insert into the equation box; when Set A and Set B are chosen, ∪ ∩ ∖ △ insert those names (B ∖ A uses B then A). Slots A–E drive the Venn and pairwise summary. The diagram is <strong>extensional</strong> (listed members only) when every compared set has an exact finite listing; ℕ/ℤ-derived sets use a <strong>labeled sample projection</strong> (see on-canvas banner). Four- and five-set figures are schematic; region <em>lists</em> still refer only to listed members. 𝒫(S) in expressions follows the Power Set tab: <strong>exact finite extensional</strong> S only.</div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Choose Sets</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">Set A</label>
+          <select id="op-a" class="form-input"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Set B</label>
+          <select id="op-b" class="form-input"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Set C (optional)</label>
+          <select id="op-c" class="form-input"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Set D (optional)</label>
+          <select id="op-d" class="form-input"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Set E (optional)</label>
+          <select id="op-e" class="form-input"><option value="">— select —</option></select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Operation</div>
+        <div class="op-grid" id="op-grid">
+          <div class="op-btn" data-op="union">
+            <span class="op-sym">∪</span><span class="op-label">Union</span>
+          </div>
+          <div class="op-btn" data-op="intersect">
+            <span class="op-sym">∩</span><span class="op-label">Intersection</span>
+          </div>
+          <div class="op-btn" data-op="diff-ab">
+            <span class="op-sym">A ∖ B</span><span class="op-label">Difference</span>
+          </div>
+          <div class="op-btn" data-op="diff-ba">
+            <span class="op-sym">B ∖ A</span><span class="op-label">Difference</span>
+          </div>
+          <div class="op-btn" data-op="symdiff">
+            <span class="op-sym">A △ B</span><span class="op-label">Sym. difference</span>
+          </div>
+          <div class="op-btn" data-insert=" ∈ ">
+            <span class="op-sym">∈</span><span class="op-label">Membership</span>
+          </div>
+          <div class="op-btn" data-insert=" ⊆ ">
+            <span class="op-sym">⊆</span><span class="op-label">Subset</span>
+          </div>
+          <div class="op-btn" data-insert=" ⊂ ">
+            <span class="op-sym">⊂</span><span class="op-label">Proper Subset</span>
+          </div>
+          <div class="op-btn" data-insert=" = ">
+            <span class="op-sym">=</span><span class="op-label">Equal</span>
+          </div>
+          <div class="op-btn" data-insert=" ≠ ">
+            <span class="op-sym">≠</span><span class="op-label">Not Equal</span>
+          </div>
+          <div class="op-btn" data-insert="𝒫(">
+            <span class="op-sym">𝒫</span><span class="op-label">Power Set</span>
+          </div>
+        </div>
+        <div class="small-note">Click a symbol to insert it into the equation box.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Result</div>
+      <details class="lang-contract" id="op-result-guide">
+        <summary>How to read results</summary>
+        <ul style="margin-top:8px">
+          <li><strong>Extensional (finite roster):</strong> the value is exactly the listed members; counts refer to that roster unless labeled otherwise.</li>
+          <li><strong>Semantic (ℕ, ℤ, …):</strong> the set is infinite standard notation; ∈ and relations use built-in rules, not an exhaustive display.</li>
+          <li><strong>Sample / bounded listing (yellow cues):</strong> only a finite window is shown — not a proof about the whole derived or infinite set.</li>
+          <li><strong>Symbolic:</strong> kept as an unevaluated expression, or the question is not decided in this evaluator.</li>
+          <li><strong>Unsupported / error:</strong> outside the documented language or violates domain rules (see “Supported expression language”).</li>
+        </ul>
+      </details>
+      <div class="result-box">
+        <div class="result-label" id="op-result-label">Enter a set expression, then Evaluate (Ctrl+Enter). Same evaluator as the Expression tab.</div>
+        <div class="result-val" id="op-result-val">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Venn diagram (extensional or sample)</div>
+      <details class="lang-contract" id="venn-view-guide">
+        <summary>What this view can and cannot show</summary>
+        <ul style="margin-top:8px">
+          <li><strong>Extensional mode (no yellow banner):</strong> regions partition the union of members that appear in the <em>listings</em> used for the diagram — a correct partition of <em>those</em> elements, not a claim about unstated elements of infinite sets.</li>
+          <li><strong>Sample projection (yellow banner):</strong> overlap is computed on bounded windows (see footnote text). Explore overlap; do not treat it as the exact infinite-set Venn.</li>
+          <li><strong>Canvas cleared with a message:</strong> at least one selected set has no finite listing here — use the pairwise notes below and the Expression tab for semantic checks.</li>
+        </ul>
+      </details>
+      <div class="venn-wrap">
+        <canvas id="venn" width="540" height="300"></canvas>
+        <div class="venn-legend" id="venn-legend"></div>
+        <div class="venn-note" id="venn-note"></div>
+        <div id="comparison-summary" class="comparison-summary" style="display:none" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== POWER SET TAB ===== -->
+  <div id="tab-powerset" class="tab-content">
+    <div class="card">
+      <div class="card-title">Compute Power Set</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Select Set</label>
+          <select id="ps-select" class="form-input"><option value="">— select —</option></select>
+        </div>
+        <div style="flex:0">
+          <button class="btn" id="ps-btn">Compute 𝒫</button>
+        </div>
+      </div>
+      <div class="small-note">𝒫(S) is enumerated only when S is <strong>exact finite extensional</strong>: an explicit roster, or a derived set whose transitive base is such a roster. Infinite standard sets, symbolic expression values, and ℕ/ℤ-derived subsets (infinite, sample-window listings) cannot yield a truthful full power-set listing here.</div>
+      <details class="lang-contract" id="ps-unavailable-guide">
+        <summary>Why 𝒫 might be unavailable</summary>
+        <ul style="margin-top:8px">
+          <li><strong>Infinite base:</strong> 𝒫(S) would have infinitely many subsets — not enumerated.</li>
+          <li><strong>Sample-only listing:</strong> bounded windows from ℕ/ℤ-derived rules do not define a unique finite S for 𝒫.</li>
+          <li><strong>Symbolic 𝒫(…):</strong> inner expression did not resolve to an exact finite set — result stays symbolic with an explanation.</li>
+        </ul>
+      </details>
+    </div>
+    <div id="ps-result-card" class="card" style="display:none">
+      <div class="card-title">𝒫(<span id="ps-name"></span>) — exact extensional listing</div>
+      <div id="ps-meta" style="color:var(--muted); font-size:13px; margin-bottom:12px; font-family:inherit;"></div>
+      <div class="ps-grid" id="ps-grid"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ===== KEYBOARD PANEL ===== -->
+<div id="kb-panel">
+  <div class="kb-topbar" id="kb-topbar">
+    <span class="kb-title">Symbol Keyboard</span>
+    <span class="kb-hint">click to insert · Alt+key for shortcuts</span>
+    <button class="kb-toggle-btn" id="kb-toggle">▲ Hide</button>
+  </div>
+  <div id="kb-body">
+    <div class="kb-groups" id="kb-groups"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  sets: {},
+  activeInput: null,
+  kbCollapsed: false,
+  /** Current Operations-tab composition string; kept in sync with #op-equation for later evaluation phases. */
+  opEquation: '',
+  /** Ordered, de-duplicated set names selected for comparison (Operations tab slots op-a … op-e). */
+  comparisonSetIds: [],
+};
+
+/** DOM ids for comparison dropdowns, in order (A–E). */
+const COMPARISON_SLOT_IDS = ['op-a', 'op-b', 'op-c', 'op-d', 'op-e'];
+
+/* ============================================================
+   KEYBOARD SYMBOL DEFINITIONS
+   ============================================================ */
+const KB_GROUPS = [
+  {
+    label: 'Number Sets',
+    keys: [
+      { sym: 'ℕ', tip: 'Natural numbers',  sc: 'A+n' },
+      { sym: 'ℤ', tip: 'Integers',          sc: 'A+z' },
+      { sym: 'ℚ', tip: 'Rationals',         sc: 'A+q' },
+      { sym: 'ℝ', tip: 'Real numbers',      sc: 'A+r' },
+      { sym: 'ℂ', tip: 'Complex numbers',   sc: 'A+c' },
+    ]
+  },
+  {
+    label: 'Relations',
+    keys: [
+      { sym: '∈',  tip: 'Element of',         sc: 'A+e' },
+      { sym: '∉',  tip: 'Not element of',     sc: 'A+E' },
+      { sym: '⊂',  tip: 'Proper subset',      sc: 'A+,' },
+      { sym: '⊆',  tip: 'Subset or equal',    sc: 'A+s' },
+      { sym: '⊃',  tip: 'Proper superset',    sc: 'A+.' },
+      { sym: '⊇',  tip: 'Superset or equal',  sc: 'A+S' },
+      { sym: '≠',  tip: 'Not equal',          sc: 'A+=' },
+      { sym: '=',  tip: 'Equals',             sc: '=' },
+    ]
+  },
+  {
+    label: 'Operations',
+    keys: [
+      { sym: '∪',  tip: 'Union',              sc: 'A+u' },
+      { sym: '∩',  tip: 'Intersection',       sc: 'A+i' },
+      { sym: '∖',  tip: 'Set difference',     sc: 'A+\\' },
+      { sym: '△',  tip: 'Symmetric diff',     sc: 'A+d' },
+      { sym: '∅',  tip: 'Empty set',          sc: 'A+0' },
+      { sym: '𝒫',  tip: 'Power set',          sc: 'A+p' },
+      { sym: '′',  tip: 'Complement',         sc: "A+'" },
+      { sym: '|',  tip: 'Such that / |A|',    sc: '|' },
+    ]
+  },
+  {
+    label: 'Logic',
+    keys: [
+      { sym: '∧',  tip: 'Logical AND',        sc: 'A+&' },
+      { sym: '∨',  tip: 'Logical OR',         sc: 'A+v' },
+      { sym: '¬',  tip: 'Negation',           sc: 'A+!' },
+      { sym: '→',  tip: 'Implies',            sc: 'A+-' },
+      { sym: '↔',  tip: 'If and only if',     sc: 'A+l' },
+      { sym: '∀',  tip: 'For all',            sc: 'A+a' },
+      { sym: '∃',  tip: 'There exists',       sc: 'A+x' },
+      { sym: '∴',  tip: 'Therefore',          sc: 'A+t' },
+    ]
+  },
+  {
+    label: 'Brackets',
+    keys: [
+      { sym: '{',  tip: 'Open brace',         sc: '{' },
+      { sym: '}',  tip: 'Close brace',        sc: '}' },
+      { sym: '(',  tip: 'Open paren',         sc: '(' },
+      { sym: ')',  tip: 'Close paren',        sc: ')' },
+      { sym: ',',  tip: 'Comma',              sc: ',' },
+      { sym: ':',  tip: 'Colon',              sc: ':' },
+      { sym: '…',  tip: 'Ellipsis',           sc: 'A+;' },
+    ]
+  },
+];
+
+// Alt-key → symbol map
+const ALT_MAP = {
+  'n':'ℕ', 'z':'ℤ', 'q':'ℚ', 'r':'ℝ', 'c':'ℂ',
+  'e':'∈', 'E':'∉',
+  ',':'⊂', 's':'⊆', '.':'⊃', 'S':'⊇',
+  '=':'≠',
+  'u':'∪', 'i':'∩', '\\':'∖', 'd':'△',
+  '0':'∅', 'p':'𝒫', "'": '′',
+  '&':'∧', 'v':'∨', '!':'¬', '-':'→', 'l':'↔',
+  'a':'∀', 'x':'∃', 't':'∴', ';':'…',
+};
+
+/* ============================================================
+   KEYBOARD UI
+   ============================================================ */
+function buildKeyboard() {
+  const container = document.getElementById('kb-groups');
+  container.innerHTML = '';
+  KB_GROUPS.forEach(group => {
+    const el = document.createElement('div');
+    el.className = 'kb-group';
+    el.innerHTML = `<div class="kb-group-label">${group.label}</div><div class="kb-keys"></div>`;
+    const keysEl = el.querySelector('.kb-keys');
+    group.keys.forEach(k => {
+      const btn = document.createElement('div');
+      btn.className = 'kb-key';
+      btn.setAttribute('data-tip', k.tip);
+      btn.innerHTML = `<span class="kb-sym">${k.sym}</span><span class="kb-sc">${k.sc}</span>`;
+      btn.addEventListener('click', () => insertSym(k.sym));
+      keysEl.appendChild(btn);
+    });
+    container.appendChild(el);
+  });
+}
+
+// Keyboard collapse toggle
+document.getElementById('kb-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  state.kbCollapsed = !state.kbCollapsed;
+  document.getElementById('kb-panel').classList.toggle('collapsed', state.kbCollapsed);
+  document.getElementById('kb-toggle').textContent = state.kbCollapsed ? '▼ Show' : '▲ Hide';
+  document.querySelector('.main').style.paddingBottom = state.kbCollapsed ? '60px' : '260px';
+});
+
+/* ============================================================
+   SYMBOL INSERTION
+   ============================================================ */
+function insertSym(sym) {
+  const target = state.activeInput || document.getElementById('expr-input');
+  if (!target || target.tagName === 'SELECT') return;
+  const s = target.selectionStart;
+  const e = target.selectionEnd;
+  target.value = target.value.slice(0, s) + sym + target.value.slice(e);
+  target.selectionStart = target.selectionEnd = s + sym.length;
+  target.focus();
+  target.classList.remove('flash');
+  void target.offsetWidth;
+  target.classList.add('flash');
+  if (target.id === 'op-equation') syncOpEquationState();
+}
+
+document.addEventListener('focusin', (e) => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+    state.activeInput = e.target;
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (!e.altKey || e.ctrlKey || e.metaKey) return;
+  const sym = ALT_MAP[e.shiftKey ? e.key.toUpperCase() : e.key] || ALT_MAP[e.key];
+  if (sym) {
+    e.preventDefault();
+    const focused = document.activeElement;
+    if (focused && (focused.tagName === 'TEXTAREA' || focused.tagName === 'INPUT')) {
+      state.activeInput = focused;
+      insertSym(sym);
+    }
+  }
+});
+
+/* ============================================================
+   TABS
+   ============================================================ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'operations') {
+    refreshOpDropdowns();
+    drawInitialVenn();
+  }
+  if (tab === 'powerset') refreshPsDropdown();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+/* ============================================================
+   SET MODEL, BUILDER, AND OPERATIONS
+   ============================================================ */
+const BUILTIN_NAMES = ['ℕ', 'ℤ', 'ℚ', 'ℝ', 'ℂ'];
+/** Upper bound on |S| for expanding 𝒫(S) in the Power Set tab and Operations / evaluator (2^14 rows max). */
+const MAX_POWER_SET_DISPLAY_BASE = 14;
+const VENN_SAMPLE_NOTE =
+  'ℕ/ℤ-derived sets use a bounded integer window here; regions and counts follow that sample, not the full derived set.';
+const SYSTEM_SAMPLE = {
+  'ℕ': [0, 1, 2, 3, 4, '...'],
+  'ℤ': ['...', -2, -1, 0, 1, 2, '...'],
+  'ℚ': ['0', '1/2', '-3', '...'],
+  'ℝ': ['0', 'π', '√2', '...'],
+  'ℂ': ['0', '1', 'i', '...']
+};
+
+/** Mathematical vs computational representation of a stored set value. */
+const SET_EXACTNESS = {
+  SEMANTIC_BUILTIN: 'semantic_builtin',
+  EXACT_ROSTER: 'exact_roster',
+  DERIVED_RULE: 'derived_rule',
+  SYMBOLIC_EXPR: 'symbolic_expression'
+};
+
+/** How a bounded listing from `enumerateFinite` relates to the full set. */
+const LISTING_KIND = {
+  EXACT: 'exact',
+  SAMPLE_PREVIEW: 'sample_preview',
+  SEMANTIC_NOT_LISTED: 'semantic_not_listed',
+  NONE: 'none'
+};
+
+/** Set Builder construction mode (Slice C1). */
+const CONSTRUCTOR_KIND = {
+  ROSTER: 'roster',
+  DERIVED: 'derived',
+  SYSTEM: 'system'
+};
+
+/** Derived-set base domain classification (Slice C3). */
+const DOMAIN_KIND = {
+  FINITE_ROSTER: 'finite_roster',
+  SEMANTIC_NATS: 'semantic_ℕ',
+  SEMANTIC_INTS: 'semantic_ℤ',
+  SEMANTIC_RATIONALS: 'semantic_ℚ',
+  SEMANTIC_REALS: 'semantic_ℝ',
+  SEMANTIC_COMPLEX: 'semantic_ℂ',
+  DERIVED_CHAIN: 'derived_chain',
+  UNKNOWN: 'unknown'
+};
+
+/** How listings/Venn/projections relate to the mathematical set (Slice C3). */
+const PROJECTION_MODE = {
+  EXACT_ROSTER: 'exact_roster',
+  BOUNDED_INTEGER_SAMPLE: 'bounded_integer_sample',
+  SYMBOLIC_MEMBERSHIP: 'symbolic_membership',
+  UNKNOWN: 'unknown'
+};
+
+/** Short hint for unsupported rules (Slice C2). */
+const DERIVED_RULE_CONTRACT_HINT =
+  'Allowed: even, odd; x % m = k or x % m ≠ k; x < n, x > n, x <= n, x >= n, x = n, x ≠ n; combine with and/or (∧ ∨).';
+
+/** Evaluation result category for UI / downstream logic. */
+const TRUTH_CLASS = {
+  BOOLEAN: 'boolean',
+  EXACT_SET: 'exact_set',
+  SEMANTIC_SET: 'semantic_set',
+  DERIVED_SET: 'derived_set',
+  SAMPLED_LISTING: 'sampled_listing',
+  SYMBOLIC: 'symbolic',
+  UNSUPPORTED: 'unsupported'
+};
+
+/** Appended to resolution errors so unsupported forms fail with a predictable contract (Slice B2). */
+const EVALUATOR_LANGUAGE_SHORT_HINT =
+  'Allowed: named sets and ℕ,ℤ,ℚ,ℝ,ℂ, ∅, rosters {…}, 𝒫(finite roster); ∪ ∩ ∖ △; ∈ ∉ ⊆ ⊂ ⊇ ⊃ = ≠; quantifiers ∀/∃ only as “∀ x ∈ domain, x ∈ target”.';
+
+function formatEvaluatorResolutionError(fragment) {
+  return `Not supported in this evaluator: “${fragment}”. ${EVALUATOR_LANGUAGE_SHORT_HINT}`;
+}
+
+function normalizeSymbol(text) {
+  return String(text || '')
+    .replaceAll('â„•', 'ℕ').replaceAll('â„¤', 'ℤ').replaceAll('â„š', 'ℚ').replaceAll('â„', 'ℝ').replaceAll('â„‚', 'ℂ')
+    .replaceAll('âˆˆ', '∈').replaceAll('âˆ‰', '∉').replaceAll('âŠ‚', '⊂').replaceAll('âŠ†', '⊆').replaceAll('âŠƒ', '⊃').replaceAll('âŠ‡', '⊇')
+    .replaceAll('âˆª', '∪').replaceAll('âˆ©', '∩').replaceAll('âˆ–', '∖').replaceAll('â–³', '△').replaceAll('âˆ…', '∅').replaceAll('ð’«', '𝒫')
+    .replaceAll('â‰ ', '≠').replaceAll('â‰ ', '≠').replaceAll('â€¦', '...');
+}
+
+function makeBuiltin(name) {
+  return {
+    type: 'builtin',
+    name: name,
+    constructorKind: CONSTRUCTOR_KIND.SYSTEM,
+    exactness: SET_EXACTNESS.SEMANTIC_BUILTIN,
+    locked: true,
+    finite: false,
+    sample: SYSTEM_SAMPLE[name]
+  };
+}
+function makeFinite(name, elements) {
+  return {
+    type: 'finite',
+    name: name || '',
+    constructorKind: CONSTRUCTOR_KIND.ROSTER,
+    exactness: SET_EXACTNESS.EXACT_ROSTER,
+    locked: false,
+    finite: true,
+    elements: uniqueElements(elements)
+  };
+}
+function makeDerived(name, base, rule) {
+  const meta = computeDerivedDomainMeta(base);
+  return {
+    type: 'derived',
+    name: name,
+    base: base,
+    rule: rule.trim(),
+    constructorKind: CONSTRUCTOR_KIND.DERIVED,
+    domainKind: meta.domainKind,
+    projectionMode: meta.projectionMode,
+    domainSummary: meta.domainSummary,
+    exactness: SET_EXACTNESS.DERIVED_RULE,
+    locked: false,
+    finite: false
+  };
+}
+function makeExpression(expr, note) {
+  return {
+    type: 'expression',
+    name: '',
+    expr: expr,
+    note: note || 'Symbolic expression',
+    exactness: SET_EXACTNESS.SYMBOLIC_EXPR,
+    finite: false,
+    locked: false
+  };
+}
+
+/** Exactness metadata for a stored set (see `SET_EXACTNESS`). */
+function getSetExactness(set) {
+  if (!set || !set.exactness) return null;
+  return set.exactness;
+}
+
+function isSampledListing(enumeration) {
+  return Boolean(enumeration && enumeration.finite && enumeration.sampledFromInfinite);
+}
+
+function listingKindFromEnumeration(enumeration) {
+  if (!enumeration) return LISTING_KIND.NONE;
+  if (enumeration.finite) {
+    return enumeration.sampledFromInfinite ? LISTING_KIND.SAMPLE_PREVIEW : LISTING_KIND.EXACT;
+  }
+  return enumeration.listingKind || LISTING_KIND.NONE;
+}
+
+/** Canonical check: finite listing is exact roster, not a bounded sample (Milestone 4 / E2). */
+function isExactExtensionalEnumeration(enumeration) {
+  return Boolean(
+    enumeration &&
+      enumeration.finite &&
+      !enumeration.sampledFromInfinite &&
+      enumeration.listingKind === LISTING_KIND.EXACT
+  );
+}
+
+/**
+ * Power set is allowed only for exact extensional bases (E1 / E2).
+ * Returns { ok, enumeration?, reason? }.
+ */
+function powerSetEligibility(set) {
+  const fin = enumerateFinite(set, undefined, { exactListingOnly: true });
+  if (!fin.finite) {
+    return { ok: false, reason: fin.reason || 'Not an exact finite extensional set for 𝒫(S) here.' };
+  }
+  if (!isExactExtensionalEnumeration(fin)) {
+    return {
+      ok: false,
+      reason:
+        '𝒫(S) requires an exact member list — bounded samples (e.g. ℕ/ℤ-derived windows) cannot enumerate the full power set.'
+    };
+  }
+  return { ok: true, enumeration: fin };
+}
+
+function getSet(name) {
+  return state.sets[normalizeSymbol(name).trim()] || null;
+}
+
+/**
+ * Domain + projection metadata for a derived set’s base (Slice C3).
+ * Used at construction and for UI; enumerators already follow the same semantics.
+ */
+function computeDerivedDomainMeta(baseName) {
+  const bs = getSet(baseName);
+  if (!bs) {
+    return {
+      domainKind: DOMAIN_KIND.UNKNOWN,
+      projectionMode: PROJECTION_MODE.UNKNOWN,
+      domainSummary: 'Base set is missing from the workspace.'
+    };
+  }
+  if (bs.type === 'finite') {
+    return {
+      domainKind: DOMAIN_KIND.FINITE_ROSTER,
+      projectionMode: PROJECTION_MODE.EXACT_ROSTER,
+      domainSummary:
+        'Domain: finite roster base — exact listing for samples, Venn (when comparable), and 𝒫 when enumerable.'
+    };
+  }
+  if (bs.type === 'builtin') {
+    if (bs.name === 'ℕ' || bs.name === 'ℤ') {
+      return {
+        domainKind: bs.name === 'ℕ' ? DOMAIN_KIND.SEMANTIC_NATS : DOMAIN_KIND.SEMANTIC_INTS,
+        projectionMode: PROJECTION_MODE.BOUNDED_INTEGER_SAMPLE,
+        domainSummary:
+          'Domain: ' +
+          bs.name +
+          ' (infinite). Membership and rules use full semantics; Venn/listings use a bounded integer window only.'
+      };
+    }
+    let dk = DOMAIN_KIND.SEMANTIC_RATIONALS;
+    if (bs.name === 'ℝ') dk = DOMAIN_KIND.SEMANTIC_REALS;
+    if (bs.name === 'ℂ') dk = DOMAIN_KIND.SEMANTIC_COMPLEX;
+    return {
+      domainKind: dk,
+      projectionMode: PROJECTION_MODE.SYMBOLIC_MEMBERSHIP,
+      domainSummary:
+        'Domain: ' +
+        bs.name +
+        ' (infinite). No exact finite listing; ∈ uses semantic/heuristic tests; projections stay partial.'
+    };
+  }
+  if (bs.type === 'derived') {
+    return {
+      domainKind: DOMAIN_KIND.DERIVED_CHAIN,
+      projectionMode: bs.projectionMode || PROJECTION_MODE.SYMBOLIC_MEMBERSHIP,
+      domainSummary:
+        'Chained domain via {' +
+        bs.name +
+        '}: ' +
+        (bs.domainSummary || 'inherits parent base behavior.')
+    };
+  }
+  return {
+    domainKind: DOMAIN_KIND.UNKNOWN,
+    projectionMode: PROJECTION_MODE.UNKNOWN,
+    domainSummary: 'Unrecognized base type for domain description.'
+  };
+}
+
+function getConstructorKind(set) {
+  if (!set) return CONSTRUCTOR_KIND.ROSTER;
+  if (set.constructorKind) return set.constructorKind;
+  if (set.type === 'builtin') return CONSTRUCTOR_KIND.SYSTEM;
+  if (set.type === 'derived') return CONSTRUCTOR_KIND.DERIVED;
+  return CONSTRUCTOR_KIND.ROSTER;
+}
+
+function ctorTagClass(kind) {
+  if (kind === CONSTRUCTOR_KIND.SYSTEM) return 'ctor-system';
+  if (kind === CONSTRUCTOR_KIND.DERIVED) return 'ctor-derived';
+  return 'ctor-roster';
+}
+
+function ctorTagLabel(kind) {
+  if (kind === CONSTRUCTOR_KIND.SYSTEM) return 'semantic';
+  if (kind === CONSTRUCTOR_KIND.DERIVED) return 'rule';
+  return 'roster';
+}
+function elementKey(value) {
+  if (isComplexValue(value)) return `C:${value.re},${value.im}`;
+  return Array.isArray(value) ? '[' + value.map(elementKey).join('|') + ']' : String(value);
+}
+function uniqueElements(elements) {
+  const seen = new Set();
+  const result = [];
+  elements.forEach(value => {
+    const key = elementKey(value);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(value);
+    }
+  });
+  return result;
+}
+function parseElement(raw) {
+  const text = normalizeSymbol(String(raw || '').trim());
+  if (!text) return '';
+  const complex = parseComplexNumberString(text);
+  if (complex) return complex;
+  const fraction = text.match(/^(-?\d+)\s*\/\s*(-?\d+)$/);
+  if (fraction && Number(fraction[2]) !== 0) return Number(fraction[1]) / Number(fraction[2]);
+  const n = Number(text);
+  return Number.isFinite(n) ? n : text;
+}
+function parseElems(str) {
+  const text = normalizeSymbol(str).trim();
+  if (!text || text === '∅') return [];
+  return uniqueElements(text.split(',').map(parseElement).filter(value => value !== ''));
+}
+/** Cartesian complex value for membership (not native JS Complex). */
+function makeComplex(re, im) {
+  return { kind: 'complex', re: Number(re), im: Number(im) };
+}
+function isComplexValue(value) {
+  return Boolean(value && typeof value === 'object' && value.kind === 'complex');
+}
+/**
+ * Parse literals like i, -2i, 3+4i after whitespace collapse.
+ * Returns null if the string does not look like a single complex literal.
+ */
+function parseComplexNumberString(raw) {
+  let t = normalizeSymbol(String(raw || '').trim()).replace(/\s+/g, '');
+  if (!t) return null;
+  while (t.startsWith('(') && t.endsWith(')') && wrapsEntireExpression(t)) {
+    t = t.slice(1, -1).replace(/\s+/g, '');
+  }
+  const lower = t.toLowerCase();
+  if (lower === 'i') return makeComplex(0, 1);
+  if (lower === '-i') return makeComplex(0, -1);
+  const mImagCoeff = t.match(/^(-?\d+(?:\.\d+)?)i$/i);
+  if (mImagCoeff) return makeComplex(0, Number(mImagCoeff[1]));
+  const mRealPlusI = t.match(/^(-?\d+(?:\.\d+)?)([+-])i$/i);
+  if (mRealPlusI) {
+    const im = mRealPlusI[2] === '+' ? 1 : -1;
+    return makeComplex(Number(mRealPlusI[1]), im);
+  }
+  const mCart = t.match(/^(-?\d+(?:\.\d+)?)([+-])(\d+(?:\.\d+)?)i$/i);
+  if (mCart) {
+    const imSign = mCart[2] === '+' ? 1 : -1;
+    return makeComplex(Number(mCart[1]), imSign * Number(mCart[3]));
+  }
+  return null;
+}
+function isRealNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+/**
+ * True if a finite IEEE double matches some p/q with |q| ≤ maxDen (heuristic for ℚ).
+ * Rejects typical irrationals (π, √2) while accepting decimals that are small rationals.
+ */
+function isLikelyRational(x, maxDen) {
+  if (!isRealNumber(x)) return false;
+  if (Number.isInteger(x)) return true;
+  const cap = maxDen || 200000;
+  const X = Math.abs(x);
+  const tol = Number.EPSILON * 1024 * (1 + Math.abs(x));
+  for (let b = 1; b <= cap; b += 1) {
+    const a = Math.round(X * b);
+    if (Math.abs(a / b - X) <= tol) return true;
+  }
+  return false;
+}
+function isBuiltinSymbolicReal(value) {
+  return value === 'π' || value === '√2';
+}
+function containsBuiltin(name, value) {
+  if (isComplexValue(value)) {
+    const re = value.re;
+    const im = value.im;
+    if (!Number.isFinite(re) || !Number.isFinite(im)) return false;
+    if (name === 'ℕ' || name === 'ℤ') return im === 0 && Number.isInteger(re) && (name === 'ℕ' ? re >= 0 : true);
+    if (name === 'ℚ') return isLikelyRational(re) && isLikelyRational(im);
+    if (name === 'ℝ') return im === 0 && isRealNumber(re);
+    if (name === 'ℂ') return true;
+    return false;
+  }
+  if (isBuiltinSymbolicReal(value)) {
+    if (name === 'ℕ' || name === 'ℤ' || name === 'ℚ') return false;
+    if (name === 'ℝ' || name === 'ℂ') return true;
+    return false;
+  }
+  if (!isRealNumber(value)) return false;
+  if (name === 'ℕ') return Number.isInteger(value) && value >= 0;
+  if (name === 'ℤ') return Number.isInteger(value);
+  if (name === 'ℚ') return isLikelyRational(value);
+  if (name === 'ℝ') return true;
+  if (name === 'ℂ') return true;
+  return false;
+}
+function containsElement(set, value) {
+  if (!set) return false;
+  if (set.type === 'builtin') return containsBuiltin(set.name, value);
+  if (set.type === 'finite') return set.elements.some(item => elementKey(item) === elementKey(value));
+  if (set.type === 'derived') {
+    const base = getSet(set.base);
+    return containsElement(base, value) && testRule(set.rule, value);
+  }
+  return false;
+}
+function isFiniteComputable(set) {
+  if (!set) return false;
+  if (set.type === 'finite') return true;
+  if (set.type === 'derived') {
+    const base = getSet(set.base);
+    return Boolean(base && (base.type === 'finite' || base.type === 'builtin'));
+  }
+  return false;
+}
+/** Bounded integer grid for sampling built-in ℕ/ℤ when used as a derived-set base. */
+function sampleBuiltinIntegerGrid(name, max) {
+  const cap = Math.min(max || 1000, 500);
+  const out = [];
+  if (name === 'ℕ') {
+    for (let k = 0; k < cap; k += 1) out.push(k);
+    return out;
+  }
+  if (name === 'ℤ') {
+    const half = Math.floor(cap / 2);
+    for (let k = -half; k < -half + cap; k += 1) out.push(k);
+    return out;
+  }
+  return out;
+}
+function enumerateFinite(set, limit, opts) {
+  const max = limit || 1000;
+  const exactOnly = Boolean(opts && opts.exactListingOnly);
+  if (!set) {
+    return { finite: false, elements: [], reason: 'No set selected.', listingKind: LISTING_KIND.NONE };
+  }
+  if (set.type === 'finite') {
+    return {
+      finite: true,
+      elements: set.elements.slice(0, max),
+      truncated: set.elements.length > max,
+      listingKind: LISTING_KIND.EXACT
+    };
+  }
+  if (set.type === 'derived') {
+    const baseSet = getSet(set.base);
+    if (!baseSet) {
+      return { finite: false, elements: [], reason: 'Unknown base set.', listingKind: LISTING_KIND.NONE };
+    }
+    if (baseSet.type === 'builtin' && (baseSet.name === 'ℕ' || baseSet.name === 'ℤ')) {
+      if (exactOnly) {
+        return {
+          finite: false,
+          elements: [],
+          reason:
+            '𝒫(S) needs a fully listed finite set S. Subsets derived from ℕ or ℤ are infinite here, so their power set is not expanded from a sample.',
+          listingKind: LISTING_KIND.SEMANTIC_NOT_LISTED
+        };
+      }
+      const grid = sampleBuiltinIntegerGrid(baseSet.name, max);
+      const filtered = grid.filter(value => containsElement(baseSet, value) && testRule(set.rule, value));
+      const lo = grid.length ? grid[0] : null;
+      const hi = grid.length ? grid[grid.length - 1] : null;
+      return {
+        finite: true,
+        elements: filtered.slice(0, max),
+        truncated: filtered.length > max,
+        sampledFromInfinite: true,
+        listingKind: LISTING_KIND.SAMPLE_PREVIEW,
+        note:
+          lo != null && hi != null
+            ? `Listed values are integers in ${baseSet.name} from ${lo} through ${hi} that satisfy the rule; membership tests still use the full semantic base.`
+            : `Listed values satisfy the rule on a bounded integer grid from ${baseSet.name}; membership tests still use the full semantic base.`
+      };
+    }
+    const base = enumerateFinite(baseSet, max, opts);
+    if (!base.finite) {
+      return { finite: false, elements: [], reason: 'Derived from a non-enumerable base set.', listingKind: LISTING_KIND.SEMANTIC_NOT_LISTED };
+    }
+    return {
+      finite: true,
+      elements: base.elements.filter(value => testRule(set.rule, value)),
+      listingKind: LISTING_KIND.EXACT
+    };
+  }
+  if (set.type === 'builtin') {
+    return {
+      finite: false,
+      elements: [],
+      illustrativeSample: set.sample || [],
+      reason: 'Infinite semantic set — listing is not used as an exact roster.',
+      listingKind: LISTING_KIND.SEMANTIC_NOT_LISTED
+    };
+  }
+  if (set.type === 'expression') {
+    return {
+      finite: false,
+      elements: [],
+      reason: 'Symbolic set expression — not expanded to a roster here.',
+      listingKind: LISTING_KIND.NONE
+    };
+  }
+  return { finite: false, elements: [], reason: 'Not enumerable as a finite listing here.', listingKind: LISTING_KIND.NONE };
+}
+function formatElement(value) {
+  if (isComplexValue(value)) {
+    const re = value.re;
+    const im = value.im;
+    if (re === 0 && im === 1) return 'i';
+    if (re === 0 && im === -1) return '-i';
+    if (re === 0) return `${im}i`;
+    if (im === 0) return String(re);
+    const sign = im >= 0 ? '+' : '-';
+    return `${re}${sign}${Math.abs(im)}i`;
+  }
+  return Array.isArray(value) ? formatSetArray(value) : String(value);
+}
+function formatSetArray(elements) {
+  if (!elements || elements.length === 0) return '∅';
+  return `{${elements.map(formatElement).join(', ')}}`;
+}
+function formatSetDisplay(set) {
+  if (!set) return '∅';
+  if (set.type === 'finite') return formatSetArray(set.elements);
+  if (set.type === 'builtin') return set.name;
+  if (set.type === 'derived') return `{x ∈ ${set.base} | ${set.rule}}`;
+  if (set.type === 'expression') return set.expr;
+  return String(set);
+}
+
+/** Human-readable sample line for built-ins (not an exact roster). */
+function formatBuiltinSamplePreviewText(set) {
+  if (!set || set.type !== 'builtin' || !set.sample || !set.sample.length) return '';
+  return `Sample preview (not an exact listing): ${formatSetArray(set.sample)}`;
+}
+function formatSet(value) {
+  return Array.isArray(value) ? formatSetArray(value) : formatSetDisplay(value);
+}
+function cardinalityDisplay(set) {
+  if (!set) return '0';
+  const finite = enumerateFinite(set);
+  if (finite.finite && finite.sampledFromInfinite) return '∞';
+  if (finite.finite) return String(finite.elements.length);
+  return set.type === 'builtin' ? '∞' : 'symbolic';
+}
+function finiteSetOp(left, right, op, expr) {
+  const L = enumerateFinite(left);
+  const R = enumerateFinite(right);
+  if (!L.finite || !R.finite) {
+    if (op === '∩' && L.finite) return makeFinite('', L.elements.filter(value => containsElement(right, value)));
+    if (op === '∩' && R.finite) return makeFinite('', R.elements.filter(value => containsElement(left, value)));
+    if (op === '∖' && L.finite) return makeFinite('', L.elements.filter(value => !containsElement(right, value)));
+    const symNote =
+      op === '∪'
+        ? 'Union is not listed as a roster when one side is not finitely enumerable here.'
+        : op === '△'
+          ? 'Symmetric difference is not listed as a roster when a full enumeration of both sides is not available.'
+          : 'This combination is not listed as a roster when operands are not both finitely enumerable here.';
+    return makeExpression(expr, symNote);
+  }
+  const a = L.elements;
+  const b = R.elements;
+  const bKeys = new Set(b.map(elementKey));
+  const aKeys = new Set(a.map(elementKey));
+  if (op === '∪') return makeFinite('', a.concat(b.filter(value => !aKeys.has(elementKey(value)))));
+  if (op === '∩') return makeFinite('', a.filter(value => bKeys.has(elementKey(value))));
+  if (op === '∖') return makeFinite('', a.filter(value => !bKeys.has(elementKey(value))));
+  if (op === '△') {
+    return makeFinite('', a.filter(value => !bKeys.has(elementKey(value))).concat(b.filter(value => !aKeys.has(elementKey(value)))));
+  }
+  return makeExpression(expr, 'Unknown operation.');
+}
+function testRule(rule, x) {
+  const text = normalizeSymbol(rule).trim().toLowerCase();
+  if (!text) return true;
+  const orParts = text.split(/\s+(?:or|∨)\s+/);
+  if (orParts.length > 1) return orParts.some(part => testRule(part, x));
+  const andParts = text.split(/\s+(?:and|∧)\s+/);
+  if (andParts.length > 1) return andParts.every(part => testRule(part, x));
+  if (text === 'even') return isRealNumber(x) && Number.isInteger(x) && x % 2 === 0;
+  if (text === 'odd') return isRealNumber(x) && Number.isInteger(x) && Math.abs(x % 2) === 1;
+  const mod = text.match(/^x\s*%\s*(-?\d+)\s*(=|==|≠|!=)\s*(-?\d+)$/);
+  if (mod && isRealNumber(x)) {
+    const ok = x % Number(mod[1]) === Number(mod[3]);
+    return mod[2] === '≠' || mod[2] === '!=' ? !ok : ok;
+  }
+  const cmp = text.match(/^x\s*(<=|>=|<|>|=|==|≠|!=)\s*(-?\d+(?:\.\d+)?)$/);
+  if (cmp && isRealNumber(x)) {
+    const rhs = Number(cmp[2]);
+    if (cmp[1] === '<') return x < rhs;
+    if (cmp[1] === '<=') return x <= rhs;
+    if (cmp[1] === '>') return x > rhs;
+    if (cmp[1] === '>=') return x >= rhs;
+    if (cmp[1] === '=' || cmp[1] === '==') return x === rhs;
+    return x !== rhs;
+  }
+  return false;
+}
+
+function ruleExpressionSupported(rule) {
+  const text = normalizeSymbol(rule).trim().toLowerCase();
+  if (!text) return false;
+  const parts = text.split(/\s+(?:and|or|∧|∨)\s+/);
+  return parts.every(part =>
+    part === 'even' ||
+    part === 'odd' ||
+    /^x\s*%\s*-?\d+\s*(=|==|≠|!=)\s*-?\d+$/.test(part) ||
+    /^x\s*(<=|>=|<|>|=|==|≠|!=)\s*-?\d+(?:\.\d+)?$/.test(part)
+  );
+}
+
+/** Slice C2 — explicit validation message for unsupported rules. */
+function validateDerivedRule(rule) {
+  const t = normalizeSymbol(String(rule || '')).trim();
+  if (!t) {
+    return { ok: false, message: 'Enter a rule for x. ' + DERIVED_RULE_CONTRACT_HINT };
+  }
+  if (ruleExpressionSupported(rule)) return { ok: true };
+  return { ok: false, message: 'Rule not in the supported grammar. ' + DERIVED_RULE_CONTRACT_HINT };
+}
+
+/* ============================================================
+   SET BUILDER
+   ============================================================ */
+function addSet() {
+  const name = normalizeSymbol(document.getElementById('set-name').value).trim();
+  const mode = document.getElementById('set-mode').value;
+  if (!name) { showError('set-name', 'Enter a name.'); return; }
+  if (!/^[A-Za-z][A-Za-z0-9_′]*$/.test(name)) { showError('set-name', 'Start with a letter.'); return; }
+  if (state.sets[name] && state.sets[name].locked) { showError('set-name', 'System set is locked.'); return; }
+  if (BUILTIN_NAMES.includes(name)) { showError('set-name', 'System set is locked.'); return; }
+
+  if (mode === 'derived') {
+    const base = document.getElementById('derived-base').value;
+    const rule = document.getElementById('set-rule').value.trim();
+    if (!base) { showError('derived-base', 'Choose base.'); return; }
+    const rv = validateDerivedRule(rule);
+    if (!rv.ok) { showError('set-rule', rv.message); return; }
+    state.sets[name] = makeDerived(name, base, rule);
+    document.getElementById('set-rule').value = '';
+  } else {
+    state.sets[name] = makeFinite(name, parseElems(document.getElementById('set-elems').value));
+    document.getElementById('set-elems').value = '';
+  }
+  document.getElementById('set-name').value = '';
+  refreshAllSetViews();
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = msg;
+  setTimeout(() => { el.style.borderColor = ''; }, 1800);
+}
+function deleteSet(name) {
+  const set = state.sets[name];
+  if (!set || set.locked) return;
+  delete state.sets[name];
+  refreshAllSetViews();
+}
+function renderSetsList() {
+  const container = document.getElementById('sets-list');
+  const names = Object.keys(state.sets);
+  container.innerHTML = names.map(name => {
+    const set = state.sets[name];
+    const ck = getConstructorKind(set);
+    const ctorCls = ctorTagClass(ck);
+    const ctorLbl = ctorTagLabel(ck);
+    const isBuiltin = set.type === 'builtin';
+    const isDerived = set.type === 'derived';
+    const elemsClass = isBuiltin ? 'set-elems is-multiline' : 'set-elems';
+    let rowClass = 'set-item';
+    if (isBuiltin) rowClass += ' set-item-builtin';
+    if (isDerived) rowClass += ' set-item-derived';
+    let innerElems;
+    if (isBuiltin) {
+      innerElems = `<span class="semantic-set-core">${escapeHtml(set.name)}</span>
+        <span class="sample-preview-inline">${escapeHtml(formatBuiltinSamplePreviewText(set))}</span>`;
+    } else {
+      const display = formatSetDisplay(set);
+      const clipped = display.length > 72 ? display.slice(0, 69) + '...' : display;
+      innerElems = escapeHtml(clipped);
+    }
+    const domainBlock =
+      isDerived && set.domainSummary
+        ? `<div class="set-domain-line">${escapeHtml(
+            set.domainSummary.length > 200 ? set.domainSummary.slice(0, 197) + '…' : set.domainSummary
+          )}<br><span style="font-style:normal;font-family:inherit;font-size:11px;color:var(--dim)">${escapeHtml(
+            String(set.domainKind || '?')
+          )} · ${escapeHtml(String(set.projectionMode || '?'))}</span></div>`
+        : '';
+    const badge = set.locked ? 'system' : `|${name}| = ${cardinalityDisplay(set)}`;
+    const del = set.locked ? '' : `<button class="del-btn" onclick="deleteSet('${name}')">✕</button>`;
+    return `<div class="${rowClass}">
+      <span class="set-name-tag">${escapeHtml(name)}</span>
+      <span class="ctor-tag ${ctorCls}">${ctorLbl}</span>
+      <span class="set-equals">=</span>
+      <span class="${elemsClass}">${innerElems}</span>
+      <span class="badge">${badge}</span>
+      ${del}
+      ${domainBlock}
+    </div>`;
+  }).join('');
+}
+function optionLabel(name) {
+  const set = state.sets[name];
+  if (set.type === 'builtin') {
+    return `${name} — semantic ${set.name}`;
+  }
+  const text = formatSetDisplay(set);
+  const clipped = text.length > 36 ? text.slice(0, 33) + '...' : text;
+  return `${name} = ${clipped}`;
+}
+function refreshSetSelect(selectId, includeEmpty) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const current = select.value;
+  const options = (includeEmpty ? '<option value="">— select —</option>' : '') +
+    Object.keys(state.sets).map(name => `<option value="${name}">${optionLabel(name)}</option>`).join('');
+  select.innerHTML = options;
+  if (state.sets[current]) select.value = current;
+}
+function refreshOpDropdowns() {
+  COMPARISON_SLOT_IDS.forEach(id => refreshSetSelect(id, true));
+  syncComparisonState();
+  refreshOpEquationSnippets();
+}
+/** Ordered selection: first non-empty slot order, duplicate names skipped. */
+function getComparisonSelection() {
+  const seen = new Set();
+  const out = [];
+  for (const id of COMPARISON_SLOT_IDS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const v = (el.value || '').trim();
+    if (v && !seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+}
+function syncComparisonState() {
+  state.comparisonSetIds = getComparisonSelection();
+}
+function syncOpEquationState() {
+  const ta = document.getElementById('op-equation');
+  if (ta) state.opEquation = ta.value;
+}
+
+/** Quick-insert chips for the Operations equation box (uses current comparison slot names). */
+function refreshOpEquationSnippets() {
+  const container = document.getElementById('op-equation-snippets');
+  if (!container) return;
+  const a = opDropdownName('op-a');
+  const b = opDropdownName('op-b');
+  const c = opDropdownName('op-c');
+  const d = opDropdownName('op-d');
+  const e = opDropdownName('op-e');
+  const pairs = [];
+  if (a && b && c && d && e) {
+    pairs.push(['A ∩ B ∩ C ∩ D ∩ E', `${a} ∩ ${b} ∩ ${c} ∩ ${d} ∩ ${e}`]);
+  }
+  if (a && b && c && d) {
+    pairs.push(['A ∩ B ∩ C ∩ D', `${a} ∩ ${b} ∩ ${c} ∩ ${d}`]);
+  }
+  if (a && b && c) {
+    pairs.push(['(A ∪ B) ∩ C', `(${a} ∪ ${b}) ∩ ${c}`]);
+    pairs.push(['A ∩ B ∩ C', `${a} ∩ ${b} ∩ ${c}`]);
+    pairs.push(['(A ∖ B) ∪ C', `(${a} ∖ ${b}) ∪ ${c}`]);
+  }
+  if (a && b) {
+    pairs.push(['A ∪ B', `${a} ∪ ${b}`]);
+    pairs.push(['A ∩ B', `${a} ∩ ${b}`]);
+    pairs.push(['A ∖ B', `${a} ∖ ${b}`]);
+    pairs.push(['A ⊆ B', `${a} ⊆ ${b}`]);
+  }
+  if (a) pairs.push(['𝒫(A)', `𝒫(${a})`]);
+  container.innerHTML = pairs.map(([label, expr]) =>
+    `<span class="hint-chip" data-op-expr="${expr.replace(/"/g, '&quot;')}">${label}</span>`
+  ).join('');
+  container.querySelectorAll('.hint-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const ta = document.getElementById('op-equation');
+      ta.value = chip.getAttribute('data-op-expr') || '';
+      state.activeInput = ta;
+      syncOpEquationState();
+      ta.focus();
+    });
+  });
+}
+function refreshPsDropdown() {
+  refreshSetSelect('ps-select', true);
+}
+function refreshDerivedBaseDropdown() {
+  refreshSetSelect('derived-base', false);
+}
+function updateHeaderSets() {
+  const names = Object.keys(state.sets).filter(name => !state.sets[name].locked).slice(0, 4);
+  document.getElementById('header-sets').innerHTML = names.map(n =>
+    `<span class="header-set-pill">${n}</span>`).join('');
+}
+function refreshAllSetViews() {
+  renderSetsList();
+  refreshOpDropdowns();
+  refreshPsDropdown();
+  refreshDerivedBaseDropdown();
+  updateHeaderSets();
+  drawActiveVenn(null);
+}
+function syncSetBuilderMode() {
+  const derived = document.getElementById('set-mode').value === 'derived';
+  document.getElementById('roster-fields').classList.toggle('is-hidden', derived);
+  document.getElementById('derived-base-field').classList.toggle('is-hidden', !derived);
+  document.getElementById('derived-rule-field').classList.toggle('is-hidden', !derived);
+  const dc = document.getElementById('derived-contract-details');
+  if (dc) dc.classList.toggle('is-hidden', !derived);
+  const help = document.getElementById('set-builder-help');
+  if (help) {
+    help.textContent = derived
+      ? 'Rule-defined mode: builds {x ∈ base | rule}. Pick a base, then enter a supported rule (see “Supported rule grammar”). ℕ/ℤ bases use a bounded integer window in listings/Venn; membership tests still use full semantics.'
+      : 'Finite roster mode: the set is exactly the comma-separated elements you list (or ∅ if empty). Use the other mode for subsets defined by a rule on a base.';
+  }
+}
+
+/* ============================================================
+   OPERATIONS
+   ============================================================ */
+const OP_INSERT = {
+  union: ' ∪ ',
+  intersect: ' ∩ ',
+  'diff-ab': ' ∖ ',
+  'diff-ba': ' ∖ ',
+  symdiff: ' △ '
+};
+function opDropdownName(selectId) {
+  const v = document.getElementById(selectId).value;
+  return v ? v.trim() : '';
+}
+/** When A and B are selected, inserts e.g. " A ∪ B "; otherwise falls back to the bare operator. */
+function insertFromOpButton(btn) {
+  state.activeInput = document.getElementById('op-equation');
+  if (btn.dataset.insert) {
+    insertSym(btn.dataset.insert);
+    return;
+  }
+  const op = btn.dataset.op;
+  if (!op) {
+    insertSym(btn.querySelector('.op-sym').textContent);
+    return;
+  }
+  const a = opDropdownName('op-a');
+  const b = opDropdownName('op-b');
+  if (a && b) {
+    if (op === 'union') return insertSym(` ${a} ∪ ${b} `);
+    if (op === 'intersect') return insertSym(` ${a} ∩ ${b} `);
+    if (op === 'symdiff') return insertSym(` ${a} △ ${b} `);
+    if (op === 'diff-ab') return insertSym(` ${a} ∖ ${b} `);
+    if (op === 'diff-ba') return insertSym(` ${b} ∖ ${a} `);
+  }
+  insertSym(OP_INSERT[op] || btn.querySelector('.op-sym').textContent);
+}
+document.querySelectorAll('.op-btn').forEach(btn => {
+  btn.addEventListener('click', () => insertFromOpButton(btn));
+});
+document.getElementById('compute-btn').addEventListener('click', computeOp);
+document.getElementById('op-clear-btn').addEventListener('click', () => {
+  document.getElementById('op-equation').value = '';
+  state.opEquation = '';
+  document.getElementById('op-result-label').textContent =
+    'Enter a set expression, then Evaluate (Ctrl+Enter). Same evaluator as the Expression tab.';
+  document.getElementById('op-result-val').textContent = '—';
+  drawActiveVenn(null);
+});
+function computeOp() {
+  syncOpEquationState();
+  const expr = document.getElementById('op-equation').value.trim();
+  if (!expr) {
+    document.getElementById('op-result-label').textContent = '⚠ Enter a set expression to evaluate.';
+    return;
+  }
+  try {
+    const { normalized, result } = evaluateFromUserInput(expr);
+    document.getElementById('op-result-label').textContent = normalized + ' =';
+    document.getElementById('op-result-val').innerHTML = renderTypedResult(result);
+    drawActiveVenn(result.kind === 'set' ? result.set : null);
+  } catch (error) {
+    document.getElementById('op-result-label').textContent = 'Could not evaluate.';
+    document.getElementById('op-result-val').innerHTML = renderEvaluationErrorHtml(error);
+    drawActiveVenn(null);
+  }
+}
+
+/* ============================================================
+   VENN DIAGRAM
+   ============================================================ */
+function cssVar(name, fallback) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+function mkLegend(color, label) {
+  return `<div class="legend-item"><div class="legend-sw" style="background:${color}"></div>${label}</div>`;
+}
+
+function placeElems(ctx, elems, cx, cy, maxW) {
+  if (!elems.length) return;
+  const show = elems.slice(0, 6);
+  const ellipsis = elems.length > 6;
+  const lines = [];
+  let cur = '';
+  show.forEach((e, i) => {
+    const part = String(e) + (i < show.length - 1 ? ', ' : '');
+    if ((cur + part).length > 9 && cur) { lines.push(cur.replace(/,\s*$/, '')); cur = part; }
+    else cur += part;
+  });
+  if (cur) lines.push(cur.replace(/,\s*$/, ''));
+  if (ellipsis) lines.push('…');
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lineH = 13;
+  const startY = cy - ((lines.length - 1) * lineH) / 2;
+  lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineH));
+  ctx.restore();
+}
+
+function drawInitialVenn() {
+  drawActiveVenn(null);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
+
+function selectedActiveSets() {
+  syncComparisonState();
+  return state.comparisonSetIds
+    .map(name => ({ name: name, set: getSet(name) }))
+    .filter(item => item.set);
+}
+
+function finiteActiveSets() {
+  const active = selectedActiveSets();
+  return active.map(item => {
+    const finite = enumerateFinite(item.set);
+    return Object.assign({}, item, finite);
+  });
+}
+
+function clearVenn(message) {
+  const canvas = document.getElementById('venn');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = cssVar('--viz-bg', '#1f1f1f');
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = cssVar('--viz-frame', 'rgba(255,255,255,0.14)');
+  ctx.lineWidth = 1;
+  roundRect(ctx, 16, 16, canvas.width - 32, canvas.height - 32, 8);
+  ctx.stroke();
+  document.getElementById('venn-legend').innerHTML = '';
+  document.getElementById('venn-note').textContent = message || '';
+}
+
+function clearComparisonSummary() {
+  const el = document.getElementById('comparison-summary');
+  if (!el) return;
+  el.style.display = 'none';
+  el.innerHTML = '';
+  el.className = 'comparison-summary';
+}
+
+function pairwiseComparisonLine(L, R, projectionKind) {
+  const leftName = L.name;
+  const rightName = R.name;
+  if (!L.finite && !R.finite) {
+    return escapeHtml(
+      `${leftName} vs ${rightName}: neither side has a finite listing in this view — use the Expression tab for semantic relations.`
+    );
+  }
+  if (!L.finite || !R.finite) {
+    const listed = L.finite ? L : R;
+    const other = L.finite ? R : L;
+    return escapeHtml(
+      `${leftName} vs ${rightName}: ${other.name} has no exact finite listing here; ${listed.name} shows ${listed.elements.length} listed member(s) where applicable.`
+    );
+  }
+  const a = L.elements;
+  const b = R.elements;
+  const bKeys = new Set(b.map(elementKey));
+  const aKeys = new Set(a.map(elementKey));
+  const interCount = a.filter(x => bKeys.has(elementKey(x))).length;
+  const subsetAB = a.every(x => bKeys.has(elementKey(x)));
+  const subsetBA = b.every(x => aKeys.has(elementKey(x)));
+  const equal = subsetAB && subsetBA && aKeys.size === bKeys.size;
+  const label =
+    projectionKind === 'sample'
+      ? 'bounded sample only'
+      : projectionKind === 'exact'
+        ? 'exact listed universes'
+        : 'listed slice';
+  return escapeHtml(
+    `${leftName} vs ${rightName} (${label}): |${leftName}|=${a.length}, |${rightName}|=${b.length}, |∩|=${interCount} (on these listings); ${leftName}⊆${rightName} on listings: ${subsetAB}; ${rightName}⊆${leftName} on listings: ${subsetBA}; same members in both listings: ${equal}.`
+  );
+}
+
+function renderComparisonSummary(diagramSets, projectionKind) {
+  const el = document.getElementById('comparison-summary');
+  if (!el || diagramSets.length < 2) return;
+  el.style.display = 'block';
+  el.classList.add(
+    projectionKind === 'exact' ? 'mode-exact' : projectionKind === 'sample' ? 'mode-sample' : 'mode-symbolic'
+  );
+  const pairs = [];
+  for (let i = 0; i < diagramSets.length; i += 1) {
+    for (let j = i + 1; j < diagramSets.length; j += 1) pairs.push([diagramSets[i], diagramSets[j]]);
+  }
+  const title =
+    projectionKind === 'exact'
+      ? 'Pairwise facts (extensional — same listing basis as the Venn)'
+      : projectionKind === 'sample'
+        ? 'Pairwise facts (sample projection — not universal)'
+        : 'Pairwise notes (no shared finite listing for a full Venn)';
+  const lines = pairs.map(([a, b]) => pairwiseComparisonLine(a, b, projectionKind));
+  el.innerHTML = `<h4>${escapeHtml(title)}</h4><ul>${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
+}
+
+function stampSampleProjectionBanner(ctx, W, H) {
+  const warn = cssVar('--warn', '#f0c14a');
+  ctx.save();
+  ctx.fillStyle = warn;
+  ctx.globalAlpha = 0.22;
+  ctx.fillRect(0, 0, W, 30);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = warn;
+  ctx.font = '600 11px ui-monospace, Menlo, Monaco, Consolas, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SAMPLE PROJECTION — not the exact Venn of the full mathematical sets', W / 2, 15);
+  ctx.restore();
+}
+
+function collectSampleWindowNotes(diagramSets) {
+  return diagramSets
+    .map(d => (d.note ? `${d.name}: ${d.note}` : ''))
+    .filter(Boolean)
+    .join(' ');
+}
+
+function applyVennFooterNotes(diagramSets, vennOpts) {
+  const noteEl = document.getElementById('venn-note');
+  if (!noteEl) return;
+  if (vennOpts.projectionMode === 'sample') {
+    const win = collectSampleWindowNotes(diagramSets);
+    noteEl.textContent =
+      'Sample projection: overlaps use only the declared bounded windows — not a claim about all members of infinite sets. ' +
+      (win ? win + ' ' : '') +
+      VENN_SAMPLE_NOTE;
+  } else {
+    let t =
+      'Extensional Venn: regions partition the union of elements that appear in the listings used here (not necessarily every mathematical member of an infinite set).';
+    if (diagramSets.length >= 4) {
+      t += ' Circle geometry is schematic; the text lists are still extensional for the listed members only.';
+    }
+    noteEl.textContent = t;
+  }
+}
+
+function drawActiveVenn(resultSet) {
+  clearComparisonSummary();
+  const active = finiteActiveSets();
+  if (active.length < 2) {
+    clearVenn('Choose at least two comparison sets for the Venn view.');
+    return;
+  }
+  const diagramSets = active.slice(0, 5);
+  const nonFinite = diagramSets.find(item => !item.finite);
+  if (nonFinite) {
+    clearVenn(
+      'Extensional Venn is unavailable: at least one selected set has no finite listing in this view (' +
+        nonFinite.name +
+        '). Use the pairwise notes below and the Expression tab for semantic membership and relations.'
+    );
+    document.getElementById('venn-legend').innerHTML = active
+      .map(item => mkLegend(cssVar('--venn-legend-0', 'rgba(95,143,232,0.5)'), `${item.name}: ${formatSetDisplay(item.set)}`))
+      .join('');
+    renderComparisonSummary(diagramSets, 'symbolic');
+    return;
+  }
+  const allExact = diagramSets.every(item => isExactExtensionalEnumeration(item));
+  const projectionMode = allExact ? 'exact' : 'sample';
+  const vennOpts = { projectionMode };
+  const n = diagramSets.length;
+  if (n === 2) drawVenn2(diagramSets[0], diagramSets[1], resultSet, vennOpts);
+  else if (n === 3) drawVenn3(diagramSets[0], diagramSets[1], diagramSets[2], resultSet, vennOpts);
+  else drawVennMany(diagramSets, resultSet, vennOpts);
+  applyVennFooterNotes(diagramSets, vennOpts);
+  renderComparisonSummary(diagramSets, projectionMode);
+}
+
+function resultKeySet(resultSet) {
+  const finite = enumerateFinite(resultSet);
+  return finite.finite ? new Set(finite.elements.map(elementKey)) : null;
+}
+
+function regionIsHighlighted(elements, resultKeys) {
+  return resultKeys && elements.some(value => resultKeys.has(elementKey(value)));
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function popcount(mask) {
+  let n = 0;
+  let m = mask >>> 0;
+  while (m) {
+    n += m & 1;
+    m >>>= 1;
+  }
+  return n;
+}
+
+function maskIntersectionLabel(names, mask) {
+  const parts = [];
+  for (let i = 0; i < names.length; i += 1) {
+    if (mask & (1 << i)) parts.push(names[i]);
+  }
+  return parts.length ? parts.join('∩') : '∅';
+}
+
+/** Circle centers for 4 (square corners) or 5 (pentagon); schematic overlaps. */
+function getVennCircleLayout(n, W, H) {
+  const minDim = Math.min(W, H);
+  if (n === 4) {
+    const r = minDim * 0.15;
+    return [
+      { cx: W * 0.30, cy: H * 0.36, r },
+      { cx: W * 0.70, cy: H * 0.36, r },
+      { cx: W * 0.30, cy: H * 0.70, r },
+      { cx: W * 0.70, cy: H * 0.70, r }
+    ];
+  }
+  if (n === 5) {
+    const r = minDim * 0.13;
+    const R = minDim * 0.20;
+    const out = [];
+    for (let k = 0; k < 5; k += 1) {
+      const ang = -Math.PI / 2 + (2 * Math.PI * k) / 5;
+      out.push({
+        cx: W / 2 + R * Math.cos(ang),
+        cy: H * 0.52 + R * Math.sin(ang),
+        r
+      });
+    }
+    return out;
+  }
+  return [];
+}
+
+function vennManyFills() {
+  return [0, 1, 2, 3, 4].map(i => cssVar(`--venn-fill-${i}`));
+}
+function vennManyStrokes() {
+  return [0, 1, 2, 3, 4].map(i => cssVar(`--venn-stroke-${i}`));
+}
+function vennManyLegends() {
+  return [0, 1, 2, 3, 4].map(i => cssVar(`--venn-legend-${i}`));
+}
+
+function renderMaskRegionLegend(names, buckets, resultKeys) {
+  const masks = Object.keys(buckets).map(Number).filter(m => m !== 0);
+  masks.sort((a, b) => {
+    const pa = popcount(a);
+    const pb = popcount(b);
+    if (pa !== pb) return pa - pb;
+    return a - b;
+  });
+  return masks.map(m => {
+    const elems = buckets[m];
+    const hi = regionIsHighlighted(elems, resultKeys);
+    const label = maskIntersectionLabel(names, m);
+    const sample = elems.slice(0, 6).map(formatElement).join(', ') + (elems.length > 6 ? '…' : '');
+    const style = hi
+      ? 'border:1px solid var(--accent);padding:6px 10px;border-radius:4px;margin:6px 0;background:color-mix(in srgb, var(--accent) 10%, transparent)'
+      : 'padding:4px 0;margin:4px 0';
+    return `<div style="${style};font-size:12px;font-family:inherit;color:var(--muted)">
+      <span style="color:var(--text);font-weight:600">${escapeHtml(label)}</span>
+      <span style="color:var(--dim)"> · ${elems.length}</span>
+      <div style="color:var(--muted);font-weight:400;margin-top:4px;font-family:inherit;font-size:11px">${escapeHtml(sample)}</div>
+    </div>`;
+  }).join('');
+}
+
+/** Four or five sets: schematic circles + membership by intersection pattern below. */
+function drawVennMany(diagramSets, resultSet, vennOpts) {
+  vennOpts = vennOpts || { projectionMode: 'exact' };
+  const n = diagramSets.length;
+  if (n < 4 || n > 5) return;
+  const canvas = document.getElementById('venn');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  const resultKeys = resultKeySet(resultSet);
+  const names = diagramSets.map(d => d.name);
+  const universe = uniqueElements(diagramSets.flatMap(d => d.elements));
+  const buckets = {};
+  universe.forEach(value => {
+    let m = 0;
+    diagramSets.forEach((item, i) => {
+      if (containsElement(item.set, value)) m |= (1 << i);
+    });
+    if (!buckets[m]) buckets[m] = [];
+    buckets[m].push(value);
+  });
+
+  clearVenn('');
+  const fills = vennManyFills();
+  const strokes = vennManyStrokes();
+  const legends = vennManyLegends();
+  const layout = getVennCircleLayout(n, W, H);
+  layout.forEach((L, i) => {
+    ctx.fillStyle = fills[i];
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.arc(L.cx, L.cy, L.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  layout.forEach((L, i) => {
+    ctx.strokeStyle = strokes[i];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(L.cx, L.cy, L.r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.font = 'italic 14px ui-sans-serif, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  layout.forEach((L, i) => {
+    const dx = L.cx - W / 2;
+    const dy = L.cy - H / 2;
+    const len = Math.hypot(dx, dy) || 1;
+    const ox = (dx / len) * (L.r * 0.88);
+    const oy = (dy / len) * (L.r * 0.88);
+    ctx.fillStyle = strokes[i];
+    ctx.fillText(names[i], L.cx + ox, L.cy + oy + 5);
+  });
+
+  const nameLine = diagramSets.map((item, i) => mkLegend(legends[i], item.name)).join('');
+  const regionHtml = renderMaskRegionLegend(names, buckets, resultKeys);
+  document.getElementById('venn-legend').innerHTML =
+    `<div style="display:flex;flex-wrap:wrap;gap:14px;width:100%;margin-bottom:8px;justify-content:center">${nameLine}</div>` +
+    `<div style="width:100%;max-width:520px;margin:0 auto;text-align:left">${regionHtml}</div>`;
+  if (vennOpts.projectionMode === 'sample') {
+    stampSampleProjectionBanner(ctx, W, H);
+  }
+}
+
+function placeRegion(ctx, label, elems, x, y, highlighted) {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = highlighted ? cssVar('--warn', '#f0c14a') : cssVar('--viz-text', '#cdcdcd');
+  ctx.font = highlighted ? '600 11px ui-monospace, Menlo, Monaco, Consolas, monospace' : '11px ui-monospace, Menlo, Monaco, Consolas, monospace';
+  ctx.fillText(label, x, y - 18);
+  placeElems(ctx, elems, x, y + 4, 64);
+  ctx.restore();
+}
+
+function drawVenn2(A, B, resultSet, vennOpts) {
+  vennOpts = vennOpts || { projectionMode: 'exact' };
+  const canvas = document.getElementById('venn');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const resultKeys = resultKeySet(resultSet);
+  const aOnly = A.elements.filter(value => !containsElement(B.set, value));
+  const bOnly = B.elements.filter(value => !containsElement(A.set, value));
+  const both = A.elements.filter(value => containsElement(B.set, value));
+  clearVenn('');
+  const cA = cssVar('--venn-stroke-0');
+  const cB = cssVar('--venn-stroke-1');
+  const fA = cssVar('--venn-fill-0');
+  const fB = cssVar('--venn-fill-1');
+  const r = H * 0.32, cx1 = W * 0.38, cx2 = W * 0.62, cy = H * 0.52;
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = fA; ctx.beginPath(); ctx.arc(cx1, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = fB; ctx.beginPath(); ctx.arc(cx2, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = cA; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx1, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = cB; ctx.beginPath(); ctx.arc(cx2, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = 'italic 18px ui-sans-serif, system-ui, sans-serif';
+  ctx.fillStyle = cA; ctx.textAlign = 'center'; ctx.fillText(A.name, cx1 - r * 0.62, cy - r * 0.65);
+  ctx.fillStyle = cB; ctx.fillText(B.name, cx2 + r * 0.62, cy - r * 0.65);
+  placeRegion(ctx, `${A.name} only`, aOnly, cx1 - r * 0.52, cy, regionIsHighlighted(aOnly, resultKeys));
+  placeRegion(ctx, `${A.name}∩${B.name}`, both, (cx1 + cx2) / 2, cy, regionIsHighlighted(both, resultKeys));
+  placeRegion(ctx, `${B.name} only`, bOnly, cx2 + r * 0.52, cy, regionIsHighlighted(bOnly, resultKeys));
+  document.getElementById('venn-legend').innerHTML = [
+    mkLegend(cssVar('--venn-legend-0'), `${A.name} only`),
+    mkLegend(cssVar('--venn-ix-legend'), 'Intersection'),
+    mkLegend(cssVar('--venn-legend-1'), `${B.name} only`)
+  ].join('');
+  if (vennOpts.projectionMode === 'sample') {
+    stampSampleProjectionBanner(ctx, W, H);
+  }
+}
+
+function drawVenn3(A, B, C, resultSet, vennOpts) {
+  vennOpts = vennOpts || { projectionMode: 'exact' };
+  const canvas = document.getElementById('venn');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const resultKeys = resultKeySet(resultSet);
+  const inA = value => containsElement(A.set, value);
+  const inB = value => containsElement(B.set, value);
+  const inC = value => containsElement(C.set, value);
+  const universe = uniqueElements(A.elements.concat(B.elements, C.elements));
+  const regions = {
+    a: universe.filter(v => inA(v) && !inB(v) && !inC(v)),
+    b: universe.filter(v => !inA(v) && inB(v) && !inC(v)),
+    c: universe.filter(v => !inA(v) && !inB(v) && inC(v)),
+    ab: universe.filter(v => inA(v) && inB(v) && !inC(v)),
+    ac: universe.filter(v => inA(v) && !inB(v) && inC(v)),
+    bc: universe.filter(v => !inA(v) && inB(v) && inC(v)),
+    abc: universe.filter(v => inA(v) && inB(v) && inC(v))
+  };
+  clearVenn('');
+  const s0 = cssVar('--venn-stroke-0');
+  const s1 = cssVar('--venn-stroke-1');
+  const s2 = cssVar('--venn-stroke-2');
+  const r = H * 0.27, ax = W * 0.39, bx = W * 0.61, cx = W * 0.5, ay = H * 0.48, by = H * 0.48, cy = H * 0.64;
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = cssVar('--venn-fill-0'); ctx.beginPath(); ctx.arc(ax, ay, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = cssVar('--venn-fill-1'); ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = cssVar('--venn-fill-2'); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  [[s0, ax, ay], [s1, bx, by], [s2, cx, cy]].forEach(item => {
+    ctx.strokeStyle = item[0]; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(item[1], item[2], r, 0, Math.PI * 2); ctx.stroke();
+  });
+  ctx.font = 'italic 17px ui-sans-serif, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = s0; ctx.fillText(A.name, ax - r * 0.65, ay - r * 0.7);
+  ctx.fillStyle = s1; ctx.fillText(B.name, bx + r * 0.65, by - r * 0.7);
+  ctx.fillStyle = s2; ctx.fillText(C.name, cx, cy + r * 0.9);
+  placeRegion(ctx, `${A.name}`, regions.a, ax - 58, ay + 2, regionIsHighlighted(regions.a, resultKeys));
+  placeRegion(ctx, `${B.name}`, regions.b, bx + 58, by + 2, regionIsHighlighted(regions.b, resultKeys));
+  placeRegion(ctx, `${C.name}`, regions.c, cx, cy + 58, regionIsHighlighted(regions.c, resultKeys));
+  placeRegion(ctx, `${A.name}∩${B.name}`, regions.ab, cx, ay - 20, regionIsHighlighted(regions.ab, resultKeys));
+  placeRegion(ctx, `${A.name}∩${C.name}`, regions.ac, cx - 42, cy + 8, regionIsHighlighted(regions.ac, resultKeys));
+  placeRegion(ctx, `${B.name}∩${C.name}`, regions.bc, cx + 42, cy + 8, regionIsHighlighted(regions.bc, resultKeys));
+  placeRegion(ctx, 'all', regions.abc, cx, cy - 5, regionIsHighlighted(regions.abc, resultKeys));
+  document.getElementById('venn-legend').innerHTML = [
+    mkLegend(cssVar('--venn-legend-0'), A.name),
+    mkLegend(cssVar('--venn-legend-1'), B.name),
+    mkLegend(cssVar('--venn-legend-2'), C.name)
+  ].join('');
+  if (vennOpts.projectionMode === 'sample') {
+    stampSampleProjectionBanner(ctx, W, H);
+  }
+}
+
+/* ============================================================
+   POWER SET
+   ============================================================ */
+function powerSet(arr) {
+  const result = [[]];
+  arr.forEach(el => {
+    result.push(...result.map(s => [...s, el]));
+  });
+  return result.sort((a,b) => a.length - b.length);
+}
+
+function computePowerSet() {
+  const name = document.getElementById('ps-select').value;
+  if (!name) return;
+  const set = getSet(name);
+  const elig = powerSetEligibility(set);
+  if (!elig.ok) {
+    document.getElementById('ps-name').textContent = name;
+    document.getElementById('ps-meta').textContent =
+      'Exactness: 𝒫(S) is enumerated only for exact finite extensional bases (canonical rule — same as evaluator 𝒫).';
+    document.getElementById('ps-grid').innerHTML = `<div class="ps-item">${escapeHtml(elig.reason)}</div>`;
+    document.getElementById('ps-result-card').style.display = 'block';
+    return;
+  }
+  const elems = elig.enumeration.elements;
+  if (elems.length > MAX_POWER_SET_DISPLAY_BASE) {
+    alert(
+      `|${name}| = ${elems.length}. Power set has 2^${elems.length} = ${Math.pow(2, elems.length).toLocaleString()} subsets — too large to display (max base size ${MAX_POWER_SET_DISPLAY_BASE}).`
+    );
+    return;
+  }
+  const ps = powerSet(elems);
+  document.getElementById('ps-name').textContent = name;
+  document.getElementById('ps-meta').textContent =
+    `Exact extensional 𝒫 · |𝒫(${name})| = 2^${elems.length} = ${ps.length} subsets`;
+  document.getElementById('ps-grid').innerHTML = ps.map(sub =>
+    sub.length === 0
+      ? `<div class="ps-item empty-set">∅</div>`
+      : `<div class="ps-item">${formatSetArray(sub)}</div>`
+  ).join('');
+  document.getElementById('ps-result-card').style.display = 'block';
+}
+
+document.getElementById('ps-btn').addEventListener('click', computePowerSet);
+
+/* ============================================================
+   EXPRESSION EVALUATOR
+   ============================================================ */
+/**
+ * Normalize user input for set parsing: fix mojibake, collapse whitespace,
+ * map a few ASCII forms, and verify delimiter balance.
+ * Throws Error with a short message when the expression cannot be parsed safely.
+ */
+function checkSetExprDelimiters(text) {
+  let depthParen = 0;
+  let depthBrace = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === '(') depthParen += 1;
+    else if (ch === ')') {
+      depthParen -= 1;
+      if (depthParen < 0) return 'Extra ")" in expression — check parentheses.';
+    } else if (ch === '{') depthBrace += 1;
+    else if (ch === '}') {
+      depthBrace -= 1;
+      if (depthBrace < 0) return 'Extra "}" in expression — check braces.';
+    }
+  }
+  if (depthParen > 0) return 'Unclosed "(" in expression.';
+  if (depthBrace > 0) return 'Unclosed "{" in expression.';
+  return null;
+}
+
+function normalizeSetExpression(raw) {
+  let t = normalizeSymbol(String(raw || ''))
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!t) throw new Error('Empty set expression.');
+  const bal = checkSetExprDelimiters(t);
+  if (bal) throw new Error(bal);
+  t = t.replace(/!=/g, '≠').replace(/==/g, '=');
+  t = t.replace(/\s\\\s/g, ' ∖ ');
+  return t;
+}
+
+document.getElementById('eval-btn').addEventListener('click', evaluate);
+document.getElementById('clear-btn').addEventListener('click', () => {
+  document.getElementById('expr-input').value = '';
+  document.getElementById('eval-output').innerHTML =
+    '<span style="color:var(--muted);font-style:italic">Enter an expression above, then Evaluate (Ctrl+Enter). Expand “How to read results” if the tags are unfamiliar.</span>';
+});
+
+document.querySelectorAll('#expr-hint-chips .hint-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.getElementById('expr-input').value = chip.dataset.expr;
+    document.getElementById('expr-input').focus();
+  });
+});
+
+function evaluate() {
+  const input = document.getElementById('expr-input').value.trim();
+  const out = document.getElementById('eval-output');
+  if (!input) { out.innerHTML = '<span style="color:var(--muted)">Nothing to evaluate.</span>'; return; }
+
+  try {
+    const { result } = evaluateFromUserInput(input);
+    out.innerHTML = renderTypedResult(result);
+  } catch (e) {
+    out.innerHTML = renderEvaluationErrorHtml(e);
+  }
+}
+
+/**
+ * Core evaluator on already-normalized text (normalize exactly once per user action via `evaluateFromUserInput`).
+ */
+function evaluateTypedNormalized(source) {
+  const quant = tryParseQuantifiedSubset(source);
+  if (quant) return evaluateQuantifiedSubset(quant);
+  const relation = splitTopLevelRelation(source);
+  if (relation) {
+    if (relation.op === '∈' || relation.op === '∉') {
+      const set = resolveSet(relation.right);
+      const value = parseValueExpr(relation.left);
+      const member = containsElement(set, value);
+      const truth = relation.op === '∈' ? member : !member;
+      let rightShow = relation.right;
+      try {
+        rightShow = normalizeSetExpression(relation.right);
+      } catch (e) {
+        rightShow = normalizeSymbol(relation.right).replace(/\s+/g, ' ').trim();
+      }
+      return {
+        kind: 'boolean',
+        truthClass: TRUTH_CLASS.BOOLEAN,
+        evidence: 'membership_semantic',
+        truth: truth,
+        detail: `${formatElement(value)} ${relation.op} ${rightShow}`,
+        note: set.type === 'derived' ? 'Derived membership uses the base set and stored rule.' : ''
+      };
+    }
+    return compareSetRelation(resolveSet(relation.left), resolveSet(relation.right), relation.op);
+  }
+  const resolved = resolveSet(source);
+  return { kind: 'set', set: resolved, truthClass: mapSetToTruthClass(resolved) };
+}
+
+function evaluateTyped(expr) {
+  return evaluateTypedNormalized(normalizeSetExpression(expr));
+}
+
+/** Shared pipeline for Expression and Operations tabs (Slice B1 — one coherent evaluation path). */
+function evaluateFromUserInput(raw) {
+  const normalized = normalizeSetExpression(raw);
+  return { normalized, result: evaluateTypedNormalized(normalized) };
+}
+
+function renderEvaluationErrorHtml(err) {
+  const msg = err && err.message ? err.message : String(err);
+  return `<span class="eval-err">⚠ ${escapeHtml(msg)}</span>`;
+}
+
+/**
+ * Shorthand: ∀ x ∈ A, x ∈ B  or  ∃ x ∈ A, x ∈ B  (comma after domain is at brace depth 0).
+ * ∃ is true when some element of the domain set lies in the target.
+ */
+function tryParseQuantifiedSubset(str) {
+  const t = normalizeSymbol(str).trim();
+  const head = t.match(/^(∀|∃)\s*([A-Za-z])\s*∈\s*(.*)$/s);
+  if (!head) return null;
+  const modeSym = head[1];
+  const varName = head[2];
+  const afterIn = head[3];
+  let depth = 0;
+  for (let i = 0; i < afterIn.length; i += 1) {
+    const ch = afterIn[i];
+    if ('({'.includes(ch)) depth += 1;
+    else if (')}'.includes(ch)) depth -= 1;
+    if (depth === 0 && ch === ',') {
+      const tail = afterIn.slice(i + 1).trim();
+      const inner = new RegExp('^' + varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*∈\\s*(.+)$', 's');
+      const mm = tail.match(inner);
+      if (mm) {
+        return {
+          mode: modeSym,
+          varName: varName,
+          domainExpr: afterIn.slice(0, i).trim(),
+          targetExpr: mm[1].trim()
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function evaluateQuantifiedSubset(q) {
+  const domain = resolveSet(normalizeSetExpression(q.domainExpr));
+  const target = resolveSet(normalizeSetExpression(q.targetExpr));
+  const finite = enumerateFinite(domain);
+  if (!finite.finite) {
+    return {
+      kind: 'symbolic',
+      truthClass: TRUTH_CLASS.SYMBOLIC,
+      text: normalizeSymbol(`${q.mode} x ∈ ${q.domainExpr}, x ∈ ${q.targetExpr}`),
+      note: 'This form is evaluated by checking members of the left set; use a finite or sampled domain (e.g. a roster set or ℤ-derived subset).'
+    };
+  }
+  const sampleDomain = Boolean(finite.sampledFromInfinite);
+  if (q.mode === '∀') {
+    const ok = finite.elements.every(value => containsElement(target, value));
+    return {
+      kind: 'boolean',
+      truthClass: TRUTH_CLASS.BOOLEAN,
+      evidence: sampleDomain ? 'finite_sample_domain' : 'exact_finite_domain',
+      truth: ok,
+      detail: `Every element of ${q.domainExpr} is in ${q.targetExpr} (${finite.elements.length} checked)`,
+      note: finite.note || ''
+    };
+  }
+  const hit = finite.elements.some(value => containsElement(target, value));
+  return {
+    kind: 'boolean',
+    truthClass: TRUTH_CLASS.BOOLEAN,
+    evidence: sampleDomain ? 'finite_sample_domain' : 'exact_finite_domain',
+    truth: hit,
+    detail: `Some element of ${q.domainExpr} lies in ${q.targetExpr} (${finite.elements.length} checked)`,
+    note: finite.note || ''
+  };
+}
+
+function mapSetToTruthClass(set) {
+  if (!set) return TRUTH_CLASS.UNSUPPORTED;
+  if (set.type === 'finite') return TRUTH_CLASS.EXACT_SET;
+  if (set.type === 'builtin') return TRUTH_CLASS.SEMANTIC_SET;
+  if (set.type === 'derived') return TRUTH_CLASS.DERIVED_SET;
+  if (set.type === 'expression') return TRUTH_CLASS.SYMBOLIC;
+  return TRUTH_CLASS.UNSUPPORTED;
+}
+
+function resolveDisplayTruthClass(result) {
+  if (result.kind === 'set') {
+    const en = enumerateFinite(result.set);
+    if (en.finite && en.sampledFromInfinite) return TRUTH_CLASS.SAMPLED_LISTING;
+    return result.truthClass || mapSetToTruthClass(result.set);
+  }
+  return result.truthClass || TRUTH_CLASS.UNSUPPORTED;
+}
+
+function truthKindPill(truthClass) {
+  const rows = {
+    [TRUTH_CLASS.BOOLEAN]: ['Boolean verdict (this evaluator)', 'kind-boolean'],
+    [TRUTH_CLASS.EXACT_SET]: ['Finite extensional set (full roster)', 'kind-exact'],
+    [TRUTH_CLASS.SEMANTIC_SET]: ['Standard infinite set (semantic)', 'kind-semantic'],
+    [TRUTH_CLASS.DERIVED_SET]: ['Rule-defined subset {x ∈ base | …}', 'kind-derived'],
+    [TRUTH_CLASS.SAMPLED_LISTING]: ['Bounded sample listing (not exhaustive)', 'kind-sample'],
+    [TRUTH_CLASS.SYMBOLIC]: ['Symbolic / not decided here', 'kind-symbolic'],
+    [TRUTH_CLASS.UNSUPPORTED]: ['Unsupported in this language', 'kind-unsupported']
+  };
+  const row = rows[truthClass];
+  if (!row) return '';
+  return `<div class="truth-kind-pill ${row[1]}">${escapeHtml(row[0])}</div>`;
+}
+
+function classifySetResultPresentation(set, enumeration) {
+  if (!set) return { mode: 'unknown' };
+  if (set.type === 'expression') return { mode: 'symbolic_expression' };
+  if (set.type === 'builtin') return { mode: 'semantic_builtin' };
+  if (set.type === 'finite') return { mode: 'extensional_exact' };
+  if (set.type === 'derived') {
+    if (enumeration.finite && enumeration.sampledFromInfinite) return { mode: 'extensional_sample' };
+    if (enumeration.finite) return { mode: 'extensional_exact' };
+    return { mode: 'intensional_derived' };
+  }
+  return { mode: 'unknown' };
+}
+
+function semanticsNoteHtml(mode) {
+  const map = {
+    extensional_exact: ['Extensional result: exact listed members only.', 'extensional'],
+    extensional_sample: ['Extensional sample: bounded listing — not the full derived set.', 'sample'],
+    semantic_builtin: ['Semantic (infinite) set: shown by symbol, not as an exhaustive roster.', 'intensional'],
+    intensional_derived: ['Rule-defined set: membership is semantic; not flattened to a roster here.', 'intensional'],
+    symbolic_expression: ['Symbolic / deferred value: not replaced with an enumerated roster.', 'symbolic']
+  };
+  const row = map[mode];
+  if (!row) return '';
+  return `<div class="result-semantics-note ${row[1]}">${escapeHtml(row[0])}</div>`;
+}
+
+function evidenceLineHtml(result) {
+  if (result.kind === 'boolean') {
+    if (result.evidence === 'finite_sample_domain') {
+      return '<div style="color:var(--warn);font-size:12px;margin-top:6px;font-family:inherit">Evidence: finite sample / bounded listing only — not a universal proof over an infinite domain.</div>';
+    }
+    if (result.evidence === 'membership_semantic') {
+      return '<div style="color:var(--muted);font-size:12px;margin-top:6px;">Membership uses semantic rules for built-ins and stored rules for derived sets.</div>';
+    }
+    if (result.evidence === 'finite_slice_membership') {
+      return '<div style="color:var(--warn);font-size:12px;margin-top:6px;">Checked on a finite listing of one side; the other operand may be infinite or non-enumerable.</div>';
+    }
+    if (result.evidence === 'finite_sample_listing_relation') {
+      return '<div style="color:var(--warn);font-size:12px;margin-top:6px;">At least one operand was compared via a bounded sample listing, not an exact full roster.</div>';
+    }
+    if (result.evidence === 'exact_semantic_relation') {
+      return '<div style="color:var(--muted);font-size:12px;margin-top:6px;">Compared using semantic identities for standard number sets.</div>';
+    }
+    if (result.evidence === 'exact_roster_relation') {
+      return '<div style="color:var(--muted);font-size:12px;margin-top:6px;">Compared on exact listed members of both finite sets.</div>';
+    }
+  }
+  return '';
+}
+
+function renderTypedResult(result) {
+  const pill = truthKindPill(resolveDisplayTruthClass(result));
+  const evidence = evidenceLineHtml(result);
+  if (result.kind === 'boolean') {
+    const cls = result.truth ? 'eval-true' : 'eval-false';
+    return `${pill}<span class="${cls}">${result.truth ? '✓ True' : '✗ False'}</span>
+      <div style="color:var(--muted);font-size:13px;margin-top:8px;">
+        ${escapeHtml(result.detail)}${result.note ? `<br><span style="font-size:12px">${escapeHtml(result.note)}</span>` : ''}
+      </div>${evidence}`;
+  }
+  if (result.kind === 'set') {
+    const finite = enumerateFinite(result.set);
+    const pres = classifySetResultPresentation(result.set, finite);
+    const semHtml = semanticsNoteHtml(pres.mode);
+    let card;
+    if (pres.mode === 'symbolic_expression') {
+      card = 'n/a (kept as symbolic form)';
+    } else if (finite.finite && finite.sampledFromInfinite) {
+      card = '∞ (bounded sample only — not exact cardinality)';
+    } else if (finite.finite) {
+      card = finite.elements.length;
+    } else if (result.set.type === 'builtin') {
+      card = '∞ (semantic; not a finite roster)';
+    } else {
+      card = cardinalityDisplay(result.set);
+    }
+    const enumNote =
+      finite.finite && finite.sampledFromInfinite && finite.note
+        ? `<div style="color:var(--warn);font-size:12px;margin-top:8px;">${escapeHtml(finite.note)}</div>`
+        : '';
+    const semanticBuiltinNote =
+      result.set.type === 'builtin' && finite.illustrativeSample && finite.illustrativeSample.length
+        ? `<div style="color:var(--muted);font-size:12px;margin-top:8px;font-style:italic">${escapeHtml(formatBuiltinSamplePreviewText(result.set))}</div>`
+        : '';
+    const note = result.set.type === 'expression'
+      ? `<div style="color:var(--muted);font-size:12px;margin-top:8px;font-style:italic">${escapeHtml(result.set.note)}</div>`
+      : '';
+    return `${pill}${semHtml}<span class="eval-set">${escapeHtml(formatSetDisplay(result.set))}</span>
+      <div style="color:var(--muted);font-size:13px;margin-top:8px;">Size / listing note: ${escapeHtml(String(card))}</div>${semanticBuiltinNote}${enumNote}${note}`;
+  }
+  if (result.kind === 'symbolic') {
+    return `${pill}<span style="color:var(--text);font-size:20px;font-family:inherit">${escapeHtml(result.text)}</span>
+      <div style="color:var(--muted);font-size:12px;margin-top:8px;font-style:italic">${escapeHtml(result.note)}</div>`;
+  }
+  return `${pill}<span class="eval-err">⚠ ${escapeHtml(result.message || 'Could not evaluate.')}</span>`;
+}
+
+/** Top-level `=` for set relations, not the `=` inside `<=`, `>=`, or `!=`. */
+function topLevelEquals(str) {
+  let depth = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    const c = str[i];
+    if ('({'.includes(c)) depth += 1;
+    else if (')}'.includes(c)) depth -= 1;
+    else if (depth === 0 && c === '=') {
+      const prev = i > 0 ? str[i - 1] : '';
+      if (prev === '<' || prev === '>' || prev === '!') continue;
+      return i;
+    }
+  }
+  return -1;
+}
+
+function splitTopLevelRelation(str) {
+  const ops = ['∉', '∈', '⊆', '⊂', '⊇', '⊃', '≠'];
+  for (const op of ops) {
+    const idx = topLevel(str, op);
+    if (idx !== -1) {
+      return {
+        left: str.slice(0, idx).trim(),
+        op: op,
+        right: str.slice(idx + op.length).trim()
+      };
+    }
+  }
+  const eqIdx = topLevelEquals(str);
+  if (eqIdx !== -1) {
+    return {
+      left: str.slice(0, eqIdx).trim(),
+      op: '=',
+      right: str.slice(eqIdx + 1).trim()
+    };
+  }
+  return null;
+}
+
+function parseValueExpr(expr) {
+  const text = normalizeSymbol(expr).trim();
+  const quoted = text.match(/^['"](.+)['"]$/);
+  const inner = quoted ? quoted[1] : text;
+  const complex = parseComplexNumberString(inner);
+  if (complex) return complex;
+  const sym = inner.replace(/\s+/g, '');
+  if (sym === 'π' || sym.toLowerCase() === 'pi') return 'π';
+  if (sym === '√2' || sym === 'sqrt(2)' || sym.toLowerCase() === 'sqrt2') return '√2';
+  return quoted ? quoted[1] : parseElement(text);
+}
+
+function compareSetRelation(left, right, op) {
+  const L = enumerateFinite(left);
+  const R = enumerateFinite(right);
+  if (!L.finite || !R.finite) {
+    if (L.finite && (op === '⊆' || op === '⊂')) {
+      const subset = L.elements.every(value => containsElement(right, value));
+      if (op === '⊂' && subset && right.type !== 'builtin') {
+        return {
+          kind: 'symbolic',
+          truthClass: TRUTH_CLASS.SYMBOLIC,
+          text: `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`,
+          note: 'Subset membership is checkable for these finite elements, but properness is symbolic for this non-enumerable target.'
+        };
+      }
+      return {
+        kind: 'boolean',
+        truthClass: TRUTH_CLASS.BOOLEAN,
+        evidence: L.sampledFromInfinite ? 'finite_sample_listing_relation' : 'finite_slice_membership',
+        truth: op === '⊂' ? subset && right.type === 'builtin' : subset,
+        detail: `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`
+      };
+    }
+    if (R.finite && (op === '⊇' || op === '⊃')) {
+      const containsRight = R.elements.every(value => containsElement(left, value));
+      if (op === '⊃' && containsRight && left.type !== 'builtin') {
+        return {
+          kind: 'symbolic',
+          truthClass: TRUTH_CLASS.SYMBOLIC,
+          text: `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`,
+          note: 'Subset membership is checkable for these finite elements, but properness is symbolic for this non-enumerable source.'
+        };
+      }
+      return {
+        kind: 'boolean',
+        truthClass: TRUTH_CLASS.BOOLEAN,
+        evidence: R.sampledFromInfinite ? 'finite_sample_listing_relation' : 'finite_slice_membership',
+        truth: op === '⊃' ? containsRight && left.type === 'builtin' : containsRight,
+        detail: `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`
+      };
+    }
+    if ((left.type === 'builtin' || right.type === 'builtin') && (op === '=' || op === '≠')) {
+      const equal = left.type === 'builtin' && right.type === 'builtin' && left.name === right.name;
+      return {
+        kind: 'boolean',
+        truthClass: TRUTH_CLASS.BOOLEAN,
+        evidence: 'exact_semantic_relation',
+        truth: op === '=' ? equal : !equal,
+        detail: `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`
+      };
+    }
+    const relationText = `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`;
+    return {
+      kind: 'symbolic',
+      truthClass: TRUTH_CLASS.SYMBOLIC,
+      text: relationText,
+      note: 'Relations over infinite or symbolic sets are shown honestly here; this pass does not attempt theorem proving.'
+    };
+  }
+  const lKeys = new Set(L.elements.map(elementKey));
+  const rKeys = new Set(R.elements.map(elementKey));
+  const lSubR = L.elements.every(value => rKeys.has(elementKey(value)));
+  const rSubL = R.elements.every(value => lKeys.has(elementKey(value)));
+  let truth = false;
+  if (op === '⊆') truth = lSubR;
+  if (op === '⊂') truth = lSubR && lKeys.size < rKeys.size;
+  if (op === '⊇') truth = rSubL;
+  if (op === '⊃') truth = rSubL && rKeys.size < lKeys.size;
+  if (op === '=') truth = lSubR && rSubL;
+  if (op === '≠') truth = !(lSubR && rSubL);
+  return {
+    kind: 'boolean',
+    truthClass: TRUTH_CLASS.BOOLEAN,
+    evidence: L.sampledFromInfinite || R.sampledFromInfinite ? 'finite_sample_listing_relation' : 'exact_roster_relation',
+    truth: truth,
+    detail: `${formatSetDisplay(left)} ${op} ${formatSetDisplay(right)}`
+  };
+}
+
+function resolveSet(expr) {
+  let t = stripOuterParens(normalizeSymbol(expr).trim());
+  if (!t) throw new Error('Empty set expression.');
+  const named = getSet(t);
+  if (named) return named;
+  if (t === '∅') return makeFinite('', []);
+
+  const litM = t.match(/^\{(.*)\}$/s);
+  if (litM) return makeFinite('', parseElems(litM[1]));
+
+  const psM = t.match(/^𝒫\((.+)\)$/s);
+  if (psM) {
+    const innerArg = psM[1].trim();
+    if (!innerArg) throw new Error(`𝒫(…) needs an inner set expression. ${EVALUATOR_LANGUAGE_SHORT_HINT}`);
+    const inner = resolveSet(innerArg);
+    const elig = powerSetEligibility(inner);
+    if (!elig.ok) return makeExpression(`𝒫(${innerArg})`, elig.reason || 'Power set not available for this base.');
+    if (elig.enumeration.elements.length > MAX_POWER_SET_DISPLAY_BASE) {
+      return makeExpression(
+        `𝒫(${innerArg})`,
+        `Finite set is too large to expand inline (max base size ${MAX_POWER_SET_DISPLAY_BASE}).`
+      );
+    }
+    return makeFinite('', powerSet(elig.enumeration.elements));
+  }
+
+  for (const group of [['∪', '△'], ['∖'], ['∩']]) {
+    for (const sym of group) {
+      const idx = topLevelLast(t, sym);
+      if (idx !== -1) {
+        const leftStr = t.slice(0, idx).trim();
+        const rightStr = t.slice(idx + sym.length).trim();
+        if (!leftStr) throw new Error(`Missing left operand for “${sym}”. ${EVALUATOR_LANGUAGE_SHORT_HINT}`);
+        if (!rightStr) throw new Error(`Missing right operand for “${sym}”. ${EVALUATOR_LANGUAGE_SHORT_HINT}`);
+        const left = resolveSet(leftStr);
+        const right = resolveSet(rightStr);
+        return finiteSetOp(left, right, sym, t);
+      }
+    }
+  }
+
+  throw new Error(formatEvaluatorResolutionError(t));
+}
+
+function stripOuterParens(text) {
+  let t = text.trim();
+  while (t.startsWith('(') && t.endsWith(')') && wrapsEntireExpression(t)) {
+    t = t.slice(1, -1).trim();
+  }
+  return t;
+}
+
+function wrapsEntireExpression(text) {
+  let depth = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] === '(') depth += 1;
+    if (text[i] === ')') depth -= 1;
+    if (depth === 0 && i < text.length - 1) return false;
+  }
+  return depth === 0;
+}
+
+function topLevel(str, sym) {
+  let depth = 0;
+  for (let i = 0; i < str.length; i++) {
+    if ('({'.includes(str[i])) depth++;
+    else if (')}'.includes(str[i])) depth--;
+    else if (depth === 0 && str.startsWith(sym, i)) return i;
+  }
+  return -1;
+}
+
+function topLevelLast(str, sym) {
+  let depth = 0;
+  for (let i = str.length - 1; i >= 0; i -= 1) {
+    if (')}'.includes(str[i])) depth++;
+    else if ('({'.includes(str[i])) depth--;
+    else if (depth === 0 && str.slice(i - sym.length + 1, i + 1) === sym) return i - sym.length + 1;
+  }
+  return -1;
+}
+
+/* ============================================================
+   WIRE UP REMAINING EVENTS
+   ============================================================ */
+document.getElementById('add-set-btn').addEventListener('click', addSet);
+document.getElementById('set-elems').addEventListener('keydown', e => { if (e.key === 'Enter') addSet(); });
+document.getElementById('set-rule').addEventListener('keydown', e => { if (e.key === 'Enter') addSet(); });
+document.getElementById('set-mode').addEventListener('change', syncSetBuilderMode);
+COMPARISON_SLOT_IDS.forEach(id => {
+  document.getElementById(id).addEventListener('change', () => drawActiveVenn(null));
+});
+document.getElementById('op-equation').addEventListener('input', syncOpEquationState);
+document.getElementById('op-equation').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); computeOp(); }
+});
+
+// Enter key in expression also evaluates
+document.getElementById('expr-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); evaluate(); }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildKeyboard();
+
+// Seed semantic system sets and finite examples.
+BUILTIN_NAMES.forEach(name => {
+  state.sets[name] = makeBuiltin(name);
+});
+state.sets.A = makeFinite('A', [1, 2, 3, 4]);
+state.sets.B = makeFinite('B', [3, 4, 5, 6]);
+state.sets.C = makeFinite('C', [1, 2, 5]);
+syncSetBuilderMode();
+refreshAllSetViews();
+document.getElementById('op-a').value = 'A';
+document.getElementById('op-b').value = 'B';
+document.getElementById('op-c').value = 'C';
+syncComparisonState();
+document.getElementById('ps-select').value = 'A';
+syncOpEquationState();
+refreshOpEquationSnippets();
+
+// Draw initial Venn
+setTimeout(() => drawInitialVenn(), 80);
+
+/* Theme cycle: auto → light/dark → dark/light → auto (canonical template behavior) */
+(function initThemeFromTemplate() {
+  const rootElement = document.documentElement;
+  const themeToggle = document.querySelector('#theme-toggle');
+  const mediaQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  let themeMode = 'auto';
+
+  function resolveTheme(mode) {
+    if (mode === 'auto') {
+      return mediaQuery && mediaQuery.matches ? 'dark' : 'light';
+    }
+    return mode;
+  }
+
+  function applyTheme(mode) {
+    rootElement.setAttribute('data-theme', resolveTheme(mode));
+  }
+
+  function updateThemeToggleLabel() {
+    if (!themeToggle) return;
+    themeToggle.textContent = `theme: ${themeMode}`;
+  }
+
+  function cycleThemeMode() {
+    if (themeMode === 'auto') {
+      themeMode = resolveTheme('auto') === 'dark' ? 'light' : 'dark';
+    } else if (themeMode === 'light') {
+      themeMode = 'dark';
+    } else {
+      themeMode = 'auto';
+    }
+    applyTheme(themeMode);
+    updateThemeToggleLabel();
+    drawInitialVenn();
+  }
+
+  applyTheme(themeMode);
+  updateThemeToggleLabel();
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', cycleThemeMode);
+  }
+
+  if (mediaQuery) {
+    const handleChange = () => {
+      if (themeMode === 'auto') {
+        applyTheme('auto');
+        updateThemeToggleLabel();
+        drawInitialVenn();
+      }
+    };
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+    } else if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(handleChange);
+    }
+  }
+})();
+</script>
+</body>
+</html>
